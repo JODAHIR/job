@@ -6,7 +6,7 @@
   <meta name="theme-color" content="#0b1320">
   <meta name="description" content="Pizarra digital moderna para organizar notas, imágenes y documentos con vista previa y descarga.">
   <title>Mi Pizarra Digital</title>
-
+  <link href="favicon.ico" rel="icon">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css" rel="stylesheet">
 
@@ -533,6 +533,128 @@
       border-radius:10px;
     }
 
+
+    /* Notas editables y comentarios */
+    .note-comments{
+      margin:0 12px 12px;
+      padding-top:10px;
+      border-top:1px solid rgba(15,23,42,.08);
+    }
+
+    .note-comments-header{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:8px;
+      margin-bottom:8px;
+      font-size:.78rem;
+      font-weight:700;
+      color:#536174;
+    }
+
+
+    .note-comments-toggle{
+      width:100%;
+      border:0;
+      background:transparent;
+      padding:0;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:8px;
+      color:#536174;
+      font:inherit;
+      text-align:left;
+      cursor:pointer;
+    }
+
+    .note-comments-toggle-main{
+      display:flex;
+      align-items:center;
+      gap:6px;
+      min-width:0;
+    }
+
+    .note-comments-chevron{
+      transition:transform .18s ease;
+      flex:0 0 auto;
+    }
+
+    .note-comments.open .note-comments-chevron{
+      transform:rotate(180deg);
+    }
+
+    .note-comments-panel{
+      display:none;
+      margin-top:8px;
+    }
+
+    .note-comments.open .note-comments-panel{
+      display:block;
+    }
+
+    .note-comments-list{
+      display:flex;
+      flex-direction:column;
+      gap:8px;
+      max-height:170px;
+      overflow:auto;
+    }
+
+    .note-comment{
+      padding:9px 10px;
+      border-radius:11px;
+      background:rgba(255,255,255,.72);
+      border:1px solid rgba(15,23,42,.07);
+    }
+
+    .note-comment-text{
+      font-size:.8rem;
+      line-height:1.4;
+      color:#2f3b4d;
+      white-space:pre-wrap;
+    }
+
+    .note-comment-date{
+      margin-top:5px;
+      font-size:.68rem;
+      color:#7d8999;
+    }
+
+    .note-comment-empty{
+      font-size:.76rem;
+      color:#8592a3;
+      padding:5px 0;
+    }
+
+    .comment-badge{
+      min-width:20px;
+      height:20px;
+      padding:0 6px;
+      border-radius:999px;
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      background:#eef2f7;
+      color:#526174;
+      font-size:.66rem;
+      font-weight:800;
+    }
+
+    .note-action-btn{
+      width:30px!important;
+      height:30px!important;
+      border-radius:9px!important;
+    }
+
+    @media(max-width:420px){
+      .note-action-btn{
+        width:28px!important;
+        height:28px!important;
+      }
+      .note-comments-list{max-height:140px}
+    }
+
     /* Lightbox para previsualización de imágenes */
     .image-lightbox{
       position:fixed;
@@ -713,6 +835,77 @@
   </div>
 </div>
 
+
+<div class="modal fade" id="editNoteModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content rounded-4">
+      <div class="modal-header border-secondary-subtle">
+        <h2 class="modal-title h5">Editar nota</h2>
+        <button class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+      </div>
+      <div class="modal-body">
+        <div class="mb-3">
+          <label for="editNoteTitle" class="form-label">Título</label>
+          <input id="editNoteTitle" class="form-control bg-dark text-white">
+        </div>
+
+        <div class="mb-3">
+          <label for="editNoteText" class="form-label">Contenido</label>
+          <textarea id="editNoteText" class="form-control bg-dark text-white" rows="6"></textarea>
+        </div>
+
+        <div class="mb-3">
+          <label for="editNoteAttachment" class="form-label">Reemplazar archivo adjunto <span class="text-white-50">(opcional)</span></label>
+          <input id="editNoteAttachment" class="form-control bg-dark text-white" type="file">
+          <div id="editAttachmentInfo" class="form-text text-white-50"></div>
+          <div class="form-check mt-2">
+            <input id="removeNoteAttachment" class="form-check-input" type="checkbox">
+            <label class="form-check-label" for="removeNoteAttachment">Quitar archivo adjunto actual</label>
+          </div>
+        </div>
+
+        <div>
+          <label for="editNoteColor" class="form-label">Color</label>
+          <select id="editNoteColor" class="form-select bg-dark text-white">
+            <option value="note-yellow">Amarillo</option>
+            <option value="note-blue">Celeste</option>
+            <option value="note-green">Verde</option>
+            <option value="note-pink">Rosa</option>
+            <option value="note-white">Blanco</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="modal-footer border-secondary-subtle">
+        <button class="btn btn-outline-light" data-bs-dismiss="modal">Cancelar</button>
+        <button class="btn btn-primary" id="updateNoteBtn">Guardar cambios</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="commentNoteModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content rounded-4">
+      <div class="modal-header border-secondary-subtle">
+        <h2 class="modal-title h5">Agregar comentario</h2>
+        <button class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+      </div>
+
+      <div class="modal-body">
+        <div id="commentNoteTitle" class="small text-white-50 mb-2"></div>
+        <label for="commentText" class="form-label">Comentario</label>
+        <textarea id="commentText" class="form-control bg-dark text-white" rows="5" placeholder="Escribí una observación sobre este apunte..."></textarea>
+      </div>
+
+      <div class="modal-footer border-secondary-subtle">
+        <button class="btn btn-outline-light" data-bs-dismiss="modal">Cancelar</button>
+        <button class="btn btn-warning" id="saveCommentBtn">Guardar comentario</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <div class="offcanvas offcanvas-end" tabindex="-1" id="helpCanvas" aria-labelledby="helpTitle">
   <div class="offcanvas-header">
     <h2 id="helpTitle" class="offcanvas-title h5">Cómo usar la pizarra</h2>
@@ -764,6 +957,20 @@
   const clearBoardBtn = document.getElementById('clearBoardBtn');
   const noteModalEl = document.getElementById('noteModal');
   const noteAttachment = document.getElementById('noteAttachment');
+  const editNoteModalEl = document.getElementById('editNoteModal');
+  const commentNoteModalEl = document.getElementById('commentNoteModal');
+  const updateNoteBtn = document.getElementById('updateNoteBtn');
+  const saveCommentBtn = document.getElementById('saveCommentBtn');
+  const editNoteTitle = document.getElementById('editNoteTitle');
+  const editNoteText = document.getElementById('editNoteText');
+  const editNoteColor = document.getElementById('editNoteColor');
+  const editNoteAttachment = document.getElementById('editNoteAttachment');
+  const editAttachmentInfo = document.getElementById('editAttachmentInfo');
+  const removeNoteAttachment = document.getElementById('removeNoteAttachment');
+  const commentText = document.getElementById('commentText');
+  const commentNoteTitle = document.getElementById('commentNoteTitle');
+  let activeEditNoteId = null;
+  let activeCommentNoteId = null;
   const imageLightbox = document.getElementById('imageLightbox');
   const imageLightboxImg = document.getElementById('imageLightboxImg');
   const imageLightboxTitle = document.getElementById('imageLightboxTitle');
@@ -818,6 +1025,7 @@
       text,
       color,
       attachment,
+      comments: [],
       x: pos.x,
       y: pos.y,
       tilt: pos.tilt,
@@ -909,6 +1117,8 @@
 
     let body = '';
     if (item.type === 'note') {
+      item.comments = Array.isArray(item.comments) ? item.comments : [];
+
       const attachmentHtml = item.attachment ? `
         <div class="note-attachment">
           <div class="note-attachment-icon"><i class="bi bi-paperclip"></i></div>
@@ -921,7 +1131,36 @@
           </button>
         </div>` : '';
 
-      body = `<div class="item-body"><div class="note-body">${escapeHtml(item.text || '')}</div></div>${attachmentHtml}`;
+      const commentsHtml = item.comments.length
+        ? item.comments.map(c => `
+          <div class="note-comment">
+            <div class="note-comment-text">${escapeHtml(c.text || '')}</div>
+            <div class="note-comment-date">${escapeHtml(c.dateLabel || '')}</div>
+          </div>`).join('')
+        : `<div class="note-comment-empty">Sin comentarios todavía.</div>`;
+
+      body = `
+        <div class="item-body"><div class="note-body">${escapeHtml(item.text || '')}</div></div>
+        ${attachmentHtml}
+        <div class="note-comments">
+          <div class="note-comments-header">
+            <button type="button"
+                    class="note-comments-toggle"
+                    aria-expanded="false"
+                    aria-controls="comments-${item.id}">
+              <span class="note-comments-toggle-main">
+                <i class="bi bi-chat-left-text"></i>
+                <span>Comentarios</span>
+                <span class="comment-badge">${item.comments.length}</span>
+              </span>
+              <i class="bi bi-chevron-down note-comments-chevron"></i>
+            </button>
+          </div>
+
+          <div id="comments-${item.id}" class="note-comments-panel">
+            <div class="note-comments-list">${commentsHtml}</div>
+          </div>
+        </div>`;
     } else if (item.type === 'image') {
       body = `<div class="item-body">
         <img class="media-preview" src="${item.dataUrl}" alt="${escapeHtml(item.title)}">
@@ -946,6 +1185,14 @@
         <i class="bi bi-grip-vertical text-secondary"></i>
         <div class="item-title" title="${escapeHtml(item.title)}">${escapeHtml(item.title)}</div>
         <div class="item-actions">
+          ${item.type === 'note' ? `
+            <button type="button" class="btn btn-sm btn-link text-primary p-0 note-action-btn edit-note-item" title="Editar nota" aria-label="Editar nota">
+              <i class="bi bi-pencil-square"></i>
+            </button>
+            <button type="button" class="btn btn-sm btn-link text-secondary p-0 note-action-btn comment-note-item" title="Agregar comentario" aria-label="Agregar comentario">
+              <i class="bi bi-chat-dots"></i>
+            </button>
+          ` : ''}
           <button class="btn btn-sm btn-link text-danger p-0 delete-item" aria-label="Eliminar"><i class="bi bi-trash3"></i></button>
         </div>
       </div>
@@ -961,6 +1208,49 @@
       imagePreview.addEventListener('click', (e) => {
         e.stopPropagation();
         openImageLightbox(item);
+      });
+    }
+
+
+    el.querySelector('.edit-note-item')?.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+
+      activeEditNoteId = item.id;
+      editNoteTitle.value = item.title || '';
+      editNoteText.value = item.text || '';
+      editNoteColor.value = item.color || 'note-yellow';
+      editNoteAttachment.value = '';
+      removeNoteAttachment.checked = false;
+
+      editAttachmentInfo.textContent = item.attachment
+        ? `Adjunto actual: ${item.attachment.name} (${formatBytes(item.attachment.size || 0)})`
+        : 'Esta nota no tiene archivo adjunto.';
+
+      bootstrap.Modal.getOrCreateInstance(editNoteModalEl).show();
+    });
+
+    el.querySelector('.comment-note-item')?.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+
+      activeCommentNoteId = item.id;
+      commentText.value = '';
+      commentNoteTitle.textContent = `Nota: ${item.title || 'Nota'}`;
+
+      bootstrap.Modal.getOrCreateInstance(commentNoteModalEl).show();
+    });
+
+
+    const commentsToggle = el.querySelector('.note-comments-toggle');
+    if (commentsToggle) {
+      commentsToggle.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+
+        const commentsBox = commentsToggle.closest('.note-comments');
+        const isOpen = commentsBox.classList.toggle('open');
+        commentsToggle.setAttribute('aria-expanded', String(isOpen));
       });
     }
 
@@ -1081,11 +1371,101 @@
     reader.readAsDataURL(file);
   });
 
+
+  updateNoteBtn.addEventListener('click', () => {
+    const item = items.find(x => x.id === activeEditNoteId && x.type === 'note');
+    if (!item) return;
+
+    const title = editNoteTitle.value.trim() || 'Nota';
+    const text = editNoteText.value.trim();
+    const color = editNoteColor.value;
+    const replacementFile = editNoteAttachment.files?.[0] || null;
+
+    if (!text) {
+      alert('El contenido de la nota no puede quedar vacío.');
+      return;
+    }
+
+    const applyUpdate = (replacementAttachment) => {
+      item.title = title;
+      item.text = text;
+      item.color = color;
+      item.updatedAt = new Date().toISOString();
+
+      if (removeNoteAttachment.checked) {
+        item.attachment = null;
+      } else if (replacementAttachment !== undefined) {
+        item.attachment = replacementAttachment;
+      }
+
+      saveItems();
+
+      const currentCard = board.querySelector(`[data-id="${CSS.escape(item.id)}"]`);
+      if (currentCard) currentCard.remove();
+      renderItem(item);
+
+      bootstrap.Modal.getOrCreateInstance(editNoteModalEl).hide();
+      activeEditNoteId = null;
+    };
+
+    if (!replacementFile) {
+      applyUpdate(undefined);
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      applyUpdate({
+        name: replacementFile.name,
+        type: replacementFile.type || 'application/octet-stream',
+        size: replacementFile.size,
+        dataUrl: reader.result
+      });
+    };
+    reader.onerror = () => alert('No se pudo leer el nuevo archivo adjunto.');
+    reader.readAsDataURL(replacementFile);
+  });
+
+  saveCommentBtn.addEventListener('click', () => {
+    const item = items.find(x => x.id === activeCommentNoteId && x.type === 'note');
+    if (!item) return;
+
+    const text = commentText.value.trim();
+    if (!text) {
+      alert('Escribí un comentario antes de guardar.');
+      return;
+    }
+
+    item.comments = Array.isArray(item.comments) ? item.comments : [];
+
+    const now = new Date();
+    item.comments.push({
+      id: uid(),
+      text,
+      createdAt: now.toISOString(),
+      dateLabel: now.toLocaleString('es-PY', {
+        dateStyle: 'short',
+        timeStyle: 'short'
+      })
+    });
+
+    saveItems();
+
+    const currentCard = board.querySelector(`[data-id="${CSS.escape(item.id)}"]`);
+    if (currentCard) currentCard.remove();
+    renderItem(item);
+
+    bootstrap.Modal.getOrCreateInstance(commentNoteModalEl).hide();
+    activeCommentNoteId = null;
+    commentText.value = '';
+  });
+
   searchInput.addEventListener('input', () => {
     const q = searchInput.value.trim().toLowerCase();
     document.querySelectorAll('.board-item').forEach(el => {
       const item = items.find(x => x.id === el.dataset.id);
-      const haystack = `${item?.title || ''} ${item?.text || ''}`.toLowerCase();
+      const commentsText = Array.isArray(item?.comments) ? item.comments.map(c => c.text || '').join(' ') : '';
+      const haystack = `${item?.title || ''} ${item?.text || ''} ${commentsText}`.toLowerCase();
       el.classList.toggle('hidden-by-search', q && !haystack.includes(q));
     });
   });
