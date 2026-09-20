@@ -304,11 +304,13 @@
 	.completedActionsV28{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:18px}
 	@media(max-width:480px){.completedStatsV28{grid-template-columns:1fr}.completedActionsV28 .btn{width:100%}}
 	</style>
-	</head><body><main class="app"><section class="hero"><h1>🌟 Aprendo Jugando</h1><p>Cuestionario interactivo de Primer Grado. Lee, practica, gana estrellas y aprende jugando.</p><div class="scorebar"><span class="pill" id="player">🎯 Total de puntos  <b id="score">0</b></span><span class="pill">🔥 Racha <b id="streak">0</b></span></div><div class="achievements" id="achievements"></div></section>
+	</head><body><main class="app"><section class="hero"><h1>🌟 Aprendo Jugando</h1><p>Cuestionario interactivo. Lee, practica, gana estrellas y aprende jugando.</p>
+		<div class="scorebar"><span class="pill" id="player">🎯 Total de puntos  <b id="score">0</b></span><span class="pill">🔥 Racha <b id="streak">0</b></span></div>
+		<div class="achievements" id="achievements"></div></section>
 
 	<section class="homeSelectorV15" id="homeSelectorV15">
 	  <h2>📚 ¿Qué cuestionario quieres usar?</h2>
-	  <p class="hint">Aquí aparecen solamente los cuestionarios activos. Puedes cambiar de cuestionario en cualquier momento.</p>
+	  <p class="hint">Aquí aparecen los cuestionarios, puedes cambiar de cuestionario en cualquier momento.</p>
 	  <div class="homeQuizGridV15" id="homeQuizGridV15"></div>
 	</section>
 
@@ -329,10 +331,13 @@
 	</section>
 	<section class="modulePanelV11" id="questionnairesPanelV11">
 	<h2>📚 Cuestionarios</h2>
-	<p class="moduleHintV11">Módulo independiente para preparar futuras ampliaciones del banco de preguntas.</p>
+	<p class="moduleHintV11">Módulo de preguntas.</p>
 	<div id="questionnaireImporterV11"></div>
 	</section>
-	<div class="tabs"><button class="btn active" id="socialBtn">🏠 Vida Social y Trabajo</button><button class="btn" id="naturalBtn">🌱 Medio Natural y Salud</button><button class="btn" id="pendingBtn">📖 Falta aprender <span id="pendingCount"></span></button><button class="btn" id="practiceListNavV8">📘 A estudiar<span id="practiceNavCountV8">(0)</span></button></div>
+	<div class="tabs"><button class="btn active" id="socialBtn">🏠 Vida Social y Trabajo</button>
+		<button class="btn" id="naturalBtn">🌱 Medio Natural y Salud</button>
+		<button class="btn" id="pendingBtn">📖 Falta aprender <span id="pendingCount"></span></button>
+		<button class="btn" id="practiceListNavV8">📘 A estudiar<span id="practiceNavCountV8">(0)</span></button></div>
 	<div class="stateNavV24" id="stateNavV24">
 	 <button class="btn" id="pendingV24">📖 Falta aprender <span id="pendingCountV24"></span></button>
 	 <button class="btn" id="practicingV24">📘 A estudiar<span id="practicingCountV24"></span></button>
@@ -345,10 +350,10 @@
 	</div>
 	<div class="progressWrap"><div class="meta"><span id="counter">Pregunta 1 de 40</span><span id="stars">⭐ 0 aprendidas</span></div><div class="progress"><div class="bar" id="bar"></div></div></div><div class="modeToggle"><button class="btn active" id="studyMode">📖 Aprender</button><button class="btn" id="practiceMode">🎮 Prueba</button></div><section class="card"><span class="badge" id="subject"></span><div class="q" id="question"></div><div class="center"><button class="btn primary big" id="reveal">👀 Ver respuesta</button></div><div class="answer" id="answer"></div><div class="practiceBox" id="practiceBox"><div class="choices" id="choices"></div><div class="feedback" id="feedback"></div></div><div class="tools"><button class="btn" id="speakQ">🔊 Leer pregunta</button><button class="btn" id="speakAll">🔊 Leer pregunta y respuesta</button><button class="btn good" id="speak" disabled>🔊 Escuchar respuesta</button><button class="btn" id="practice">🟡 A estudiar</button><button class="btn" id="learned" disabled>⭐ Ya la aprendí</button><button class="btn" id="random">🎲 Pregunta al azar</button><button class="btn" id="passPracticeV19">⏭️ Paso</button></div></section><div class="nav"><button class="btn" id="prev">← Anterior</button><button class="btn primary" id="next">Siguiente →</button></div><div class="tools"><input class="search" id="search" placeholder="🔎 Buscar una pregunta…"><button class="btn" id="showAll">📚 Ver todas</button><button class="btn" id="reset">↻ Reiniciar progreso</button></div><section class="list" id="list"></section><section class="practiceListPanel" id="practiceListPanelV8">
 	<h2>🟡 Preguntas a estudiar</h2>
-	<p class="hint">Aquí puedes consultar las preguntas según su estado y volver a estudiarlas.</p>
+	<p class="hint">Aquí puedes volver a estudiarlas.</p>
 	<div class="stateTabsV8">
 	<button class="btn" id="pendingListV8">🔴 Por aprender <span id="pendingCountV8">(0)</span></button>
-	<button class="btn active" id="practicingListV8">📘 A estudiar<span id="practicingCountV8">(0)</span></button>
+	<button class="btn active" id="practicingListV8">🟡 A estudiar<span id="practicingCountV8">(0)</span></button>
 	<button class="btn" id="learnedListV8">🟢 Aprendidas <span id="learnedCountV8">(0)</span></button>
 	</div><div id="stateListV8"></div></section>
 	<div id="socialTrophyV10" class="trophyV10"><span class="cup">🏆</span>¡Vida Social y Trabajo totalmente aprendido!</div>
@@ -699,7 +704,7 @@
 	      <h3>⚙️ Administrar cuestionarios</h3>
 	      <div class="managerTabsV15">
 		<button class="btn ${managerViewV15==='active'?'active':''}" id="activeTabV15">🟢 Activos (${quizzesV12.filter(q=>q.enabled!==false).length})</button>
-		<button class="btn ${managerViewV15==='inactive'?'active':''}" id="inactiveTabV15">⚪ Inactivos (${quizzesV12.filter(q=>q.enabled===false).length})</button>
+		<button class="btn ${managerViewV15==='inactive'?'active':''}" id="inactiveTabV15">🔴  Inactivos (${quizzesV12.filter(q=>q.enabled===false).length})</button>
 	      </div>
 	      <div class="managerGridV15">
 		${rows.length?rows.map(({q,idx})=>`
@@ -2112,6 +2117,85 @@
 
     window.scrollTo({top:0,behavior:'smooth'});
   };
+})();
+</script>
+
+
+<style id="v35-practice-disabled-controls">
+/* En modo Prueba estos controles permanecen visibles, pero inactivos. */
+body.v35PracticeMode #random,
+body.v35PracticeMode #practice{
+  opacity:.42!important;
+  cursor:not-allowed!important;
+  pointer-events:none!important;
+  filter:grayscale(.25);
+}
+</style>
+<script id="v35-practice-disabled-controls-js">
+(()=>{
+  const study=document.getElementById('studyMode');
+  const test=document.getElementById('practiceMode');
+  const random=document.getElementById('random');
+  const toStudy=document.getElementById('practice');
+
+  function applyV35(){
+    const inPractice = typeof learningMode!=='undefined' && learningMode==='practice';
+    document.body.classList.toggle('v35PracticeMode',inPractice);
+
+    if(random){
+      random.disabled=inPractice;
+      random.setAttribute('aria-disabled',inPractice?'true':'false');
+    }
+    if(toStudy){
+      toStudy.disabled=inPractice;
+      toStudy.setAttribute('aria-disabled',inPractice?'true':'false');
+    }
+  }
+
+  // Ejecutar después del cambio de modo realizado por el código base.
+  if(test)test.addEventListener('click',()=>setTimeout(applyV35,0));
+  if(study)study.addEventListener('click',()=>setTimeout(applyV35,0));
+
+  // También se reaplica cuando se cambia/abre un cuestionario.
+  ['socialBtn','naturalBtn','changeQuizV21','homeNavV34'].forEach(id=>{
+    const b=document.getElementById(id);
+    if(b)b.addEventListener('click',()=>setTimeout(applyV35,0));
+  });
+
+  applyV35();
+})();
+</script>
+
+
+<style id="v36-disable-read-both">
+/* V36: en modo Prueba también se bloquea Leer pregunta y respuesta. */
+body.v35PracticeMode #speakAll{
+  opacity:.42!important;
+  cursor:not-allowed!important;
+  pointer-events:none!important;
+  filter:grayscale(.25);
+}
+</style>
+<script id="v36-disable-read-both-js">
+(()=>{
+  const speakAll=document.getElementById('speakAll');
+
+  function applyV36(){
+    const inPractice =
+      typeof learningMode!=='undefined' && learningMode==='practice';
+    if(speakAll){
+      speakAll.disabled=inPractice;
+      speakAll.setAttribute('aria-disabled',inPractice?'true':'false');
+    }
+  }
+
+  ['practiceMode','studyMode','socialBtn','naturalBtn',
+   'changeQuizV21','homeNavV34'].forEach(id=>{
+    const b=document.getElementById(id);
+    if(b)b.addEventListener('click',()=>setTimeout(applyV36,0));
+  });
+
+  applyV36();
 })();
 </script>
 
