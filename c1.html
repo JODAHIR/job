@@ -1812,4 +1812,202 @@
 })();
 </script>
 
-	</body></html>
+	
+<style id="v31-next-pending">
+.v31PendingNote{margin:10px 0;padding:10px 13px;border-radius:13px;background:#fff7dc;color:#795900;font-size:13px;font-weight:800}
+</style>
+<script id="v31-next-pending-js">
+(()=>{
+  /*
+    V31:
+    En modo Aprender/Estudiar, al pulsar "Siguiente", la pregunta que se abandona
+    queda automáticamente en "A estudiar" si todavía no fue marcada como aprendida.
+    Así aparecerá en la sección 📘 A estudiar del cuestionario activo.
+  */
+  const nextBtn=document.getElementById('next');
+  if(!nextBtn)return;
+
+  // Reemplazamos el botón para retirar el onclick antiguo sin alterar el resto del sistema.
+  const fresh=nextBtn.cloneNode(true);
+  nextBtn.parentNode.replaceChild(fresh,nextBtn);
+
+  fresh.onclick=()=>{
+    if(view!=='study' || i>=data[mode].length-1)return;
+
+    const k=key();
+
+    // Solo queda pendiente de estudio si todavía NO está aprendida.
+    if(!learned[k]){
+      practicing[k]=true;
+      localStorage.setItem('practicando1',JSON.stringify(practicing));
+      localStorage.setItem('aprendo1',JSON.stringify(learned));
+    }
+
+    i++;
+    render();
+
+    // Actualiza todos los contadores/listados existentes.
+    if(typeof updateStateCountsV8==='function') updateStateCountsV8();
+    if(typeof refreshStateButtonsV26==='function') refreshStateButtonsV26();
+
+    scrollTo({top:0,behavior:'smooth'});
+  };
+
+  // Aclaración visual en el botón.
+  fresh.title='Al avanzar, una pregunta no aprendida quedará guardada en A estudiar';
+})();
+</script>
+
+
+<script id="v32-study-only-marked-js">
+(()=>{
+  /*
+    V32 — Sesión "A estudiar":
+    - Al entrar en 📘 A estudiar se crea una cola SOLO con preguntas marcadas practicing.
+    - Nunca incluye preguntas aprendidas.
+    - Siguiente/Anterior recorren únicamente esa cola.
+    - Si una pregunta pasa a aprendida, sale de la cola.
+  */
+  let queueV32=[];
+  let posV32=0;
+  let activeV32=false;
+
+  function currentModeV32(){
+    return (typeof mode!=='undefined' && (mode==='social'||mode==='natural')) ? mode : null;
+  }
+
+  function buildQueueV32(m){
+    if(!m || !data[m]) return [];
+    return data[m].map((_,n)=>n).filter(n=>{
+      const k=m+'-'+n;
+      return !!practicing[k] && !learned[k];
+    });
+  }
+
+  function syncQueueV32(){
+    const m=currentModeV32();
+    if(!m)return;
+    queueV32=buildQueueV32(m);
+    const found=queueV32.indexOf(i);
+    if(found>=0) posV32=found;
+    else if(queueV32.length){
+      posV32=Math.min(posV32,queueV32.length-1);
+      i=queueV32[posV32];
+    }
+  }
+
+  function enterStudyMarkedV32(){
+    const m=currentModeV32();
+    queueV32=buildQueueV32(m);
+    if(!queueV32.length){
+      activeV32=false;
+      if(typeof openStatePanelV24==='function') openStatePanelV24('practicing');
+      return;
+    }
+    activeV32=true;
+    posV32=0;
+    i=queueV32[0];
+    view='study';
+    if(typeof closeStatePanelV24==='function') closeStatePanelV24();
+    if(typeof hideStatePanelV8==='function') hideStatePanelV8();
+    render();
+    updateNavV32();
+    scrollTo({top:0,behavior:'smooth'});
+  }
+
+  function updateNavV32(){
+    if(!activeV32)return;
+    syncQueueV32();
+    const prev=document.getElementById('prev'), next=document.getElementById('next');
+    if(prev) prev.disabled=posV32<=0;
+    if(next) next.disabled=posV32>=queueV32.length-1;
+    const counter=document.getElementById('counter');
+    if(counter) counter.textContent=`A estudiar ${posV32+1} de ${queueV32.length}`;
+  }
+
+  // Botón superior "A estudiar": entra directamente a estudiar la cola marcada.
+  const studyNav=document.getElementById('practicingV24');
+  if(studyNav){
+    const clone=studyNav.cloneNode(true);
+    studyNav.parentNode.replaceChild(clone,studyNav);
+    clone.onclick=enterStudyMarkedV32;
+  }
+
+  // También el acceso heredado "A estudiar".
+  const legacy=document.getElementById('practiceListNavV8');
+  if(legacy){
+    const clone=legacy.cloneNode(true);
+    legacy.parentNode.replaceChild(clone,legacy);
+    clone.onclick=enterStudyMarkedV32;
+  }
+
+  // Navegación exclusiva dentro de la cola.
+  ['prev','next'].forEach(id=>{
+    const old=document.getElementById(id);
+    if(!old)return;
+    const fresh=old.cloneNode(true);
+    old.parentNode.replaceChild(fresh,old);
+    fresh.onclick=()=>{
+      if(activeV32){
+        syncQueueV32();
+        if(!queueV32.length){activeV32=false;render();return}
+        if(id==='next' && posV32<queueV32.length-1) posV32++;
+        if(id==='prev' && posV32>0) posV32--;
+        i=queueV32[posV32];
+        render();updateNavV32();
+        scrollTo({top:0,behavior:'smooth'});
+        return;
+      }
+      // Comportamiento normal fuera de A estudiar, conservando V31.
+      if(view!=='study')return;
+      if(id==='next'){
+        if(i>=data[mode].length-1)return;
+        const k=key();
+        if(!learned[k]){
+          practicing[k]=true;
+          localStorage.setItem('practicando1',JSON.stringify(practicing));
+          localStorage.setItem('aprendo1',JSON.stringify(learned));
+        }
+        i++;
+      }else{
+        if(i<=0)return;
+        i--;
+      }
+      render();
+      if(typeof updateStateCountsV8==='function')updateStateCountsV8();
+      if(typeof refreshStateButtonsV26==='function')refreshStateButtonsV26();
+      scrollTo({top:0,behavior:'smooth'});
+    };
+  });
+
+  // Si se marca como aprendida durante la sesión, debe desaparecer de A estudiar.
+  const learnedBtn=document.getElementById('learned');
+  if(learnedBtn){
+    learnedBtn.addEventListener('click',()=>{
+      if(!activeV32)return;
+      setTimeout(()=>{
+        const m=currentModeV32(), oldIndex=i;
+        queueV32=buildQueueV32(m);
+        if(!queueV32.length){
+          activeV32=false;
+          if(typeof refreshStateButtonsV26==='function')refreshStateButtonsV26();
+          render();
+          return;
+        }
+        let nextPos=queueV32.findIndex(n=>n>oldIndex);
+        if(nextPos<0)nextPos=queueV32.length-1;
+        posV32=nextPos;i=queueV32[posV32];
+        render();updateNavV32();
+      },0);
+    });
+  }
+
+  // Salir de la sesión al cambiar de cuestionario/modo.
+  ['changeQuizV21','pendingV24','learnedV24','studyMode','practiceMode'].forEach(id=>{
+    const b=document.getElementById(id);
+    if(b)b.addEventListener('click',()=>{activeV32=false});
+  });
+})();
+</script>
+
+</body></html>
