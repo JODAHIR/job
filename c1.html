@@ -304,13 +304,11 @@
 	.completedActionsV28{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:18px}
 	@media(max-width:480px){.completedStatsV28{grid-template-columns:1fr}.completedActionsV28 .btn{width:100%}}
 	</style>
-	</head><body><main class="app"><section class="hero"><h1>🌟 Aprendo Jugando</h1><p>Cuestionario interactivo. Lee, practica, gana estrellas y aprende jugando.</p>
-		<div class="scorebar"><span class="pill" id="player">🎯 Total de puntos  <b id="score">0</b></span><span class="pill">🔥 Racha <b id="streak">0</b></span></div>
-		<div class="achievements" id="achievements"></div></section>
+	</head><body><main class="app"><section class="hero"><h1>🌟 Aprendo Jugando</h1><p>Cuestionario interactivo de Primer Grado. Lee, practica, gana estrellas y aprende jugando.</p><div class="scorebar"><span class="pill" id="player">🎯 Total de puntos  <b id="score">0</b></span><span class="pill">🔥 Racha <b id="streak">0</b></span></div><div class="achievements" id="achievements"></div></section>
 
 	<section class="homeSelectorV15" id="homeSelectorV15">
 	  <h2>📚 ¿Qué cuestionario quieres usar?</h2>
-	  <p class="hint">Aquí aparecen los cuestionarios, puedes cambiar de cuestionario en cualquier momento.</p>
+	  <p class="hint">Aquí aparecen solamente los cuestionarios activos. Puedes cambiar de cuestionario en cualquier momento.</p>
 	  <div class="homeQuizGridV15" id="homeQuizGridV15"></div>
 	</section>
 
@@ -331,13 +329,10 @@
 	</section>
 	<section class="modulePanelV11" id="questionnairesPanelV11">
 	<h2>📚 Cuestionarios</h2>
-	<p class="moduleHintV11">Módulo de preguntas.</p>
+	<p class="moduleHintV11">Módulo independiente para preparar futuras ampliaciones del banco de preguntas.</p>
 	<div id="questionnaireImporterV11"></div>
 	</section>
-	<div class="tabs"><button class="btn active" id="socialBtn">🏠 Vida Social y Trabajo</button>
-		<button class="btn" id="naturalBtn">🌱 Medio Natural y Salud</button>
-		<button class="btn" id="pendingBtn">📖 Falta aprender <span id="pendingCount"></span></button>
-		<button class="btn" id="practiceListNavV8">📘 A estudiar<span id="practiceNavCountV8">(0)</span></button></div>
+	<div class="tabs"><button class="btn active" id="socialBtn">🏠 Vida Social y Trabajo</button><button class="btn" id="naturalBtn">🌱 Medio Natural y Salud</button><button class="btn" id="pendingBtn">📖 Falta aprender <span id="pendingCount"></span></button><button class="btn" id="practiceListNavV8">📘 A estudiar<span id="practiceNavCountV8">(0)</span></button></div>
 	<div class="stateNavV24" id="stateNavV24">
 	 <button class="btn" id="pendingV24">📖 Falta aprender <span id="pendingCountV24"></span></button>
 	 <button class="btn" id="practicingV24">📘 A estudiar<span id="practicingCountV24"></span></button>
@@ -350,10 +345,10 @@
 	</div>
 	<div class="progressWrap"><div class="meta"><span id="counter">Pregunta 1 de 40</span><span id="stars">⭐ 0 aprendidas</span></div><div class="progress"><div class="bar" id="bar"></div></div></div><div class="modeToggle"><button class="btn active" id="studyMode">📖 Aprender</button><button class="btn" id="practiceMode">🎮 Prueba</button></div><section class="card"><span class="badge" id="subject"></span><div class="q" id="question"></div><div class="center"><button class="btn primary big" id="reveal">👀 Ver respuesta</button></div><div class="answer" id="answer"></div><div class="practiceBox" id="practiceBox"><div class="choices" id="choices"></div><div class="feedback" id="feedback"></div></div><div class="tools"><button class="btn" id="speakQ">🔊 Leer pregunta</button><button class="btn" id="speakAll">🔊 Leer pregunta y respuesta</button><button class="btn good" id="speak" disabled>🔊 Escuchar respuesta</button><button class="btn" id="practice">🟡 A estudiar</button><button class="btn" id="learned" disabled>⭐ Ya la aprendí</button><button class="btn" id="random">🎲 Pregunta al azar</button><button class="btn" id="passPracticeV19">⏭️ Paso</button></div></section><div class="nav"><button class="btn" id="prev">← Anterior</button><button class="btn primary" id="next">Siguiente →</button></div><div class="tools"><input class="search" id="search" placeholder="🔎 Buscar una pregunta…"><button class="btn" id="showAll">📚 Ver todas</button><button class="btn" id="reset">↻ Reiniciar progreso</button></div><section class="list" id="list"></section><section class="practiceListPanel" id="practiceListPanelV8">
 	<h2>🟡 Preguntas a estudiar</h2>
-	<p class="hint">Aquí puedes volver a estudiarlas.</p>
+	<p class="hint">Aquí puedes consultar las preguntas según su estado y volver a estudiarlas.</p>
 	<div class="stateTabsV8">
 	<button class="btn" id="pendingListV8">🔴 Por aprender <span id="pendingCountV8">(0)</span></button>
-	<button class="btn active" id="practicingListV8">🟡 A estudiar<span id="practicingCountV8">(0)</span></button>
+	<button class="btn active" id="practicingListV8">📘 A estudiar<span id="practicingCountV8">(0)</span></button>
 	<button class="btn" id="learnedListV8">🟢 Aprendidas <span id="learnedCountV8">(0)</span></button>
 	</div><div id="stateListV8"></div></section>
 	<div id="socialTrophyV10" class="trophyV10"><span class="cup">🏆</span>¡Vida Social y Trabajo totalmente aprendido!</div>
@@ -704,7 +699,7 @@
 	      <h3>⚙️ Administrar cuestionarios</h3>
 	      <div class="managerTabsV15">
 		<button class="btn ${managerViewV15==='active'?'active':''}" id="activeTabV15">🟢 Activos (${quizzesV12.filter(q=>q.enabled!==false).length})</button>
-		<button class="btn ${managerViewV15==='inactive'?'active':''}" id="inactiveTabV15">🔴  Inactivos (${quizzesV12.filter(q=>q.enabled===false).length})</button>
+		<button class="btn ${managerViewV15==='inactive'?'active':''}" id="inactiveTabV15">⚪ Inactivos (${quizzesV12.filter(q=>q.enabled===false).length})</button>
 	      </div>
 	      <div class="managerGridV15">
 		${rows.length?rows.map(({q,idx})=>`
@@ -2196,6 +2191,564 @@ body.v35PracticeMode #speakAll{
   });
 
   applyV36();
+})();
+</script>
+
+
+<style id="v37-generator">
+.v37Process{background:#5b5bd6!important;color:#fff!important}
+.v37Editor{margin-top:14px;border:1px solid #dfe4f4;border-radius:16px;padding:14px;background:#fff}
+.v37Row{display:grid;grid-template-columns:1fr 1fr auto;gap:8px;margin:8px 0;align-items:start}
+.v37Row textarea{width:100%;min-height:72px;border:1px solid #ccd3e7;border-radius:10px;padding:9px;font:inherit}
+.v37Status{margin:10px 0;font-weight:800}
+.v37Status.ok{color:#19733c}.v37Status.warn{color:#946200}
+@media(max-width:700px){.v37Row{grid-template-columns:1fr}.v37Row .btn{width:100%}}
+</style>
+<script id="v37-generator-js">
+(()=>{
+ const DB='AprendoJugandoFilesV30', STORE='sources';
+ const esc=x=>String(x??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+ function db(){return new Promise((ok,no)=>{const r=indexedDB.open(DB,1);r.onupgradeneeded=()=>{if(!r.result.objectStoreNames.contains(STORE))r.result.createObjectStore(STORE)};r.onsuccess=()=>ok(r.result);r.onerror=()=>no(r.error)})}
+ async function blob(key){const d=await db();return new Promise((ok,no)=>{const r=d.transaction(STORE).objectStore(STORE).get(key);r.onsuccess=()=>ok(r.result);r.onerror=()=>no(r.error)})}
+ function splitQA(text){
+   text=(text||'').replace(/\r/g,'').replace(/[ \t]+/g,' ').replace(/\n{3,}/g,'\n\n').trim();
+   const lines=text.split('\n').map(x=>x.trim()).filter(Boolean);
+
+   // 1) Cuestionarios/encuestas numeradas: 1) ... 2) ... etc.
+   const numbered=[]; let current=null;
+   for(const line of lines){
+     const m=line.match(/^(\d{1,3})\s*[\)\.\-:]\s*(.+)$/);
+     if(m){
+       if(current) numbered.push(current);
+       current={n:+m[1], q:m[2].trim(), extra:[]};
+     }else if(current){
+       // Evita pies/citas/paginación evidentes.
+       if(!/^Please cite:/i.test(line) && !/^de Hoyos,/i.test(line) && !/^\d+$/.test(line))
+         current.extra.push(line);
+     }
+   }
+   if(current) numbered.push(current);
+
+   if(numbered.length>=2){
+     return numbered.map(o=>{
+       let q=o.q, extras=o.extra.slice();
+
+       // Algunas preguntas continúan en la línea siguiente antes de las opciones.
+       while(extras.length && !/^(?:[□☐✓]|sí\b|no\b|mujer\b|hombre\b|dos\b|tres\b|cuatro\b|cinco\b|seis\b|más\b|ninguna\b|una\b|las hago\b|me ayuda\b|chatear\b|jugar\b|buscar\b|editar\b|hacer tareas\b|otras\b|heladera\b|microondas\b|ventilador\b|aire acondicionado\b|televisor\b|lavarropas\b|computadora\b|sabe\b|fue\b|terminó\b|hay\b|no hay\b|muy bien\b|bien\b|regular\b|mal\b)/i.test(extras[0])){
+         const x=extras.shift();
+         if(x.length<180 && !q.endsWith('?')) q+=' '+x;
+         else { extras.unshift(x); break; }
+       }
+
+       const clean=extras.map(x=>x.replace(/^[□☐✓]\s*/,'').trim()).filter(Boolean);
+       const ans=clean.length
+         ? 'Respuesta personal. Opciones: '+clean.join(' · ')
+         : 'Respuesta personal.';
+       return [q,ans];
+     }).filter(x=>x[0]);
+   }
+
+   // 2) Formato tradicional pregunta/respuesta.
+   const out=[]; let q='',a='';
+   const flush=()=>{if(q&&a)out.push([q.replace(/^\s*(?:pregunta|p)\s*[:.-]?\s*/i,''),a.replace(/^\s*(?:respuesta|r)\s*[:.-]?\s*/i,'')]);q='';a=''};
+   for(const line of lines){
+     if(/^(?:pregunta|p)\s*[:.-]/i.test(line)||line.endsWith('?')){
+       if(q&&a)flush(); q=line;
+     }else if(q){ a+=(a?' ':'')+line; }
+   }
+   flush();
+   return out.filter(x=>x[0]&&x[1]);
+ }
+
+ async function pdfText(file){
+   let pdfjs;
+   try{pdfjs=await import('https://cdn.jsdelivr.net/npm/pdfjs-dist@4.10.38/build/pdf.min.mjs')}
+   catch(e){throw new Error('No se pudo cargar el lector PDF. Verifica la conexión a Internet.')}
+   pdfjs.GlobalWorkerOptions.workerSrc='https://cdn.jsdelivr.net/npm/pdfjs-dist@4.10.38/build/pdf.worker.min.mjs';
+   const doc=await pdfjs.getDocument({data:new Uint8Array(await file.arrayBuffer())}).promise;
+   let text='';
+   for(let p=1;p<=doc.numPages;p++){
+     const page=await doc.getPage(p), tc=await page.getTextContent();
+     // Reconstruye líneas usando la coordenada vertical del PDF.
+     const rows=[];
+     for(const it of tc.items){
+       const y=Math.round((it.transform?.[5]||0)*2)/2;
+       let row=rows.find(r=>Math.abs(r.y-y)<2);
+       if(!row){row={y,items:[]};rows.push(row)}
+       row.items.push({x:it.transform?.[4]||0,s:it.str||''});
+     }
+     rows.sort((a,b)=>b.y-a.y);
+     for(const row of rows){
+       row.items.sort((a,b)=>a.x-b.x);
+       const line=row.items.map(z=>z.s.trim()).filter(Boolean).join(' ').replace(/\s+/g,' ').trim();
+       if(line) text+=line+'\n';
+     }
+     text+='\n';
+   }
+   if(text.trim().length<30)throw new Error('El PDF parece escaneado y no contiene texto seleccionable. Usa OCR para imágenes.');
+   return text;
+ }
+ function editor(card,idx,qa){
+   let box=card.querySelector('.v37Editor');
+   if(!box){box=document.createElement('div');box.className='v37Editor';card.appendChild(box)}
+   box.innerHTML='<h4>✏️ Revisa las preguntas detectadas</h4><p class="hint">En encuestas sin respuestas correctas, el segundo campo conserva las opciones o indica “Respuesta personal”.</p><div class="v37Rows"></div><div class="tools"><button class="btn primary v37Save">💾 Guardar cuestionario</button><button class="btn v37Add">➕ Agregar pregunta</button></div>';
+   const rows=box.querySelector('.v37Rows');
+   const add=(q='',a='')=>{
+     const r=document.createElement('div');r.className='v37Row';
+     r.innerHTML=`<textarea class="v37Q" placeholder="Pregunta">${esc(q)}</textarea><textarea class="v37A" placeholder="Respuesta">${esc(a)}</textarea><button class="btn v37Del">🗑️</button>`;
+     r.querySelector('.v37Del').onclick=()=>r.remove(); rows.appendChild(r);
+   };
+   qa.forEach(x=>add(x[0],x[1])); box.querySelector('.v37Add').onclick=()=>add();
+   box.querySelector('.v37Save').onclick=()=>{
+     const final=[...rows.querySelectorAll('.v37Row')].map(r=>[r.querySelector('.v37Q').value.trim(),r.querySelector('.v37A').value.trim()]).filter(x=>x[0]&&x[1]);
+     if(!final.length){alert('Debe existir al menos una pregunta y respuesta.');return}
+     quizzesV12[idx].questions=final; quizzesV12[idx].survey=final.every(x=>/^Respuesta personal/i.test(x[1])); quizzesV12[idx].processedAt=new Date().toISOString(); quizzesV12[idx].enabled=true;
+     saveQuizzesV12(); renderManagerV15(); if(typeof renderHomeSelectorV15==='function')renderHomeSelectorV15();
+   };
+ }
+ function enhance(){
+   document.querySelectorAll('.managerCardV15').forEach(card=>{
+     const del=card.querySelector('[data-v30-delete]');
+     if(!del)return;
+     const idx=+del.dataset.v30Delete, q=quizzesV12[idx];
+     if(!q||q.questions?.length||!q.sourceKey||card.querySelector('.v37Process'))return;
+     const actions=del.parentElement, b=document.createElement('button');
+     b.className='btn v37Process'; b.textContent='⚙️ Generar cuestionario';
+     actions.insertBefore(b,actions.firstChild);
+     b.onclick=async()=>{
+       let st=card.querySelector('.v37Status');
+       if(!st){st=document.createElement('div');st.className='v37Status';actions.before(st)}
+       try{
+         b.disabled=true;st.className='v37Status warn';st.textContent='⏳ Procesando archivo…';
+         const f=await blob(q.sourceKey); if(!f)throw new Error('No se encontró el archivo guardado.');
+         let text='';
+         if((q.sourceType||f.type||'').includes('pdf')) text=await pdfText(f);
+         else if((q.sourceType||f.type||'').startsWith('image/')) text=await imageText(f,st);
+         else throw new Error('Formato no compatible. Usa PDF o imagen.');
+         const qa=splitQA(text);
+         if(!qa.length)throw new Error('Se extrajo texto, pero no pude identificar pares de pregunta y respuesta. Puedes usar un documento donde cada pregunta esté seguida de su respuesta.');
+         st.className='v37Status ok';st.textContent=`✅ ${qa.length} preguntas detectadas. Revisa y confirma antes de guardar.`;
+         editor(card,idx,qa);
+       }catch(e){st.className='v37Status warn';st.textContent='⚠️ '+e.message}
+       finally{b.disabled=false}
+     };
+   });
+ }
+ const old=renderManagerV15;
+ renderManagerV15=function(){old();setTimeout(enhance,0)};
+ const nav=document.getElementById('questionnairesNavV11');if(nav)nav.addEventListener('click',()=>setTimeout(enhance,20));
+ setTimeout(enhance,50);
+})();
+</script>
+
+
+<script id="v38-survey-player">
+(()=>{
+  const oldRender=renderQuizQuestionV12;
+  renderQuizQuestionV12=function(){
+    oldRender();
+    const q=quizzesV12[activeQuizV12];
+    if(!q||!q.survey)return;
+    const item=q.questions[activeQuestionV12];
+    const ans=document.getElementById('quizAnswerV12');
+    const show=document.getElementById('showAnswerV12');
+    if(ans) ans.textContent='📝 '+item[1];
+    if(show){
+      show.textContent='📋 Ver opciones / tipo de respuesta';
+      show.onclick=()=>ans?.classList.add('show');
+    }
+  };
+})();
+</script>
+
+
+<style id="v39-independent-custom">
+/* Un cuestionario cargado se ejecuta como una vista independiente. */
+body.v39CustomQuiz #homeSelectorV15,
+body.v39CustomQuiz #questionnairesPanelV11,
+body.v39CustomQuiz #achievementsPanelV11,
+body.v39CustomQuiz #statePanelV24,
+body.v39CustomQuiz #practiceListPanelV8,
+body.v39CustomQuiz #learn,
+body.v39CustomQuiz #learnNav,
+body.v39CustomQuiz #progress,
+body.v39CustomQuiz #stateNavV24{display:none!important}
+body.v39CustomQuiz #quizPlayerV12{display:block!important}
+.v39CustomHeader{display:none;margin:0 0 14px;padding:12px 14px;border:1px solid #dfe4f4;border-radius:14px;background:#fff}
+body.v39CustomQuiz .v39CustomHeader{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.v39CustomHeader strong{font-size:16px}
+</style>
+<script id="v39-independent-custom-js">
+(()=>{
+  let customActiveV39=false;
+
+  function ensureHeaderV39(){
+    const player=document.getElementById('quizPlayerV12');
+    if(!player||document.getElementById('customHeaderV39'))return;
+    const h=document.createElement('div');
+    h.id='customHeaderV39'; h.className='v39CustomHeader';
+    h.innerHTML='<strong id="customTitleV39">📚 Cuestionario</strong><button class="btn" id="customExitV39">← Volver a cuestionarios</button>';
+    player.parentNode.insertBefore(h,player);
+    h.querySelector('#customExitV39').onclick=exitCustomV39;
+  }
+
+  function enterCustomV39(idx){
+    customActiveV39=true;
+    document.body.classList.add('v39CustomQuiz');
+    ensureHeaderV39();
+    const q=quizzesV12[idx];
+    const t=document.getElementById('customTitleV39');
+    if(t&&q)t.textContent='📚 '+q.title;
+    // Cierra cualquier panel global heredado.
+    document.getElementById('questionnairesPanelV11')?.classList.remove('show');
+    document.getElementById('achievementsPanelV11')?.classList.remove('show');
+    document.getElementById('statePanelV24')?.classList.remove('show');
+    window.scrollTo({top:0,behavior:'smooth'});
+  }
+
+  function exitCustomV39(){
+    customActiveV39=false;
+    document.body.classList.remove('v39CustomQuiz');
+    const p=document.getElementById('quizPlayerV12');
+    if(p)p.style.display='none';
+    if(typeof openModuleV11==='function')openModuleV11('questionnaires');
+    if(typeof renderManagerV15==='function')renderManagerV15();
+    window.scrollTo({top:0,behavior:'smooth'});
+  }
+
+  ensureHeaderV39();
+
+  // Captura cualquier botón "Usar/Comenzar" de un cuestionario personalizado,
+  // sin modificar los cuestionarios base.
+  document.addEventListener('click',e=>{
+    const b=e.target.closest('[data-v18-use],[data-v15-use],[data-v30-use]');
+    if(!b)return;
+    const type=b.dataset.v18Use||b.dataset.v15Use||b.dataset.v30Use;
+    // Los botones personalizados usan índice numérico; los base usan social/natural.
+    if(type!==undefined && /^\d+$/.test(String(type))){
+      const idx=+type;
+      if(quizzesV12[idx] && quizzesV12[idx].questions?.length){
+        setTimeout(()=>enterCustomV39(idx),0);
+      }
+    }
+  },true);
+
+  // openQuizV12 también puede ser llamado desde otras partes del sistema.
+  const oldOpen=openQuizV12;
+  openQuizV12=function(idx){
+    oldOpen(idx);
+    enterCustomV39(idx);
+  };
+
+  // Inicio siempre abandona el cuestionario personalizado.
+  const home=document.getElementById('homeNavV34');
+  if(home)home.addEventListener('click',()=>{
+    customActiveV39=false;
+    document.body.classList.remove('v39CustomQuiz');
+    const p=document.getElementById('quizPlayerV12');if(p)p.style.display='none';
+  },true);
+})();
+</script>
+
+
+<style id="v40-custom-player-fix">
+/* V40: el reproductor del cuestionario personalizado debe permanecer visible
+   aunque el cuestionario principal esté en modo focus. */
+body.v39CustomQuiz #quizLibraryV12{display:block!important}
+body.v39CustomQuiz #quizPlayerV12{display:block!important}
+body.v39CustomQuiz #quizPlayerV12.hidden{display:block!important}
+body.v39CustomQuiz #quizPlayerV12[hidden]{display:block!important}
+body.v39CustomQuiz .v39CustomHeader{display:flex!important}
+body.v39CustomQuiz #quizPlayerV12 .quizQuestionV12,
+body.v39CustomQuiz #quizPlayerV12 .quizAnswerV12,
+body.v39CustomQuiz #quizPlayerV12 .quizActionsV12{visibility:visible!important}
+</style>
+<script id="v40-custom-player-fix-js">
+(()=>{
+  function forcePlayerV40(idx){
+    const q=quizzesV12[idx];
+    if(!q || !q.questions || !q.questions.length)return;
+
+    // Estado del reproductor personalizado.
+    activeQuizV12=idx;
+    if(typeof activeQuestionV12==='undefined') return;
+    if(activeQuestionV12<0 || activeQuestionV12>=q.questions.length) activeQuestionV12=0;
+
+    document.body.classList.add('v39CustomQuiz');
+    document.body.classList.remove('awaitQuizV22');
+
+    const lib=document.getElementById('quizLibraryV12');
+    const player=document.getElementById('quizPlayerV12');
+    if(lib)lib.style.display='block';
+    if(player){
+      player.hidden=false;
+      player.classList.remove('hidden');
+      player.style.setProperty('display','block','important');
+    }
+
+    // Oculta explícitamente la ficha principal que aparecía vacía en la captura.
+    const mainLearn=document.getElementById('learn');
+    if(mainLearn)mainLearn.style.display='none';
+
+    // Renderiza nuevamente después de establecer la vista.
+    renderQuizQuestionV12();
+
+    const title=document.getElementById('customTitleV39');
+    if(title)title.textContent='📚 '+q.title;
+  }
+
+  // Reemplaza la apertura personalizada con una secuencia estable.
+  const previousOpenV40=openQuizV12;
+  openQuizV12=function(idx){
+    activeQuizV12=idx;
+    activeQuestionV12=0;
+
+    // Conservamos cualquier preparación que haga la función original.
+    previousOpenV40(idx);
+
+    // Los wrappers anteriores podían volver a ocultar el player;
+    // lo forzamos al final del mismo ciclo.
+    setTimeout(()=>forcePlayerV40(idx),0);
+    setTimeout(()=>forcePlayerV40(idx),30);
+  };
+
+  // Los botones dinámicos del administrador pueden abrir el cuestionario
+  // sin depender de las capas de eventos antiguas.
+  document.addEventListener('click',e=>{
+    const b=e.target.closest('[data-v30-use],[data-v18-use],[data-v15-use]');
+    if(!b)return;
+    const raw=b.dataset.v30Use ?? b.dataset.v18Use ?? b.dataset.v15Use;
+    if(!/^\d+$/.test(String(raw)))return;
+    const idx=+raw;
+    if(!quizzesV12[idx]?.questions?.length)return;
+    e.preventDefault();
+    e.stopImmediatePropagation();
+    openQuizV12(idx);
+  },true);
+})();
+</script>
+
+
+<style id="v41-manual-builder">
+.v41Builder{margin:14px 0;padding:16px;border:1px solid #dfe4f4;border-radius:18px;background:#fff}
+.v41Grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.v41Field label{display:block;font-weight:800;margin-bottom:6px}
+.v41Field input,.v41Field textarea{width:100%;box-sizing:border-box;border:1px solid #ccd3e7;border-radius:11px;padding:10px;font:inherit}
+.v41Field textarea{min-height:90px;resize:vertical}
+.v41Question{border:1px solid #e1e5f2;border-radius:14px;padding:12px;margin:10px 0;background:#fafbff}
+.v41QuestionHead{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:8px}
+.v41Actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.v41Status{font-weight:800;margin-top:10px}
+@media(max-width:700px){.v41Grid{grid-template-columns:1fr}}
+</style>
+<script id="v41-manual-builder-js">
+(()=>{
+ let rowsV41=[];
+
+ function escV41(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+
+ function builderHTMLV41(){
+   return `<section class="v41Builder">
+     <h3>➕ Crear cuestionario</h3>
+     <p class="hint">Completa el nombre del cuestionario y carga manualmente cada pregunta con su respuesta correcta.</p>
+     <div class="v41Grid">
+       <div class="v41Field"><label for="v41Title">Nombre del cuestionario</label><input id="v41Title" maxlength="100" placeholder="Ej.: Ciencias - Unidad 1"></div>
+       <div class="v41Field"><label for="v41Subject">Materia / categoría</label><input id="v41Subject" maxlength="80" placeholder="Ej.: Ciencias Naturales"></div>
+     </div>
+     <div id="v41Rows"></div>
+     <div class="v41Actions">
+       <button class="btn" id="v41Add">➕ Agregar pregunta</button>
+       <button class="btn primary" id="v41Save">💾 Guardar cuestionario</button>
+       <button class="btn" id="v41Clear">🧹 Limpiar</button>
+     </div>
+     <div id="v41Status" class="v41Status" aria-live="polite"></div>
+   </section>`;
+ }
+
+ function drawRowsV41(){
+   const host=document.getElementById('v41Rows'); if(!host)return;
+   host.innerHTML='';
+   rowsV41.forEach((r,n)=>{
+     const d=document.createElement('div');d.className='v41Question';
+     d.innerHTML=`<div class="v41QuestionHead"><strong>Pregunta ${n+1}</strong>${rowsV41.length>1?`<button class="btn" data-v41-del="${n}">🗑️ Eliminar</button>`:''}</div>
+       <div class="v41Grid">
+        <div class="v41Field"><label>Pregunta</label><textarea data-v41-q="${n}" placeholder="Escribe la pregunta">${escV41(r.q)}</textarea></div>
+        <div class="v41Field"><label>Respuesta correcta</label><textarea data-v41-a="${n}" placeholder="Escribe la respuesta correcta">${escV41(r.a)}</textarea></div>
+       </div>`;
+     host.appendChild(d);
+   });
+   host.querySelectorAll('[data-v41-q]').forEach(x=>x.oninput=()=>rowsV41[+x.dataset.v41Q].q=x.value);
+   host.querySelectorAll('[data-v41-a]').forEach(x=>x.oninput=()=>rowsV41[+x.dataset.v41A].a=x.value);
+   host.querySelectorAll('[data-v41-del]').forEach(x=>x.onclick=()=>{rowsV41.splice(+x.dataset.v41Del,1);drawRowsV41()});
+ }
+
+ function installV41(){
+   const panel=document.getElementById('questionnairesPanelV11'); if(!panel)return;
+
+   // Oculta los generadores anteriores de PDF/imagen y su importación JSON.
+   panel.querySelectorAll('.generatorV30,.importV12,.quizImportV12').forEach(x=>x.style.display='none');
+
+   let old=panel.querySelector('.v41Builder');
+   if(old)old.remove();
+
+   const manager=panel.querySelector('#managerV15,.managerV15') || panel.lastElementChild;
+   const wrap=document.createElement('div');wrap.innerHTML=builderHTMLV41();
+   const node=wrap.firstElementChild;
+   if(manager)panel.insertBefore(node,manager);else panel.appendChild(node);
+
+   rowsV41=[{q:'',a:''}];drawRowsV41();
+
+   document.getElementById('v41Add').onclick=()=>{rowsV41.push({q:'',a:''});drawRowsV41();setTimeout(()=>document.querySelector(`[data-v41-q="${rowsV41.length-1}"]`)?.focus(),0)};
+   document.getElementById('v41Clear').onclick=()=>{
+     document.getElementById('v41Title').value='';document.getElementById('v41Subject').value='';
+     rowsV41=[{q:'',a:''}];drawRowsV41();document.getElementById('v41Status').textContent='';
+   };
+   document.getElementById('v41Save').onclick=()=>{
+     const title=document.getElementById('v41Title').value.trim();
+     const subject=document.getElementById('v41Subject').value.trim()||'General';
+     const questions=rowsV41.map(r=>[r.q.trim(),r.a.trim()]).filter(x=>x[0]&&x[1]);
+     const status=document.getElementById('v41Status');
+     if(!title){status.textContent='⚠️ Ingresa el nombre del cuestionario.';return}
+     if(!questions.length){status.textContent='⚠️ Debes completar al menos una pregunta y su respuesta correcta.';return}
+     if(questions.length!==rowsV41.length){status.textContent='⚠️ Completa la pregunta y la respuesta de todas las filas o elimina las filas vacías.';return}
+     quizzesV12.push({
+       title,subject,questions,enabled:true,
+       createdAt:new Date().toISOString(),
+       manual:true
+     });
+     saveQuizzesV12();
+     rowsV41=[{q:'',a:''}];
+     renderManagerV15();
+     if(typeof renderHomeSelectorV15==='function')renderHomeSelectorV15();
+   };
+ }
+
+ // El administrador se reconstruye dinámicamente; reinstala el formulario después.
+ const previousManagerV41=renderManagerV15;
+ renderManagerV15=function(){
+   previousManagerV41();
+   setTimeout(installV41,0);
+ };
+
+ const nav=document.getElementById('questionnairesNavV11');
+ if(nav)nav.addEventListener('click',()=>setTimeout(installV41,30));
+ setTimeout(installV41,80);
+})();
+</script>
+
+
+<style id="v42-custom-fix">
+.v42EditBox{margin-top:14px;padding:15px;border:1px solid #dfe4f4;border-radius:16px;background:#fff}
+.v42EditRow{display:grid;grid-template-columns:1fr 1fr auto;gap:9px;margin:10px 0}
+.v42EditRow textarea{width:100%;box-sizing:border-box;min-height:80px;border:1px solid #ccd3e7;border-radius:10px;padding:9px;font:inherit}
+.v42EditActions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+@media(max-width:700px){.v42EditRow{grid-template-columns:1fr}.v42EditRow .btn{width:100%}}
+</style>
+<script id="v42-custom-fix-js">
+(()=>{
+  function esc42(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+
+  function showCustom42(idx){
+    const q=quizzesV12[idx];
+    if(!q||!q.questions?.length)return;
+    activeQuizV12=idx;
+    activeQuestionV12=0;
+
+    document.body.classList.add('v39CustomQuiz');
+    document.body.classList.remove('awaitQuizV22','moduleOpenV17');
+
+    // Ocultar paneles globales y mostrar explícitamente el player personalizado.
+    ['questionnairesPanelV11','achievementsPanelV11','statePanelV24','practiceListPanelV8','homeSelectorV15','learn'].forEach(id=>{
+      const el=document.getElementById(id); if(el)el.style.display='none';
+    });
+    const player=document.getElementById('quizPlayerV12');
+    if(player){
+      player.hidden=false;
+      player.classList.remove('hidden');
+      player.style.setProperty('display','block','important');
+      player.style.setProperty('visibility','visible','important');
+    }
+    const lib=document.getElementById('quizLibraryV12');
+    if(lib)lib.style.setProperty('display','block','important');
+
+    const h=document.getElementById('customHeaderV39');
+    if(h)h.style.setProperty('display','flex','important');
+    const title=document.getElementById('customTitleV39');
+    if(title)title.textContent='📚 '+q.title;
+
+    renderQuizQuestionV12();
+    window.scrollTo({top:0,behavior:'smooth'});
+  }
+
+  // Interceptar de forma definitiva los botones de inicio de cuestionarios personalizados.
+  document.addEventListener('click',e=>{
+    const b=e.target.closest('[data-v30-use],[data-v18-use],[data-v15-use]');
+    if(!b)return;
+    const raw=b.dataset.v30Use ?? b.dataset.v18Use ?? b.dataset.v15Use;
+    if(!/^\d+$/.test(String(raw)))return;
+    e.preventDefault(); e.stopImmediatePropagation();
+    showCustom42(+raw);
+  },true);
+
+  // Editor completo del cuestionario.
+  function editQuiz42(idx,card){
+    const q=quizzesV12[idx]; if(!q)return;
+    card.querySelector('.v42EditBox')?.remove();
+    const box=document.createElement('div');box.className='v42EditBox';
+    box.innerHTML=`<h4>✏️ Modificar cuestionario</h4>
+      <div class="v41Grid">
+       <div class="v41Field"><label>Nombre</label><input class="v42Title" value="${esc42(q.title)}"></div>
+       <div class="v41Field"><label>Materia / categoría</label><input class="v42Subject" value="${esc42(q.subject||'General')}"></div>
+      </div>
+      <div class="v42Rows"></div>
+      <div class="v42EditActions">
+       <button class="btn" data-v42-add>➕ Agregar pregunta</button>
+       <button class="btn primary" data-v42-save>💾 Guardar cambios</button>
+       <button class="btn" data-v42-cancel>Cancelar</button>
+      </div>`;
+    card.appendChild(box);
+    const rows=box.querySelector('.v42Rows');
+    const add=(question='',answer='')=>{
+      const r=document.createElement('div');r.className='v42EditRow';
+      r.innerHTML=`<textarea class="v42Q" placeholder="Pregunta">${esc42(question)}</textarea>
+                   <textarea class="v42A" placeholder="Respuesta correcta">${esc42(answer)}</textarea>
+                   <button class="btn v42Del">🗑️</button>`;
+      r.querySelector('.v42Del').onclick=()=>r.remove();rows.appendChild(r);
+    };
+    q.questions.forEach(x=>add(x[0],x[1]));
+    box.querySelector('[data-v42-add]').onclick=()=>add();
+    box.querySelector('[data-v42-cancel]').onclick=()=>box.remove();
+    box.querySelector('[data-v42-save]').onclick=()=>{
+      const title=box.querySelector('.v42Title').value.trim();
+      const subject=box.querySelector('.v42Subject').value.trim()||'General';
+      const questions=[...rows.querySelectorAll('.v42EditRow')].map(r=>[
+        r.querySelector('.v42Q').value.trim(),r.querySelector('.v42A').value.trim()
+      ]).filter(x=>x[0]&&x[1]);
+      if(!title){alert('Ingresa el nombre del cuestionario.');return}
+      if(!questions.length){alert('Debe quedar al menos una pregunta con su respuesta.');return}
+      q.title=title;q.subject=subject;q.questions=questions;q.updatedAt=new Date().toISOString();
+      saveQuizzesV12();renderManagerV15();
+      if(typeof renderHomeSelectorV15==='function')renderHomeSelectorV15();
+    };
+  }
+
+  function addEditButtons42(){
+    document.querySelectorAll('.managerCardV15').forEach(card=>{
+      const del=card.querySelector('[data-v30-delete]');
+      if(!del||card.querySelector('[data-v42-edit]'))return;
+      const idx=+del.dataset.v30Delete;
+      if(!quizzesV12[idx])return;
+      const b=document.createElement('button');
+      b.className='btn';b.dataset.v42Edit=idx;b.textContent='✏️ Modificar preguntas';
+      del.parentElement.insertBefore(b,del);
+      b.onclick=()=>editQuiz42(idx,card);
+    });
+  }
+
+  const rm=renderManagerV15;
+  renderManagerV15=function(){rm();setTimeout(addEditButtons42,10)};
+  document.getElementById('questionnairesNavV11')?.addEventListener('click',()=>setTimeout(addEditButtons42,40));
+  setTimeout(addEditButtons42,100);
 })();
 </script>
 
