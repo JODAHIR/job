@@ -2010,4 +2010,66 @@
 })();
 </script>
 
+
+<script id="v33-disable-random-pass-in-study-queue">
+(()=>{
+  /*
+    V33:
+    Cuando el usuario entra en 📘 A estudiar, se deshabilitan:
+    - 🎲 Pregunta al azar
+    - ⏭️ Paso
+    Al salir de esa sección vuelven a su comportamiento normal.
+  */
+  let markedStudyActiveV33=false;
+
+  const randomBtn=()=>document.getElementById('random');
+  const passBtn=()=>document.getElementById('passPracticeV19');
+
+  function setRestrictedV33(active){
+    markedStudyActiveV33=!!active;
+    const r=randomBtn(), p=passBtn();
+
+    if(r){
+      r.disabled=markedStudyActiveV33;
+      r.style.display=markedStudyActiveV33?'none':'';
+      r.setAttribute('aria-hidden',markedStudyActiveV33?'true':'false');
+    }
+    if(p){
+      p.disabled=markedStudyActiveV33;
+      p.style.display=markedStudyActiveV33?'none':'';
+      p.setAttribute('aria-hidden',markedStudyActiveV33?'true':'false');
+    }
+  }
+
+  // Los dos accesos que llevan a "A estudiar".
+  ['practicingV24','practiceListNavV8'].forEach(id=>{
+    const b=document.getElementById(id);
+    if(b)b.addEventListener('click',()=>setTimeout(()=>setRestrictedV33(true),0));
+  });
+
+  // Acciones que abandonan la sesión exclusiva "A estudiar".
+  ['changeQuizV21','pendingV24','learnedV24','studyMode','practiceMode',
+    'socialBtn','naturalBtn','pendingBtn','achievementsNavV11','questionnairesNavV11'
+  ].forEach(id=>{
+    const b=document.getElementById(id);
+    if(b)b.addEventListener('click',()=>setRestrictedV33(false));
+  });
+
+  // Si ya no quedan preguntas en A estudiar después de marcar una como aprendida,
+  // se restablecen los controles normales.
+  const learnedBtn=document.getElementById('learned');
+  if(learnedBtn){
+    learnedBtn.addEventListener('click',()=>{
+      setTimeout(()=>{
+        if(!markedStudyActiveV33)return;
+        const m=(typeof mode!=='undefined')?mode:null;
+        if(!m||!data[m])return;
+        const remaining=data[m].some((_,n)=>!!practicing[m+'-'+n]&&!learned[m+'-'+n]);
+        if(!remaining)setRestrictedV33(false);
+      },10);
+    });
+  }
+})();
+</script>
+
 </body></html>
