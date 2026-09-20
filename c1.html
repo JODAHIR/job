@@ -244,7 +244,7 @@ body.quizFocusV21 .tabs{display:none!important}
 /* Un inactivo es informativo: no ofrece acción de uso ni activación desde la portada. */
 .homeQuizV15.inactiveV18 button{display:none!important}
 </style>
-</head><body><main class="app"><section class="hero"><h1>🌟 Aprendo Jugando</h1><p>Cuestionario interactivo de Primer Grado. Lee, practica, gana estrellas y aprende jugando.</p><div class="scorebar"><span class="pill" id="player">👧 Mia ⭐ <b id="score">0</b></span><span class="pill">🔥 Racha <b id="streak">0</b></span></div><div class="achievements" id="achievements"></div></section>
+</head><body><main class="app"><section class="hero"><h1>🌟 Aprendo Jugando</h1><p>Cuestionario interactivo de Primer Grado. Lee, practica, gana estrellas y aprende jugando.</p><div class="scorebar"><span class="pill" id="player">⭐ Puntaje <b id="score">0</b></span><span class="pill">🔥 Racha <b id="streak">0</b></span></div><div class="achievements" id="achievements"></div></section>
 
 <section class="homeSelectorV15" id="homeSelectorV15">
   <h2>🎯 ¿Qué cuestionario quieres usar?</h2>
@@ -1078,5 +1078,34 @@ openModuleV11=function(which){
 // Estado inicial: mostrar selector, pero ocultar todo el detalle de preguntas.
 renderHomeSelectorV15();
 awaitQuizSelectionV22();
+
+
+// V23: eliminar definitivamente el cuestionario de Matemáticas del catálogo dinámico.
+// Se limpia también cualquier copia que hubiera quedado guardada en localStorage.
+function isMathQuizV23(q){
+ const txt=((q&&q.title)||'')+' '+((q&&q.subject)||'');
+ return /matem[aá]tica/i.test(txt);
+}
+function removeMathQuizV23(){
+ let changed=false;
+ for(let n=quizzesV12.length-1;n>=0;n--){
+   if(isMathQuizV23(quizzesV12[n])){
+     quizzesV12.splice(n,1);
+     changed=true;
+   }
+ }
+ if(changed) saveQuizzesV12();
+}
+removeMathQuizV23();
+
+// Evita que el cuestionario inicial de Matemáticas vuelva a incorporarse
+// aunque exista en versiones anteriores del almacenamiento local.
+if(typeof starterQuizzesV12!=='undefined'){
+ for(let n=starterQuizzesV12.length-1;n>=0;n--){
+   if(isMathQuizV23(starterQuizzesV12[n])) starterQuizzesV12.splice(n,1);
+ }
+}
+
+renderHomeSelectorV15();
 
 </script></body></html>
