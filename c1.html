@@ -106,7 +106,50 @@
 .importV10 input[type=file]{width:100%;padding:12px;border:2px dashed #cbd3ef;border-radius:14px;background:#f8f9ff}
 .previewV10{max-width:100%;max-height:320px;border-radius:16px;margin:12px auto;display:none}
 </style>
-</head><body><main class="app"><section class="hero"><h1>🌟 Aprendo Jugando</h1><p>Cuestionario interactivo de Primer Grado. Lee, practica, gana estrellas y aprende jugando.</p><div class="scorebar"><span class="pill" id="player">👧 Mia ⭐ <b id="score">0</b></span><span class="pill">🔥 Racha <b id="streak">0</b></span></div><div class="achievements" id="achievements"></div></section><div class="tabs"><button class="btn active" id="socialBtn">🏠 Vida Social y Trabajo</button><button class="btn" id="naturalBtn">🌱 Medio Natural y Salud</button><button class="btn" id="pendingBtn">📖 Falta aprender <span id="pendingCount"></span></button><button class="btn" id="practiceListNavV8">🟡 Practicando <span id="practiceNavCountV8">(0)</span></button></div><div class="progressWrap"><div class="meta"><span id="counter">Pregunta 1 de 40</span><span id="stars">⭐ 0 aprendidas</span></div><div class="progress"><div class="bar" id="bar"></div></div></div><div class="modeToggle"><button class="btn active" id="studyMode">📖 Aprender</button><button class="btn" id="practiceMode">🎮 Practicar</button></div><section class="card"><span class="badge" id="subject"></span><div class="q" id="question"></div><div class="center"><button class="btn primary big" id="reveal">👀 Ver respuesta</button></div><div class="answer" id="answer"></div><div class="practiceBox" id="practiceBox"><div class="choices" id="choices"></div><div class="feedback" id="feedback"></div></div><div class="tools"><button class="btn" id="speakQ">🔊 Leer pregunta</button><button class="btn" id="speakAll">🔊 Leer pregunta y respuesta</button><button class="btn good" id="speak" disabled>🔊 Escuchar respuesta</button><button class="btn" id="practice">🟡 Estoy practicando</button><button class="btn" id="learned" disabled>⭐ Ya la aprendí</button><button class="btn" id="random">🎲 Pregunta al azar</button></div></section><div class="nav"><button class="btn" id="prev">← Anterior</button><button class="btn primary" id="next">Siguiente →</button></div><div class="tools"><input class="search" id="search" placeholder="🔎 Buscar una pregunta…"><button class="btn" id="showAll">📚 Ver todas</button><button class="btn" id="reset">↻ Reiniciar progreso</button></div><section class="list" id="list"></section><section class="practiceListPanel" id="practiceListPanelV8">
+
+<style id="v11-modules">
+/* Un solo color para todas las funcionalidades propias de cada pregunta */
+#reveal,#speakQ,#speakAll,#speak,#practice,#learned,#random{
+  background:#5b5bd6!important;color:#fff!important;border:1px solid #5b5bd6!important;
+  box-shadow:0 5px 14px rgba(91,91,214,.20)!important;
+}
+#reveal:hover,#speakQ:hover,#speakAll:hover,#speak:hover,#practice:hover,#learned:hover,#random:hover{
+  background:#4848bd!important;border-color:#4848bd!important;filter:none!important;transform:translateY(-1px)
+}
+#reveal:disabled,#speakQ:disabled,#speakAll:disabled,#speak:disabled,#practice:disabled,#learned:disabled,#random:disabled{
+  background:#b9b9dc!important;border-color:#b9b9dc!important;color:#fff!important
+}
+#practice.active,#learned.active{background:#39399e!important;border-color:#39399e!important}
+.moduleNavV11{display:flex;gap:10px;flex-wrap:wrap;margin:14px 0}
+#achievementsNavV11{background:#fff1b8;color:#795800;border:1px solid #efcf5c}
+#questionnairesNavV11{background:#e8f2ff;color:#2457a6;border:1px solid #a9c8ff}
+#achievementsNavV11.active{background:#d99f12!important;color:#fff!important;border-color:#d99f12!important}
+#questionnairesNavV11.active{background:#3977d5!important;color:#fff!important;border-color:#3977d5!important}
+.modulePanelV11{display:none;background:#fff;border-radius:24px;padding:clamp(18px,4vw,30px);box-shadow:0 12px 30px #30386d18;margin:14px 0}
+.modulePanelV11.show{display:block}
+.achievementGridV11{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin-top:16px}
+.achievementCardV11{padding:18px;border-radius:18px;background:#fff9df;border:1px solid #f0d87c;text-align:center}
+.achievementCardV11 .icon{font-size:42px;display:block;margin-bottom:8px}
+.moduleHintV11{color:var(--muted);line-height:1.55}
+#achievements{display:none!important}
+</style>
+</head><body><main class="app"><section class="hero"><h1>🌟 Aprendo Jugando</h1><p>Cuestionario interactivo de Primer Grado. Lee, practica, gana estrellas y aprende jugando.</p><div class="scorebar"><span class="pill" id="player">👧 Mia ⭐ <b id="score">0</b></span><span class="pill">🔥 Racha <b id="streak">0</b></span></div><div class="achievements" id="achievements"></div></section>
+<div class="moduleNavV11">
+<button class="btn" id="achievementsNavV11">🏆 Logros</button>
+<button class="btn" id="questionnairesNavV11">📚 Nuevos cuestionarios</button>
+</div>
+<section class="modulePanelV11" id="achievementsPanelV11">
+<h2>🏆 Mis logros</h2>
+<p class="moduleHintV11">Aquí se concentran los premios obtenidos por progreso, rachas y materias completadas.</p>
+<div class="achievementGridV11" id="achievementGridV11"></div>
+<div id="subjectTrophiesV11"></div>
+</section>
+<section class="modulePanelV11" id="questionnairesPanelV11">
+<h2>📚 Nuevos cuestionarios</h2>
+<p class="moduleHintV11">Módulo independiente para preparar futuras ampliaciones del banco de preguntas.</p>
+<div id="questionnaireImporterV11"></div>
+</section>
+<div class="tabs"><button class="btn active" id="socialBtn">🏠 Vida Social y Trabajo</button><button class="btn" id="naturalBtn">🌱 Medio Natural y Salud</button><button class="btn" id="pendingBtn">📖 Falta aprender <span id="pendingCount"></span></button><button class="btn" id="practiceListNavV8">🟡 Practicando <span id="practiceNavCountV8">(0)</span></button></div><div class="progressWrap"><div class="meta"><span id="counter">Pregunta 1 de 40</span><span id="stars">⭐ 0 aprendidas</span></div><div class="progress"><div class="bar" id="bar"></div></div></div><div class="modeToggle"><button class="btn active" id="studyMode">📖 Aprender</button><button class="btn" id="practiceMode">🎮 Practicar</button></div><section class="card"><span class="badge" id="subject"></span><div class="q" id="question"></div><div class="center"><button class="btn primary big" id="reveal">👀 Ver respuesta</button></div><div class="answer" id="answer"></div><div class="practiceBox" id="practiceBox"><div class="choices" id="choices"></div><div class="feedback" id="feedback"></div></div><div class="tools"><button class="btn" id="speakQ">🔊 Leer pregunta</button><button class="btn" id="speakAll">🔊 Leer pregunta y respuesta</button><button class="btn good" id="speak" disabled>🔊 Escuchar respuesta</button><button class="btn" id="practice">🟡 Estoy practicando</button><button class="btn" id="learned" disabled>⭐ Ya la aprendí</button><button class="btn" id="random">🎲 Pregunta al azar</button></div></section><div class="nav"><button class="btn" id="prev">← Anterior</button><button class="btn primary" id="next">Siguiente →</button></div><div class="tools"><input class="search" id="search" placeholder="🔎 Buscar una pregunta…"><button class="btn" id="showAll">📚 Ver todas</button><button class="btn" id="reset">↻ Reiniciar progreso</button></div><section class="list" id="list"></section><section class="practiceListPanel" id="practiceListPanelV8">
 <h2>🟡 Preguntas practicando</h2>
 <p class="hint">Aquí puedes consultar las preguntas según su estado y volver a estudiarlas.</p>
 <div class="stateTabsV8">
@@ -215,5 +258,47 @@ $('removeImageV10').onclick=()=>{imageInputV10.value='';imagePreviewV10.removeAt
 updateTrophiesV10();
 // Actualiza trofeos después de acciones que cambian el aprendizaje.
 ['learnBtn','practiceBtn'].forEach(id=>{const b=$(id);if(b)b.addEventListener('click',()=>setTimeout(updateTrophiesV10,0))});
+
+
+// V11: módulos independientes de Logros y Nuevos cuestionarios.
+function closeModulesV11(){
+  $('achievementsPanelV11').classList.remove('show');
+  $('questionnairesPanelV11').classList.remove('show');
+  $('achievementsNavV11').classList.remove('active');
+  $('questionnairesNavV11').classList.remove('active');
+}
+function openModuleV11(which){
+  closeModulesV11();
+  const panel=$(which==='achievements'?'achievementsPanelV11':'questionnairesPanelV11');
+  const nav=$(which==='achievements'?'achievementsNavV11':'questionnairesNavV11');
+  panel.classList.add('show');nav.classList.add('active');
+  panel.scrollIntoView({behavior:'smooth',block:'start'});
+  if(which==='achievements')renderAchievementsV11();
+}
+function renderAchievementsV11(){
+  const totalLearned=Object.values(learned).filter(Boolean).length;
+  const socialLearned=data.social.filter((_,n)=>!!learned['social-'+n]).length;
+  const naturalLearned=data.natural.filter((_,n)=>!!learned['natural-'+n]).length;
+  const cards=[];
+  cards.push({icon:'⭐',title:'Preguntas aprendidas',text:totalLearned+' de '+(data.social.length+data.natural.length)});
+  cards.push({icon:'🔥',title:'Mejor racha actual',text:streak+' respuestas correctas seguidas'});
+  if(totalLearned>=10)cards.push({icon:'🏅',title:'Primer gran logro',text:'Aprendiste al menos 10 preguntas'});
+  if(streak>=5)cards.push({icon:'🔥',title:'Racha de estudio',text:'Lograste 5 respuestas correctas seguidas'});
+  if(socialLearned===data.social.length)cards.push({icon:'🏆',title:'Vida Social y Trabajo',text:'¡Materia totalmente aprendida!'});
+  if(naturalLearned===data.natural.length)cards.push({icon:'🏆',title:'Medio Natural y Salud',text:'¡Materia totalmente aprendida!'});
+  $('achievementGridV11').innerHTML=cards.map(c=>`<div class="achievementCardV11"><span class="icon">${c.icon}</span><b>${c.title}</b><div class="hint">${c.text}</div></div>`).join('');
+}
+$('achievementsNavV11').onclick=()=>openModuleV11('achievements');
+$('questionnairesNavV11').onclick=()=>openModuleV11('questionnaires');
+
+// Reubica el importador V10 dentro del módulo independiente, sin duplicar su lógica.
+const importerV10=document.querySelector('.importV10');
+if(importerV10)$('questionnaireImporterV11').appendChild(importerV10);
+// Los trofeos anteriores se concentran ahora en Logros.
+['socialTrophyV10','naturalTrophyV10'].forEach(id=>{const el=$(id);if(el)$('subjectTrophiesV11').appendChild(el)});
+
+// Mantiene actualizado el módulo de logros después de cambios de aprendizaje.
+['learned','practice'].forEach(id=>{const b=$(id);if(b)b.addEventListener('click',()=>setTimeout(renderAchievementsV11,10))});
+renderAchievementsV11();
 
 </script></body></html>
