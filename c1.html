@@ -244,7 +244,32 @@ body.quizFocusV21 .tabs{display:none!important}
 /* Un inactivo es informativo: no ofrece acción de uso ni activación desde la portada. */
 .homeQuizV15.inactiveV18 button{display:none!important}
 </style>
-</head><body><main class="app"><section class="hero"><h1>🌟 Aprendo Jugando</h1><p>Cuestionario interactivo de Primer Grado. Lee, practica, gana estrellas y aprende jugando.</p><div class="scorebar"><span class="pill" id="player">⭐ Puntaje <b id="score">0</b></span><span class="pill">🔥 Racha <b id="streak">0</b></span></div><div class="achievements" id="achievements"></div></section>
+
+<style id="v24-state-access">
+/* V24: estados del cuestionario activo siempre accesibles dentro del cuestionario */
+.stateNavV24{display:none;gap:10px;flex-wrap:wrap;margin:12px 0}
+body.quizFocusV21 .stateNavV24{display:flex}
+.stateNavV24 .btn{min-width:150px}
+.statePanelV24{display:none;background:#fff;border-radius:22px;padding:22px;margin:14px 0;box-shadow:0 10px 26px #30386d14}
+.statePanelV24.show{display:block}
+.stateListV24{display:grid;gap:8px;margin-top:14px}
+.stateRowV24{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:12px;border-bottom:1px solid #e7e9f3}
+.stateRowV24:last-child{border-bottom:0}
+.stateRowV24 .meta{font-size:13px;color:var(--muted)}
+@media(max-width:600px){.stateRowV24{align-items:flex-start;flex-direction:column}.stateRowV24 .btn{width:100%}}
+</style>
+
+<style id="v25-achievements-summary">
+.achievementSummaryV25{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:14px;margin-top:16px}
+.achievementCardV25{background:#fff;border:1px solid #e4e7f2;border-radius:20px;padding:18px}
+.achievementTopV25{display:flex;justify-content:space-between;gap:10px;align-items:center}
+.achievementPctV25{font-size:32px;font-weight:1000;color:#5b55e7;margin:8px 0 4px}
+.achievementBarV25{height:10px;background:#eceef8;border-radius:999px;overflow:hidden;margin-top:12px}
+.achievementBarV25>span{display:block;height:100%;background:linear-gradient(90deg,#6258ef,#8c7cff);border-radius:999px}
+.totalAchievementV25{background:linear-gradient(135deg,#f4f1ff,#fff);border:2px solid #dcd6ff}
+.totalNumberV25{font-size:38px;font-weight:1000;color:#4f46d8}
+</style>
+</head><body><main class="app"><section class="hero"><h1>🌟 Aprendo Jugando</h1><p>Cuestionario interactivo de Primer Grado. Lee, practica, gana estrellas y aprende jugando.</p><div class="scorebar"><span class="pill" id="player">🎮 Puntos ⭐ <b id="score">0</b></span><span class="pill">🔥 Racha <b id="streak">0</b></span></div><div class="achievements" id="achievements"></div></section>
 
 <section class="homeSelectorV15" id="homeSelectorV15">
   <h2>🎯 ¿Qué cuestionario quieres usar?</h2>
@@ -271,7 +296,18 @@ body.quizFocusV21 .tabs{display:none!important}
 <p class="moduleHintV11">Módulo independiente para preparar futuras ampliaciones del banco de preguntas.</p>
 <div id="questionnaireImporterV11"></div>
 </section>
-<div class="tabs"><button class="btn active" id="socialBtn">🏠 Vida Social y Trabajo</button><button class="btn" id="naturalBtn">🌱 Medio Natural y Salud</button><button class="btn" id="pendingBtn">📖 Falta aprender <span id="pendingCount"></span></button><button class="btn" id="practiceListNavV8">🟡 Practicando <span id="practiceNavCountV8">(0)</span></button></div><div class="progressWrap"><div class="meta"><span id="counter">Pregunta 1 de 40</span><span id="stars">⭐ 0 aprendidas</span></div><div class="progress"><div class="bar" id="bar"></div></div></div><div class="modeToggle"><button class="btn active" id="studyMode">📖 Aprender</button><button class="btn" id="practiceMode">🎮 Practicar</button></div><section class="card"><span class="badge" id="subject"></span><div class="q" id="question"></div><div class="center"><button class="btn primary big" id="reveal">👀 Ver respuesta</button></div><div class="answer" id="answer"></div><div class="practiceBox" id="practiceBox"><div class="choices" id="choices"></div><div class="feedback" id="feedback"></div></div><div class="tools"><button class="btn" id="speakQ">🔊 Leer pregunta</button><button class="btn" id="speakAll">🔊 Leer pregunta y respuesta</button><button class="btn good" id="speak" disabled>🔊 Escuchar respuesta</button><button class="btn" id="practice">🟡 Estoy practicando</button><button class="btn" id="learned" disabled>⭐ Ya la aprendí</button><button class="btn" id="random">🎲 Pregunta al azar</button><button class="btn" id="passPracticeV19" style="display:none">⏭️ Paso</button></div></section><div class="nav"><button class="btn" id="prev">← Anterior</button><button class="btn primary" id="next">Siguiente →</button></div><div class="tools"><input class="search" id="search" placeholder="🔎 Buscar una pregunta…"><button class="btn" id="showAll">📚 Ver todas</button><button class="btn" id="reset">↻ Reiniciar progreso</button></div><section class="list" id="list"></section><section class="practiceListPanel" id="practiceListPanelV8">
+<div class="tabs"><button class="btn active" id="socialBtn">🏠 Vida Social y Trabajo</button><button class="btn" id="naturalBtn">🌱 Medio Natural y Salud</button><button class="btn" id="pendingBtn">📖 Falta aprender <span id="pendingCount"></span></button><button class="btn" id="practiceListNavV8">🟡 Practicando <span id="practiceNavCountV8">(0)</span></button></div>
+<div class="stateNavV24" id="stateNavV24">
+ <button class="btn" id="pendingV24">📖 Falta aprender <span id="pendingCountV24"></span></button>
+ <button class="btn" id="practicingV24">🟡 Practicando <span id="practicingCountV24"></span></button>
+ <button class="btn" id="learnedV24">🟢 Aprendidas <span id="learnedCountV24"></span></button>
+</div>
+<div class="statePanelV24" id="statePanelV24">
+ <h2 id="stateTitleV24">Preguntas</h2>
+ <p class="hint" id="stateHintV24">Preguntas registradas en este cuestionario.</p>
+ <div class="stateListV24" id="stateListV24"></div>
+</div>
+<div class="progressWrap"><div class="meta"><span id="counter">Pregunta 1 de 40</span><span id="stars">⭐ 0 aprendidas</span></div><div class="progress"><div class="bar" id="bar"></div></div></div><div class="modeToggle"><button class="btn active" id="studyMode">📖 Aprender</button><button class="btn" id="practiceMode">🎮 Practicar</button></div><section class="card"><span class="badge" id="subject"></span><div class="q" id="question"></div><div class="center"><button class="btn primary big" id="reveal">👀 Ver respuesta</button></div><div class="answer" id="answer"></div><div class="practiceBox" id="practiceBox"><div class="choices" id="choices"></div><div class="feedback" id="feedback"></div></div><div class="tools"><button class="btn" id="speakQ">🔊 Leer pregunta</button><button class="btn" id="speakAll">🔊 Leer pregunta y respuesta</button><button class="btn good" id="speak" disabled>🔊 Escuchar respuesta</button><button class="btn" id="practice">🟡 Estoy practicando</button><button class="btn" id="learned" disabled>⭐ Ya la aprendí</button><button class="btn" id="random">🎲 Pregunta al azar</button><button class="btn" id="passPracticeV19" style="display:none">⏭️ Paso</button></div></section><div class="nav"><button class="btn" id="prev">← Anterior</button><button class="btn primary" id="next">Siguiente →</button></div><div class="tools"><input class="search" id="search" placeholder="🔎 Buscar una pregunta…"><button class="btn" id="showAll">📚 Ver todas</button><button class="btn" id="reset">↻ Reiniciar progreso</button></div><section class="list" id="list"></section><section class="practiceListPanel" id="practiceListPanelV8">
 <h2>🟡 Preguntas practicando</h2>
 <p class="hint">Aquí puedes consultar las preguntas según su estado y volver a estudiarlas.</p>
 <div class="stateTabsV8">
@@ -1107,5 +1143,149 @@ if(typeof starterQuizzesV12!=='undefined'){
 }
 
 renderHomeSelectorV15();
+
+
+// V24: acceso a Por aprender / Practicando / Aprendidas por cuestionario seleccionado.
+let stateViewV24=null;
+
+function activeCoreModeV24(){
+ return (mode==='social'||mode==='natural')?mode:null;
+}
+function rowsForActiveQuizV24(){
+ const m=activeCoreModeV24();
+ if(!m)return [];
+ return data[m].map((qa,idx)=>{
+   const k=m+'-'+idx;
+   return {idx,q:qa[0],a:qa[1],k,
+     learned:!!learned[k],
+     practicing:!!practicing[k],
+     state:learned[k]?'learned':(practicing[k]?'practicing':'pending')
+   };
+ });
+}
+function updateStateNavV24(){
+ const rows=rowsForActiveQuizV24();
+ const counts={pending:0,practicing:0,learned:0};
+ rows.forEach(r=>counts[r.state]++);
+ $('pendingCountV24').textContent=`(${counts.pending})`;
+ $('practicingCountV24').textContent=`(${counts.practicing})`;
+ $('learnedCountV24').textContent=`(${counts.learned})`;
+}
+function closeStatePanelV24(){
+ stateViewV24=null;
+ $('statePanelV24').classList.remove('show');
+ // restore normal study card
+ document.querySelector('.progressWrap').style.display='';
+ document.querySelector('.modeToggle').style.display='';
+ document.querySelector('main > .card').style.display='';
+ document.querySelector('main > .nav').style.display='';
+ document.querySelector('main > .tools').style.display='';
+}
+function openStatePanelV24(which){
+ stateViewV24=which;
+ updateStateNavV24();
+ const labels={
+   pending:['📖 Preguntas por aprender','Preguntas que todavía no fueron marcadas para practicar ni aprendidas.'],
+   practicing:['🟡 Preguntas practicando','Preguntas que marcaste para seguir practicando.'],
+   learned:['🟢 Preguntas aprendidas','Preguntas que ya fueron registradas como aprendidas.']
+ };
+ $('stateTitleV24').textContent=labels[which][0];
+ $('stateHintV24').textContent=labels[which][1];
+ const rows=rowsForActiveQuizV24().filter(r=>r.state===which);
+ $('stateListV24').innerHTML=rows.length?rows.map(r=>`
+   <div class="stateRowV24">
+    <div><b>${r.q}</b><div class="meta">${mode==='social'?'🏠 Vida Social y Trabajo':'🌱 Medio Natural y Salud'}</div></div>
+    <button class="btn primary" data-study-v24="${r.idx}">▶ Estudiar</button>
+   </div>`).join(''):`<div class="homeEmptyV15">No hay preguntas registradas en esta sección.</div>`;
+ $('statePanelV24').classList.add('show');
+
+ // Hide question detail while reviewing a state list.
+ document.querySelector('.progressWrap').style.display='none';
+ document.querySelector('.modeToggle').style.display='none';
+ document.querySelector('main > .card').style.display='none';
+ document.querySelector('main > .nav').style.display='none';
+ document.querySelector('main > .tools').style.display='none';
+
+ document.querySelectorAll('[data-study-v24]').forEach(b=>b.onclick=()=>{
+   i=+b.dataset.studyV24;
+   closeStatePanelV24();
+   view='study';
+   render();
+   updateStateNavV24();
+   document.querySelector('main > .card').scrollIntoView({behavior:'smooth',block:'start'});
+ });
+}
+$('pendingV24').onclick=()=>openStatePanelV24('pending');
+$('practicingV24').onclick=()=>openStatePanelV24('practicing');
+$('learnedV24').onclick=()=>openStatePanelV24('learned');
+
+// Al abrir un cuestionario, actualiza sus contadores y no mezcla estados con otra materia.
+const enterQuizFocusV21_v24=enterQuizFocusV21;
+enterQuizFocusV21=function(title){
+ enterQuizFocusV21_v24(title);
+ closeStatePanelV24();
+ updateStateNavV24();
+};
+
+// Actualiza los contadores después de cualquier cambio de pregunta/estado.
+document.addEventListener('click',()=>{
+ if(document.body.classList.contains('quizFocusV21'))setTimeout(updateStateNavV24,0);
+});
+
+updateStateNavV24();
+
+
+// V25: resumen de logros por materia/cuestionario y total general.
+function achievementDataV25(){
+ const subjects=[
+   {id:'social',title:'Vida Social y Trabajo',icon:'🏠',total:data.social.length},
+   {id:'natural',title:'Medio Natural y Salud',icon:'🌱',total:data.natural.length}
+ ];
+ return subjects.map(x=>{
+   let learnedCount=0;
+   for(let n=0;n<x.total;n++) if(learned[x.id+'-'+n]) learnedCount++;
+   return {...x,learned:learnedCount,pct:x.total?Math.round(learnedCount*100/x.total):0};
+ });
+}
+function renderAchievementsV25(){
+ const host=$('achievementsContentV11');
+ if(!host)return;
+ const rows=achievementDataV25();
+ const totalLearned=rows.reduce((a,x)=>a+x.learned,0);
+ const totalQuestions=rows.reduce((a,x)=>a+x.total,0);
+ const overallPct=totalQuestions?Math.round(totalLearned*100/totalQuestions):0;
+ host.innerHTML=`
+   <h2>🏆 Resumen de logros</h2>
+   <p class="hint">Tu progreso se calcula de forma independiente para cada cuestionario.</p>
+   <div class="achievementSummaryV25">
+    ${rows.map(x=>`
+      <div class="achievementCardV25">
+       <div class="achievementTopV25"><b>${x.icon} ${x.title}</b><span>⭐</span></div>
+       <div class="achievementPctV25">${x.pct}%</div>
+       <div><b>${x.learned}</b> de ${x.total} aprendidas</div>
+       <div class="achievementBarV25"><span style="width:${x.pct}%"></span></div>
+      </div>`).join('')}
+      <div class="achievementCardV25 totalAchievementV25">
+       <div class="achievementTopV25"><b>🌟 Total general</b><span>🏆</span></div>
+       <div class="totalNumberV25">${totalLearned}</div>
+       <div>preguntas aprendidas de ${totalQuestions}</div>
+       <div class="achievementBarV25"><span style="width:${overallPct}%"></span></div>
+       <div class="hint" style="margin-top:8px">${overallPct}% de progreso general</div>
+      </div>
+   </div>`;
+}
+
+// Actualiza Logros al abrir el módulo.
+const openModuleV11_v25=openModuleV11;
+openModuleV11=function(which){
+ openModuleV11_v25(which);
+ if(which==='achievements')renderAchievementsV25();
+ if(which==='questionnaires')renderManagerV15();
+};
+
+// Actualiza los datos tras cambios de estado.
+document.addEventListener('click',()=>setTimeout(()=>{
+ if($('achievementsModuleV11') && !$('achievementsModuleV11').classList.contains('hidden')) renderAchievementsV25();
+},0));
 
 </script></body></html>
