@@ -2752,4 +2752,123 @@ body.v39CustomQuiz #quizPlayerV12 .quizActionsV12{visibility:visible!important}
 })();
 </script>
 
+
+<style id="v43-normal-custom">
+/* Los cuestionarios creados usan exactamente el área normal de estudio. */
+body.v43CustomNormal #quizPlayerV12,
+body.v43CustomNormal #quizLibraryV12,
+body.v43CustomNormal .v39CustomHeader{display:none!important}
+</style>
+<script id="v43-normal-custom-js">
+(()=>{
+  let currentCustomV43=null;
+
+  function ensureIdsV43(){
+    let changed=false;
+    quizzesV12.forEach(q=>{
+      if(!q.id){
+        q.id='cq_'+Date.now().toString(36)+'_'+Math.random().toString(36).slice(2,8);
+        changed=true;
+      }
+    });
+    if(changed)saveQuizzesV12();
+  }
+  ensureIdsV43();
+
+  function modeKeyV43(q){return 'custom_'+q.id}
+
+  // Mantiene el título correcto después de cada render normal
+  // (Siguiente, Anterior, Aprender, Prueba, marcar aprendida, etc.).
+  const baseRenderV43=render;
+  render=function(){
+    baseRenderV43();
+    if(currentCustomV43 && mode===modeKeyV43(currentCustomV43)){
+      const subject=document.getElementById('subject');
+      if(subject)subject.textContent='📘 '+currentCustomV43.title;
+    }
+  };
+
+  function openNormalCustomV43(idx){
+    ensureIdsV43();
+    const q=quizzesV12[idx];
+    if(!q || q.enabled===false || !Array.isArray(q.questions) || !q.questions.length)return;
+
+    currentCustomV43=q;
+    const mk=modeKeyV43(q);
+
+    // Inserta las preguntas en el mismo motor que usan los cuestionarios originales.
+    data[mk]=q.questions.map(x=>[String(x[0]),String(x[1])]);
+
+    // Cierra administración/módulos y restaura el área normal.
+    document.body.classList.remove('v39CustomQuiz','moduleOpenV17','awaitQuizV22');
+    document.body.classList.add('v43CustomNormal','quizFocusV21');
+    closeModulesV11();
+
+    const learn=document.getElementById('learn');
+    if(learn)learn.style.removeProperty('display');
+    const card=document.querySelector('.card');
+    const nav=document.querySelector('.nav');
+    const toggle=document.querySelector('.modeToggle');
+    const progress=document.querySelector('.progressWrap');
+    if(card)card.style.removeProperty('display');
+    if(nav)nav.style.removeProperty('display');
+    if(toggle)toggle.style.removeProperty('display');
+    if(progress)progress.style.removeProperty('display');
+
+    document.getElementById('quizPlayerV12')?.classList.remove('show');
+
+    mode=mk;
+    i=0;
+    view='study';
+    learningMode='study';
+
+    // Botones de materia base no deben aparentar estar seleccionados.
+    document.getElementById('socialBtn')?.classList.remove('active');
+    document.getElementById('naturalBtn')?.classList.remove('active');
+    document.getElementById('pendingBtn')?.classList.remove('active');
+
+    render();
+    if(typeof updateSmartUI==='function')updateSmartUI();
+    window.scrollTo({top:0,behavior:'smooth'});
+  }
+
+  // Corrige la causa del fallo anterior: data-v30-use contiene "custom|0",
+  // no solamente "0". Se intercepta el formato real.
+  document.addEventListener('click',e=>{
+    const b=e.target.closest('[data-v30-use],[data-v18-use],[data-v16-use],[data-v15-use]');
+    if(!b)return;
+    const raw=b.dataset.v30Use ?? b.dataset.v18Use ?? b.dataset.v16Use ?? b.dataset.v15Use;
+    if(!raw)return;
+    const parts=String(raw).split('|');
+    if(parts[0]!=='custom')return;
+    const idx=Number(parts[1]);
+    if(!Number.isInteger(idx)||!quizzesV12[idx])return;
+    e.preventDefault();
+    e.stopImmediatePropagation();
+    openNormalCustomV43(idx);
+  },true);
+
+  // También corrige el botón antiguo "Comenzar" si llegara a mostrarse.
+  document.addEventListener('click',e=>{
+    const b=e.target.closest('[data-open-quiz-v12]');
+    if(!b)return;
+    const idx=Number(b.dataset.openQuizV12);
+    if(!Number.isInteger(idx)||!quizzesV12[idx])return;
+    e.preventDefault();e.stopImmediatePropagation();
+    openNormalCustomV43(idx);
+  },true);
+
+  // Al volver al inicio/cuestionarios sale del modo personalizado.
+  ['homeNavV34','questionnairesNavV11','changeQuizV21'].forEach(id=>{
+    document.getElementById(id)?.addEventListener('click',()=>{
+      currentCustomV43=null;
+      document.body.classList.remove('v43CustomNormal');
+    },true);
+  });
+
+  // Si se edita el cuestionario actualmente abierto, la próxima apertura
+  // usa inmediatamente las preguntas actualizadas.
+})();
+</script>
+
 </body></html>
