@@ -282,11 +282,18 @@ body.quizFocusV21 #statePanelV24.show{display:block!important}
 .achievementStatsV26 span{background:#f5f6fb;border-radius:10px;padding:8px;text-align:center}
 .achievementTotalV26{background:#f5f2ff;border:2px solid #d9d3ff}
 </style>
-</head><body><main class="app"><section class="hero"><h1>🌟 Aprendo Jugando</h1><p>Cuestionario interactivo de Primer Grado. Lee, practica, gana estrellas y aprende jugando.</p>
-  <div class="scorebar"><span class="pill" id="player">🎮 Total puntos ⭐ <b id="score">0</b></span><span class="pill">🔥 Racha <b id="streak">0</b></span></div><div class="achievements" id="achievements"></div></section>
+
+<style id="v27-achievements-clean">
+.achievementHistoryV27{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px;margin-top:16px}
+.achievementMetricV27{border:1px solid #f0cc63;background:#fff9df;border-radius:20px;padding:20px;text-align:center}
+.achievementMetricV27 .ico{font-size:42px;line-height:1}
+.achievementMetricV27 .big{font-size:30px;font-weight:1000;margin:8px 0 3px}
+.achievementMetricV27 .sub{color:var(--muted);font-size:14px}
+</style>
+</head><body><main class="app"><section class="hero"><h1>🌟 Aprendo Jugando</h1><p>Cuestionario interactivo de Primer Grado. Lee, practica, gana estrellas y aprende jugando.</p><div class="scorebar"><span class="pill" id="player">🎯 Total puntos<b id="score">0</b></span><span class="pill">🔥 Racha <b id="streak">0</b></span></div><div class="achievements" id="achievements"></div></section>
 
 <section class="homeSelectorV15" id="homeSelectorV15">
-  <h2>🎯 ¿Qué cuestionario quieres usar?</h2>
+  <h2>📚 ¿Qué cuestionario quieres usar?</h2>
   <p class="hint">Aquí aparecen solamente los cuestionarios activos. Puedes cambiar de cuestionario en cualquier momento.</p>
   <div class="homeQuizGridV15" id="homeQuizGridV15"></div>
 </section>
@@ -1393,5 +1400,103 @@ document.addEventListener('click',()=>setTimeout(()=>{
 },10));
 
 refreshStateButtonsV26();
+
+
+// V27: Logros es un módulo exclusivo. No muestra listas/estados de cuestionarios.
+const trophyHistoryKeyV27='aprendoTrophyHistoryV27';
+let trophyHistoryV27=JSON.parse(localStorage.getItem(trophyHistoryKeyV27)||'{}');
+
+function dateV27(ts){
+ if(!ts)return 'Aún no obtenido';
+ return new Intl.DateTimeFormat('es-PY',{day:'2-digit',month:'2-digit',year:'numeric'}).format(new Date(ts));
+}
+function syncTrophyHistoryV27(){
+ const defs=[
+   {id:'social',title:'Vida Social y Trabajo'},
+   {id:'natural',title:'Medio Natural y Salud'}
+ ];
+ const now=Date.now();
+ defs.forEach(d=>{
+   const c=stateCountsForV26(d.id);
+   if(c.total>0 && c.learned===c.total && !trophyHistoryV27[d.id]){
+     trophyHistoryV27[d.id]=now;
+   }
+ });
+ // Primer gran logro: primera fecha registrada en que llegó al menos a 10 aprendidas.
+ // Desde V27 se registra al detectarse el logro si aún no existía historial.
+ const totalLearned=defs.reduce((a,d)=>a+stateCountsForV26(d.id).learned,0);
+ if(totalLearned>=10 && !trophyHistoryV27.first10)trophyHistoryV27.first10=now;
+ localStorage.setItem(trophyHistoryKeyV27,JSON.stringify(trophyHistoryV27));
+}
+function fullTrophiesV27(){
+ const defs=[
+   {id:'social',title:'Vida Social y Trabajo'},
+   {id:'natural',title:'Medio Natural y Salud'}
+ ];
+ return defs.filter(d=>{
+   const c=stateCountsForV26(d.id);
+   return c.total>0 && c.learned===c.total;
+ });
+}
+function renderAchievementsV25(){
+ const host=$('achievementsContentV11');if(!host)return;
+ syncTrophyHistoryV27();
+ const full=fullTrophiesV27();
+ const dated=full.map(x=>({...x,ts:trophyHistoryV27[x.id]||0})).sort((a,b)=>b.ts-a.ts);
+ const last=dated[0];
+ const totalLearned=['social','natural'].reduce((a,m)=>a+stateCountsForV26(m).learned,0);
+ host.innerHTML=`
+   <h2>🏆 Mis logros</h2>
+   <p class="hint">Aquí se concentran tus hitos generales de aprendizaje.</p>
+   <div class="achievementHistoryV27">
+    <div class="achievementMetricV27">
+      <div class="ico">⭐</div>
+      <b>Preguntas aprendidas</b>
+      <div class="big">${totalLearned}</div>
+      <div class="sub">preguntas registradas como aprendidas</div>
+    </div>
+    <div class="achievementMetricV27">
+      <div class="ico">🔥</div>
+      <b>Mejor racha actual</b>
+      <div class="big">${streak||0}</div>
+      <div class="sub">respuestas correctas seguidas</div>
+    </div>
+    <div class="achievementMetricV27">
+      <div class="ico">🥇</div>
+      <b>Primer gran logro</b>
+      <div class="big">${dateV27(trophyHistoryV27.first10)}</div>
+      <div class="sub">fecha en que alcanzaste al menos 10 preguntas aprendidas</div>
+    </div>
+    <div class="achievementMetricV27">
+      <div class="ico">🏆</div>
+      <b>Cuestionarios completados</b>
+      <div class="big">${full.length}</div>
+      <div class="sub">cuestionarios aprendidos en su totalidad</div>
+    </div>
+    <div class="achievementMetricV27">
+      <div class="ico">🎖️</div>
+      <b>Último trofeo</b>
+      <div class="big">${last?dateV27(last.ts):'Sin trofeos'}</div>
+      <div class="sub">${last?last.title:'Aún no completaste un cuestionario'}</div>
+    </div>
+   </div>`;
+}
+
+// Logros debe ocultar por completo cualquier panel/listado de estados de cuestionarios.
+const openModuleV11_v27=openModuleV11;
+openModuleV11=function(which){
+ if(which==='achievements'){
+   if($('statePanelV24'))$('statePanelV24').classList.remove('show');
+   document.body.classList.remove('quizFocusV21');
+   document.body.classList.add('awaitQuizV22','moduleOpenV17');
+ }
+ openModuleV11_v27(which);
+ if(which==='achievements')renderAchievementsV25();
+ if(which==='questionnaires')renderManagerV15();
+};
+
+// Registrar fechas cuando se produzcan nuevos logros.
+document.addEventListener('click',()=>setTimeout(syncTrophyHistoryV27,20));
+syncTrophyHistoryV27();
 
 </script></body></html>
