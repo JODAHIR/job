@@ -269,7 +269,21 @@ body.quizFocusV21 .stateNavV24{display:flex}
 .totalAchievementV25{background:linear-gradient(135deg,#f4f1ff,#fff);border:2px solid #dcd6ff}
 .totalNumberV25{font-size:38px;font-weight:1000;color:#4f46d8}
 </style>
-</head><body><main class="app"><section class="hero"><h1>🌟 Aprendo Jugando</h1><p>Cuestionario interactivo de Primer Grado. Lee, practica, gana estrellas y aprende jugando.</p><div class="scorebar"><span class="pill" id="player">🎮 Puntos ⭐ <b id="score">0</b></span><span class="pill">🔥 Racha <b id="streak">0</b></span></div><div class="achievements" id="achievements"></div></section>
+
+<style id="v26-fixes">
+/* V26: los estados permanecen siempre visibles dentro del cuestionario elegido */
+body.quizFocusV21 .stateNavV24{display:flex!important}
+body.quizFocusV21 #statePanelV24.show{display:block!important}
+.stateNavV24 .btn.activeStateV26{background:#655cf1!important;color:#fff!important}
+.achievementSummaryV26{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;margin-top:16px}
+.achievementCardV26{background:#fff;border:1px solid #e3e6f1;border-radius:20px;padding:18px}
+.achievementCardV26 h3{margin:0 0 8px}.achievementPctV26{font-size:34px;font-weight:1000;color:#5d55e8}
+.achievementStatsV26{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:12px;font-size:13px}
+.achievementStatsV26 span{background:#f5f6fb;border-radius:10px;padding:8px;text-align:center}
+.achievementTotalV26{background:#f5f2ff;border:2px solid #d9d3ff}
+</style>
+</head><body><main class="app"><section class="hero"><h1>🌟 Aprendo Jugando</h1><p>Cuestionario interactivo de Primer Grado. Lee, practica, gana estrellas y aprende jugando.</p>
+  <div class="scorebar"><span class="pill" id="player">🎮 Total puntos ⭐ <b id="score">0</b></span><span class="pill">🔥 Racha <b id="streak">0</b></span></div><div class="achievements" id="achievements"></div></section>
 
 <section class="homeSelectorV15" id="homeSelectorV15">
   <h2>🎯 ¿Qué cuestionario quieres usar?</h2>
@@ -1287,5 +1301,97 @@ openModuleV11=function(which){
 document.addEventListener('click',()=>setTimeout(()=>{
  if($('achievementsModuleV11') && !$('achievementsModuleV11').classList.contains('hidden')) renderAchievementsV25();
 },0));
+
+
+// V26: corrección consolidada de estados + resumen real por cuestionario.
+function stateCountsForV26(m){
+ const total=data[m].length;
+ let l=0,p=0;
+ for(let n=0;n<total;n++){
+   const k=m+'-'+n;
+   if(learned[k]) l++;
+   else if(practicing[k]) p++;
+ }
+ return {total,learned:l,practicing:p,pending:total-l-p,pct:total?Math.round(l*100/total):0};
+}
+function refreshStateButtonsV26(){
+ if(!(mode==='social'||mode==='natural'))return;
+ const c=stateCountsForV26(mode);
+ if($('pendingCountV24'))$('pendingCountV24').textContent=`(${c.pending})`;
+ if($('practicingCountV24'))$('practicingCountV24').textContent=`(${c.practicing})`;
+ if($('learnedCountV24'))$('learnedCountV24').textContent=`(${c.learned})`;
+}
+
+// Asegura que los botones abran las listas correspondientes.
+['pendingV24','practicingV24','learnedV24'].forEach(id=>{
+ const b=$(id); if(b)b.classList.remove('activeStateV26');
+});
+function activateStateButtonV26(which){
+ ['pendingV24','practicingV24','learnedV24'].forEach(id=>$(id)?.classList.remove('activeStateV26'));
+ const map={pending:'pendingV24',practicing:'practicingV24',learned:'learnedV24'};
+ $(map[which])?.classList.add('activeStateV26');
+}
+const openStatePanelV24_v26=openStatePanelV24;
+openStatePanelV24=function(which){
+ openStatePanelV24_v26(which);
+ activateStateButtonV26(which);
+};
+const closeStatePanelV24_v26=closeStatePanelV24;
+closeStatePanelV24=function(){
+ closeStatePanelV24_v26();
+ ['pendingV24','practicingV24','learnedV24'].forEach(id=>$(id)?.classList.remove('activeStateV26'));
+ refreshStateButtonsV26();
+};
+
+// Resumen solicitado: por cuestionario, con los 3 estados y total general.
+renderAchievementsV25=function(){
+ const host=$('achievementsContentV11'); if(!host)return;
+ const defs=[
+   {id:'social',title:'Vida Social y Trabajo',icon:'🏠'},
+   {id:'natural',title:'Medio Natural y Salud',icon:'🌱'}
+ ];
+ const rows=defs.map(d=>({...d,...stateCountsForV26(d.id)}));
+ const total=rows.reduce((a,r)=>a+r.total,0);
+ const learnedTotal=rows.reduce((a,r)=>a+r.learned,0);
+ const practiceTotal=rows.reduce((a,r)=>a+r.practicing,0);
+ const pendingTotal=rows.reduce((a,r)=>a+r.pending,0);
+ const pct=total?Math.round(learnedTotal*100/total):0;
+ host.innerHTML=`
+  <h2>🏆 Resumen de logros</h2>
+  <p class="hint">Progreso guardado de forma independiente para cada cuestionario.</p>
+  <div class="achievementSummaryV26">
+   ${rows.map(r=>`
+    <div class="achievementCardV26">
+     <h3>${r.icon} ${r.title}</h3>
+     <div class="achievementPctV26">${r.pct}%</div>
+     <div><b>${r.learned}</b> de ${r.total} aprendidas</div>
+     <div class="achievementBarV25"><span style="width:${r.pct}%"></span></div>
+     <div class="achievementStatsV26">
+      <span>📖<br><b>${r.pending}</b><br>Faltan</span>
+      <span>🟡<br><b>${r.practicing}</b><br>Practicando</span>
+      <span>🟢<br><b>${r.learned}</b><br>Aprendidas</span>
+     </div>
+    </div>`).join('')}
+    <div class="achievementCardV26 achievementTotalV26">
+     <h3>🌟 Total general</h3>
+     <div class="achievementPctV26">${pct}%</div>
+     <div><b>${learnedTotal}</b> preguntas aprendidas de ${total}</div>
+     <div class="achievementBarV25"><span style="width:${pct}%"></span></div>
+     <div class="achievementStatsV26">
+      <span>📖<br><b>${pendingTotal}</b><br>Faltan</span>
+      <span>🟡<br><b>${practiceTotal}</b><br>Practicando</span>
+      <span>🟢<br><b>${learnedTotal}</b><br>Aprendidas</span>
+     </div>
+    </div>
+  </div>`;
+};
+
+// Recalcula siempre después de marcar Practicando, Aprendida, Paso o responder.
+document.addEventListener('click',()=>setTimeout(()=>{
+ refreshStateButtonsV26();
+ if($('achievementsModuleV11') && !$('achievementsModuleV11').classList.contains('hidden')) renderAchievementsV25();
+},10));
+
+refreshStateButtonsV26();
 
 </script></body></html>
