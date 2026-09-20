@@ -317,6 +317,7 @@
 	  <button class="btn" id="changeQuizV21">🔄 Cambiar cuestionario</button>
 	</div>
 	<div class="moduleNavV11">
+	<button class="btn" id="homeNavV34">🏠 Inicio</button>
 	<button class="btn" id="achievementsNavV11">🏆 Logros</button>
 	<button class="btn" id="questionnairesNavV11">📚 Cuestionarios</button>
 	</div>
@@ -2069,6 +2070,48 @@
       },10);
     });
   }
+})();
+</script>
+
+
+<style id="v34-home-button">
+#homeNavV34{background:#eaf8ee;color:#19733c;border:1px solid #9bd7af}
+#homeNavV34:hover{background:#d9f2e2}
+</style>
+<script id="v34-home-button-js">
+(()=>{
+  const b=document.getElementById('homeNavV34');
+  if(!b)return;
+
+  b.onclick=()=>{
+    // Cierra módulos abiertos.
+    document.getElementById('achievementsPanelV11')?.classList.remove('show');
+    document.getElementById('questionnairesPanelV11')?.classList.remove('show');
+    document.getElementById('achievementsNavV11')?.classList.remove('active');
+    document.getElementById('questionnairesNavV11')?.classList.remove('active');
+
+    // Cierra paneles/listados de estados.
+    document.getElementById('statePanelV24')?.classList.remove('show');
+    document.getElementById('practiceListPanelV8')?.classList.remove('show');
+    document.getElementById('list')?.classList.remove('show');
+
+    // Sale del cuestionario actual y vuelve al selector inicial.
+    document.body.classList.remove('moduleOpenV17','quizFocusV21');
+    document.body.classList.add('awaitQuizV22');
+
+    const home=document.getElementById('homeSelectorV15');
+    if(home)home.style.removeProperty('display');
+
+    if(typeof renderHomeSelectorV15==='function')renderHomeSelectorV15();
+
+    // Restaura controles que pudieran estar restringidos en "A estudiar".
+    const random=document.getElementById('random');
+    const pass=document.getElementById('passPracticeV19');
+    if(random){random.disabled=false;random.style.display='';random.setAttribute('aria-hidden','false')}
+    if(pass){pass.disabled=false;pass.style.display='';pass.setAttribute('aria-hidden','false')}
+
+    window.scrollTo({top:0,behavior:'smooth'});
+  };
 })();
 </script>
 
