@@ -199,6 +199,51 @@ body.moduleOpenV17 #practiceListPanelV8,
 body.moduleOpenV17 #list{display:none!important}
 .moduleNavV11 .btn{min-width:180px}
 </style>
+
+<style id="v18-selector-status">
+#homeSelectorV15{display:block!important}
+body.moduleOpenV17 #homeSelectorV15{display:none!important}
+.homeQuizV15.inactiveV18{opacity:.78;background:#f4f5f8;border-color:#d8dbe5}
+.inactivePillV18{display:inline-block;background:#eceef3;color:#687083;border-radius:999px;padding:6px 10px;font-weight:900;font-size:13px}
+.inactiveMsgV18{margin-top:10px;padding:10px 12px;border-radius:12px;background:#fff3cd;color:#7a5a00;font-size:14px;font-weight:800}
+</style>
+
+<style id="v19-pass-practice">
+#passPracticeV19{
+ background:#fff0d9!important;color:#925600!important;border:1px solid #ffc76b!important;
+}
+#passPracticeV19:hover{background:#ffe3b5!important}
+</style>
+
+<style id="v21-focus-quiz">
+/* V21: al elegir un cuestionario se ocultan los demás selectores/materias */
+body.quizFocusV21 .tabs{display:none!important}
+body.quizFocusV21 #homeSelectorV15{display:none!important}
+body.quizFocusV21 .moduleNavV11{display:flex!important}
+.focusBarV21{display:none;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;
+background:#fff;border-radius:16px;padding:10px 14px;margin:10px 0;box-shadow:0 7px 20px #30386d12}
+body.quizFocusV21 .focusBarV21{display:flex}
+.focusTitleV21{font-weight:900}
+</style>
+
+<style id="v22-gated-quiz">
+/* V22: ningún detalle de preguntas se muestra hasta elegir explícitamente "Usar". */
+body.awaitQuizV22 .tabs,
+body.awaitQuizV22 .progressWrap,
+body.awaitQuizV22 .modeToggle,
+body.awaitQuizV22 > main > .card,
+body.awaitQuizV22 > main > .nav,
+body.awaitQuizV22 > main > .tools,
+body.awaitQuizV22 #practiceListPanelV8,
+body.awaitQuizV22 #list{display:none!important}
+
+/* En modo cuestionario seleccionado, oculta la lista de selección y otras materias. */
+body.quizFocusV21 #homeSelectorV15,
+body.quizFocusV21 .tabs{display:none!important}
+
+/* Un inactivo es informativo: no ofrece acción de uso ni activación desde la portada. */
+.homeQuizV15.inactiveV18 button{display:none!important}
+</style>
 </head><body><main class="app"><section class="hero"><h1>🌟 Aprendo Jugando</h1><p>Cuestionario interactivo de Primer Grado. Lee, practica, gana estrellas y aprende jugando.</p><div class="scorebar"><span class="pill" id="player">👧 Mia ⭐ <b id="score">0</b></span><span class="pill">🔥 Racha <b id="streak">0</b></span></div><div class="achievements" id="achievements"></div></section>
 
 <section class="homeSelectorV15" id="homeSelectorV15">
@@ -207,6 +252,10 @@ body.moduleOpenV17 #list{display:none!important}
   <div class="homeQuizGridV15" id="homeQuizGridV15"></div>
 </section>
 
+<div class="focusBarV21" id="focusBarV21">
+  <span class="focusTitleV21" id="focusTitleV21">📘 Cuestionario seleccionado</span>
+  <button class="btn" id="changeQuizV21">🔄 Cambiar cuestionario</button>
+</div>
 <div class="moduleNavV11">
 <button class="btn" id="achievementsNavV11">🏆 Logros</button>
 <button class="btn" id="questionnairesNavV11">📚 Nuevos cuestionarios</button>
@@ -222,7 +271,7 @@ body.moduleOpenV17 #list{display:none!important}
 <p class="moduleHintV11">Módulo independiente para preparar futuras ampliaciones del banco de preguntas.</p>
 <div id="questionnaireImporterV11"></div>
 </section>
-<div class="tabs"><button class="btn active" id="socialBtn">🏠 Vida Social y Trabajo</button><button class="btn" id="naturalBtn">🌱 Medio Natural y Salud</button><button class="btn" id="pendingBtn">📖 Falta aprender <span id="pendingCount"></span></button><button class="btn" id="practiceListNavV8">🟡 Practicando <span id="practiceNavCountV8">(0)</span></button></div><div class="progressWrap"><div class="meta"><span id="counter">Pregunta 1 de 40</span><span id="stars">⭐ 0 aprendidas</span></div><div class="progress"><div class="bar" id="bar"></div></div></div><div class="modeToggle"><button class="btn active" id="studyMode">📖 Aprender</button><button class="btn" id="practiceMode">🎮 Practicar</button></div><section class="card"><span class="badge" id="subject"></span><div class="q" id="question"></div><div class="center"><button class="btn primary big" id="reveal">👀 Ver respuesta</button></div><div class="answer" id="answer"></div><div class="practiceBox" id="practiceBox"><div class="choices" id="choices"></div><div class="feedback" id="feedback"></div></div><div class="tools"><button class="btn" id="speakQ">🔊 Leer pregunta</button><button class="btn" id="speakAll">🔊 Leer pregunta y respuesta</button><button class="btn good" id="speak" disabled>🔊 Escuchar respuesta</button><button class="btn" id="practice">🟡 Estoy practicando</button><button class="btn" id="learned" disabled>⭐ Ya la aprendí</button><button class="btn" id="random">🎲 Pregunta al azar</button></div></section><div class="nav"><button class="btn" id="prev">← Anterior</button><button class="btn primary" id="next">Siguiente →</button></div><div class="tools"><input class="search" id="search" placeholder="🔎 Buscar una pregunta…"><button class="btn" id="showAll">📚 Ver todas</button><button class="btn" id="reset">↻ Reiniciar progreso</button></div><section class="list" id="list"></section><section class="practiceListPanel" id="practiceListPanelV8">
+<div class="tabs"><button class="btn active" id="socialBtn">🏠 Vida Social y Trabajo</button><button class="btn" id="naturalBtn">🌱 Medio Natural y Salud</button><button class="btn" id="pendingBtn">📖 Falta aprender <span id="pendingCount"></span></button><button class="btn" id="practiceListNavV8">🟡 Practicando <span id="practiceNavCountV8">(0)</span></button></div><div class="progressWrap"><div class="meta"><span id="counter">Pregunta 1 de 40</span><span id="stars">⭐ 0 aprendidas</span></div><div class="progress"><div class="bar" id="bar"></div></div></div><div class="modeToggle"><button class="btn active" id="studyMode">📖 Aprender</button><button class="btn" id="practiceMode">🎮 Practicar</button></div><section class="card"><span class="badge" id="subject"></span><div class="q" id="question"></div><div class="center"><button class="btn primary big" id="reveal">👀 Ver respuesta</button></div><div class="answer" id="answer"></div><div class="practiceBox" id="practiceBox"><div class="choices" id="choices"></div><div class="feedback" id="feedback"></div></div><div class="tools"><button class="btn" id="speakQ">🔊 Leer pregunta</button><button class="btn" id="speakAll">🔊 Leer pregunta y respuesta</button><button class="btn good" id="speak" disabled>🔊 Escuchar respuesta</button><button class="btn" id="practice">🟡 Estoy practicando</button><button class="btn" id="learned" disabled>⭐ Ya la aprendí</button><button class="btn" id="random">🎲 Pregunta al azar</button><button class="btn" id="passPracticeV19" style="display:none">⏭️ Paso</button></div></section><div class="nav"><button class="btn" id="prev">← Anterior</button><button class="btn primary" id="next">Siguiente →</button></div><div class="tools"><input class="search" id="search" placeholder="🔎 Buscar una pregunta…"><button class="btn" id="showAll">📚 Ver todas</button><button class="btn" id="reset">↻ Reiniciar progreso</button></div><section class="list" id="list"></section><section class="practiceListPanel" id="practiceListPanelV8">
 <h2>🟡 Preguntas practicando</h2>
 <p class="hint">Aquí puedes consultar las preguntas según su estado y volver a estudiarlas.</p>
 <div class="stateTabsV8">
@@ -779,5 +828,255 @@ openCoreQuizV16=function(id){
  closeModulesV11();
  openCoreQuizV16_v17(id);
 };
+
+
+// V18: restaura "¿Qué cuestionario quieres usar?" y muestra también los inactivos.
+renderHomeSelectorV15=function(){
+ const host=$('homeQuizGridV15');if(!host)return;
+ normalizeQuizEnabledV13();
+ const core=coreQuizzesV16().map(q=>({kind:'core',q}));
+ const custom=quizzesV12.map((q,idx)=>({kind:'custom',q,idx}));
+ const all=[...core,...custom];
+
+ host.innerHTML=all.length?all.map(x=>{
+   const q=x.q, active=q.enabled!==false;
+   const count=x.kind==='core'?q.count:q.questions.length;
+   const ident=x.kind==='core'?q.id:x.idx;
+   const icon=x.kind==='core'?q.icon:subjectIconV14(q.subject);
+   return `<div class="homeQuizV15 ${active?'':'inactiveV18'}">
+     <span class="${active?'activeQuizPillV15':'inactivePillV18'}">${active?'● ACTIVO':'○ INACTIVO'}</span>
+     <h3>${icon} ${q.title}</h3>
+     <div class="hint">${q.subject||'General'} · ${count} preguntas</div>
+     ${active
+       ? `<button class="btn primary" data-v18-use="${x.kind}|${ident}">▶ Usar este cuestionario</button>`
+       : `<div class="inactiveMsgV18">🔒 Necesitas activar este cuestionario para poder usarlo.</div>
+          <button class="btn" data-v18-activate="${x.kind}|${ident}">✅ Activar cuestionario</button>`}
+   </div>`;
+ }).join(''):'<div class="homeEmptyV15">No hay cuestionarios disponibles.</div>';
+
+ document.querySelectorAll('[data-v18-use]').forEach(b=>b.onclick=()=>{
+   const [kind,id]=b.dataset.v18Use.split('|');
+   if(kind==='core') openCoreQuizV16(id);
+   else{
+     openModuleV11('questionnaires');
+     renderQuizLibraryV12();
+     openQuizV12(+id);
+     const p=$('quizPlayerV12');if(p)p.scrollIntoView({behavior:'smooth',block:'start'});
+   }
+ });
+ document.querySelectorAll('[data-v18-activate]').forEach(b=>b.onclick=()=>{
+   const [kind,id]=b.dataset.v18Activate.split('|');
+   if(kind==='core'){coreQuizStateV16[id]=true;saveCoreStateV16();}
+   else{quizzesV12[+id].enabled=true;saveQuizzesV12();}
+   renderHomeSelectorV15();
+ });
+};
+
+// V17 ocultaba el selector de forma directa. V18 lo vuelve a habilitar en la portada.
+const homeV18=$('homeSelectorV15');
+if(homeV18)homeV18.style.removeProperty('display');
+document.body.classList.remove('moduleOpenV17');
+renderHomeSelectorV15();
+
+
+// V19: botón PASO en modo práctica.
+// Al usarlo se revela/marca automáticamente la respuesta correcta y la pregunta queda practicando.
+function syncPassButtonV19(){
+ const b=$('passPracticeV19'); if(!b)return;
+ b.style.display=(view==='study')?'inline-block':'none';
+}
+function passPracticeV19(){
+ if(view!=='study')return;
+ const k=key();
+ practicing[k]=true;
+ learned[k]=false;
+ const st=stats[k]||{correct:0,wrong:0};
+ st.wrong=(st.wrong||0)+1;
+ stats[k]=st;
+ streak=0;
+
+ const correct=data[mode][i][1];
+ document.querySelectorAll('.choice').forEach(btn=>{
+   btn.disabled=true;
+   if(btn.dataset.c==='1')btn.classList.add('correct');
+ });
+ $('feedback').textContent=learningMode==='practice'?'⏭️ Paso · La respuesta correcta quedó marcada para practicar.':'⏭️ Paso · La respuesta correcta quedó marcada. Esta pregunta quedará en Practicando para reforzarla.';
+ $('answer').classList.add('show');
+ $('speak').disabled=false;
+ saveSmart();updateStars();updateStateCountsV8();
+}
+$('passPracticeV19').onclick=passPracticeV19;
+
+// Mantiene visible el botón tanto en Aprender como en Practicar.
+const setLearningMode_v19=setLearningMode;
+setLearningMode=function(m){setLearningMode_v19(m);syncPassButtonV19();};
+const render_v19=render;
+render=function(){render_v19();syncPassButtonV19();};
+syncPassButtonV19();
+
+
+// V21: modo de enfoque por cuestionario + sonido de check al aprender.
+let selectedQuizV21=null;
+
+function enterQuizFocusV21(title){
+ selectedQuizV21=title||'Cuestionario';
+ document.body.classList.add('quizFocusV21');
+ const t=$('focusTitleV21'); if(t)t.textContent='📘 '+selectedQuizV21;
+}
+function leaveQuizFocusV21(){
+ selectedQuizV21=null;
+ document.body.classList.remove('quizFocusV21','moduleOpenV17');
+ closeModulesV11();
+ const home=$('homeSelectorV15'); if(home)home.scrollIntoView({behavior:'smooth',block:'start'});
+}
+$('changeQuizV21').onclick=leaveQuizFocusV21;
+
+// Sonido corto de confirmación sin archivos externos.
+function learnedCheckSoundV21(){
+ try{
+   const AC=window.AudioContext||window.webkitAudioContext;
+   if(!AC)return;
+   const ctx=new AC();
+   const now=ctx.currentTime;
+   [[659.25,0],[880,0.09]].forEach(([freq,delay])=>{
+     const o=ctx.createOscillator(),g=ctx.createGain();
+     o.type='sine';o.frequency.setValueAtTime(freq,now+delay);
+     g.gain.setValueAtTime(0.0001,now+delay);
+     g.gain.exponentialRampToValueAtTime(0.16,now+delay+0.012);
+     g.gain.exponentialRampToValueAtTime(0.0001,now+delay+0.13);
+     o.connect(g);g.connect(ctx.destination);
+     o.start(now+delay);o.stop(now+delay+0.14);
+   });
+   setTimeout(()=>ctx.close(),350);
+ }catch(e){}
+}
+
+// Cuestionarios originales: al entrar, oculta los demás cuestionarios.
+const openCoreQuizV16_v21=openCoreQuizV16;
+openCoreQuizV16=function(id){
+ const q=coreQuizzesV16().find(x=>x.id===id);
+ if(!q||q.enabled===false)return;
+ openCoreQuizV16_v21(id);
+ enterQuizFocusV21(q.title);
+};
+
+// Cuestionarios importados: también entran en modo exclusivo.
+const openQuizV12_v21=openQuizV12;
+openQuizV12=function(idx){
+ const q=quizzesV12[idx];
+ if(!q||q.enabled===false)return;
+ openQuizV12_v21(idx);
+ enterQuizFocusV21(q.title);
+};
+
+// Detecta el momento exacto en que una pregunta pasa a aprendida.
+// Funciona tanto al marcar manualmente como cuando el aprendizaje inteligente la promociona.
+const learnedSnapshotV21=()=>new Set(Object.keys(learned).filter(k=>learned[k]));
+function watchLearnedV21(action){
+ const before=learnedSnapshotV21();
+ action();
+ const after=learnedSnapshotV21();
+ for(const k of after){
+   if(!before.has(k)){learnedCheckSoundV21();break;}
+ }
+}
+
+// Botón "Marcar como aprendida".
+const learnedBtnV21=$('learned');
+if(learnedBtnV21){
+ learnedBtnV21.addEventListener('click',()=>{
+   // El listener base se ejecuta antes; comprobamos el resultado en el siguiente microturno.
+   setTimeout(()=>{
+     const k=key();
+     if(learned[k] && window._lastSoundLearnedV21!==k){
+       window._lastSoundLearnedV21=k;
+       learnedCheckSoundV21();
+     }
+   },0);
+ });
+}
+
+// Para promociones automáticas tras respuestas correctas, observa cambios en el estado al pulsar opciones.
+document.addEventListener('click',e=>{
+ const c=e.target.closest&&e.target.closest('.choice');
+ if(!c)return;
+ const before=learnedSnapshotV21();
+ setTimeout(()=>{
+   const after=learnedSnapshotV21();
+   for(const k of after){
+     if(!before.has(k)){
+       if(window._lastSoundLearnedV21!==k){
+         window._lastSoundLearnedV21=k; learnedCheckSoundV21();
+       }
+       break;
+     }
+   }
+ },0);
+},true);
+
+
+// V22: portada cerrada hasta que el usuario pulse "Usar este cuestionario".
+function awaitQuizSelectionV22(){
+ document.body.classList.add('awaitQuizV22');
+ document.body.classList.remove('quizFocusV21','moduleOpenV17');
+ closeModulesV11();
+}
+function selectedQuizV22(){
+ document.body.classList.remove('awaitQuizV22');
+}
+
+// La portada ya no permite activar un cuestionario inactivo.
+// Solo informa que debe activarse desde "Nuevos cuestionarios".
+const renderHomeSelectorV15_v22=renderHomeSelectorV15;
+renderHomeSelectorV15=function(){
+ renderHomeSelectorV15_v22();
+ document.querySelectorAll('[data-v18-activate]').forEach(b=>{
+   const card=b.closest('.homeQuizV15');
+   if(card){
+     b.remove();
+     const msg=card.querySelector('.inactiveMsgV18');
+     if(msg)msg.innerHTML='🔒 Este cuestionario está inactivo. Debes activarlo desde <b>📚 Nuevos cuestionarios</b> para poder usarlo.';
+   }
+ });
+};
+
+// Refuerzo de seguridad: aunque se invoque por código, un inactivo nunca abre.
+const openCoreQuizV16_v22=openCoreQuizV16;
+openCoreQuizV16=function(id){
+ const q=coreQuizzesV16().find(x=>x.id===id);
+ if(!q || q.enabled===false){renderHomeSelectorV15();awaitQuizSelectionV22();return;}
+ selectedQuizV22();
+ openCoreQuizV16_v22(id);
+};
+
+const openQuizV12_v22=openQuizV12;
+openQuizV12=function(idx){
+ const q=quizzesV12[idx];
+ if(!q || q.enabled===false){renderHomeSelectorV15();awaitQuizSelectionV22();return;}
+ selectedQuizV22();
+ openQuizV12_v22(idx);
+};
+
+// Cambiar cuestionario vuelve a la portada sin mostrar preguntas anteriores.
+$('changeQuizV21').onclick=()=>{
+ selectedQuizV21=null;
+ document.body.classList.remove('quizFocusV21','moduleOpenV17');
+ renderHomeSelectorV15();
+ awaitQuizSelectionV22();
+ const home=$('homeSelectorV15');if(home)home.scrollIntoView({behavior:'smooth',block:'start'});
+};
+
+// Al entrar a módulos independientes tampoco se muestra el cuestionario que estaba detrás.
+const openModuleV11_v22=openModuleV11;
+openModuleV11=function(which){
+ document.body.classList.remove('quizFocusV21');
+ document.body.classList.add('awaitQuizV22');
+ openModuleV11_v22(which);
+ if(which==='questionnaires')renderManagerV15();
+};
+
+// Estado inicial: mostrar selector, pero ocultar todo el detalle de preguntas.
+renderHomeSelectorV15();
+awaitQuizSelectionV22();
 
 </script></body></html>
