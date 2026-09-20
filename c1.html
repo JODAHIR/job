@@ -1617,4 +1617,199 @@
 	 </div>
 	</div>
 
+
+<style id="v30-questionnaire-generator">
+.generatorV30{margin-top:18px;padding:20px;border:1px solid #dfe4f4;border-radius:20px;background:#fafbff}
+.generatorGridV30{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:14px}
+.fieldV30{display:grid;gap:7px}.fieldV30.full{grid-column:1/-1}
+.fieldV30 label{font-weight:850}.fieldV30 input,.fieldV30 select{width:100%;min-height:46px;border:1px solid #cbd3ef;border-radius:13px;padding:10px 12px;background:#fff;color:var(--ink)}
+.fileDropV30{border:2px dashed #b8c3ea;border-radius:16px;padding:18px;background:#fff;text-align:center}
+.fileDropV30 input{border:0;padding:8px}
+.fileMetaV30{margin-top:8px;color:var(--muted);font-size:13px;font-weight:700}
+.createdV30{margin-top:6px;font-size:13px;color:var(--muted)}
+.sourceBadgeV30{display:inline-block;margin-top:7px;padding:5px 9px;border-radius:999px;background:#eef2ff;color:#4f55a8;font-size:12px;font-weight:850}
+.pendingQuestionsV30{margin-top:9px;padding:9px 11px;border-radius:11px;background:#fff4d6;color:#805b00;font-size:13px;font-weight:800}
+.generatorActionsV30{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}
+.generatorStatusV30{min-height:22px;margin-top:10px;font-weight:800}
+@media(max-width:650px){.generatorGridV30{grid-template-columns:1fr}.fieldV30.full{grid-column:auto}.generatorActionsV30 .btn{width:100%}}
+</style>
+<script id="v30-questionnaire-generator-js">
+(()=>{
+ const DB_NAME='AprendoJugandoFilesV30', STORE='sources';
+ function openDbV30(){
+   return new Promise((resolve,reject)=>{
+     const req=indexedDB.open(DB_NAME,1);
+     req.onupgradeneeded=()=>{const db=req.result;if(!db.objectStoreNames.contains(STORE))db.createObjectStore(STORE)};
+     req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error);
+   });
+ }
+ async function putFileV30(key,file){
+   const db=await openDbV30();
+   return new Promise((resolve,reject)=>{
+     const tx=db.transaction(STORE,'readwrite');tx.objectStore(STORE).put(file,key);
+     tx.oncomplete=()=>{db.close();resolve()};tx.onerror=()=>{db.close();reject(tx.error)};
+   });
+ }
+ async function getFileV30(key){
+   const db=await openDbV30();
+   return new Promise((resolve,reject)=>{
+     const req=db.transaction(STORE,'readonly').objectStore(STORE).get(key);
+     req.onsuccess=()=>{db.close();resolve(req.result)};req.onerror=()=>{db.close();reject(req.error)};
+   });
+ }
+ async function deleteFileV30(key){
+   const db=await openDbV30();
+   return new Promise((resolve,reject)=>{
+     const tx=db.transaction(STORE,'readwrite');tx.objectStore(STORE).delete(key);
+     tx.oncomplete=()=>{db.close();resolve()};tx.onerror=()=>{db.close();reject(tx.error)};
+   });
+ }
+ const escV30=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+ const fmtDateV30=iso=>{
+   if(!iso)return 'Sin fecha registrada';
+   const d=new Date(iso);return isNaN(d)?'Sin fecha registrada':new Intl.DateTimeFormat('es-PY',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'}).format(d);
+ };
+ const fmtSizeV30=n=>n<1024?n+' B':n<1048576?(n/1024).toFixed(1)+' KB':(n/1048576).toFixed(1)+' MB';
+
+ // La etiqueta del módulo queda consolidada como "Cuestionarios".
+ const nav=document.getElementById('questionnairesNavV11');if(nav)nav.textContent='📚 Cuestionarios';
+ const title=document.querySelector('#questionnairesPanelV11 h2');if(title)title.textContent='📚 Cuestionarios';
+
+ // No mostrar cuestionarios sin preguntas en el selector principal: el archivo fuente puede guardarse
+ // primero y luego completarse con preguntas sin romper el reproductor.
+ const oldHome=renderHomeSelectorV15;
+ renderHomeSelectorV15=function(){
+   oldHome();
+   document.querySelectorAll('[data-home-open-v15]').forEach(b=>{
+     const idx=+b.dataset.homeOpenV15;
+     if(!quizzesV12[idx] || !Array.isArray(quizzesV12[idx].questions) || !quizzesV12[idx].questions.length){
+       b.closest('.homeQuizV15')?.remove();
+     }
+   });
+ };
+
+ renderManagerV15=function(){
+   const host=$('questionnaireImporterV11');if(!host)return;
+   normalizeQuizEnabledV13();
+   const core=coreQuizzesV16().map(q=>({kind:'core',q}));
+   const custom=quizzesV12.map((q,idx)=>({kind:'custom',q,idx}));
+   const all=[...core,...custom];
+   const rows=all.filter(x=>managerViewV15==='active'?x.q.enabled!==false:x.q.enabled===false);
+   const activeCount=all.filter(x=>x.q.enabled!==false).length;
+   const inactiveCount=all.filter(x=>x.q.enabled===false).length;
+
+   host.innerHTML=`
+    <div class="generatorV30">
+      <h3>➕ Generar nuevo cuestionario</h3>
+      <p class="hint">Registra un cuestionario desde una imagen o PDF. El archivo queda guardado localmente en este navegador junto con el nombre y la fecha de creación.</p>
+      <div class="generatorGridV30">
+        <div class="fieldV30"><label for="quizNameV30">Nombre del cuestionario</label><input id="quizNameV30" maxlength="100" placeholder="Ej.: Evaluación de Ciencias"></div>
+        <div class="fieldV30"><label for="quizSubjectV30">Materia</label><input id="quizSubjectV30" maxlength="80" placeholder="Ej.: Medio Natural y Salud"></div>
+        <div class="fieldV30 full">
+          <label for="quizFileV30">Imagen o PDF</label>
+          <div class="fileDropV30">
+            <input type="file" id="quizFileV30" accept="image/*,application/pdf,.pdf">
+            <div class="fileMetaV30" id="quizFileMetaV30">Selecciona una imagen o un archivo PDF.</div>
+          </div>
+        </div>
+      </div>
+      <div class="generatorActionsV30"><button class="btn primary" id="saveQuizV30">💾 Guardar cuestionario</button></div>
+      <div class="generatorStatusV30" id="generatorStatusV30"></div>
+    </div>
+    <div class="quizManagerV15">
+      <h3>⚙️ Administrar cuestionarios</h3>
+      <p class="hint">Puedes activar o inactivar los cuestionarios. Los cuestionarios creados también pueden eliminarse.</p>
+      <div class="managerTabsV15">
+        <button class="btn ${managerViewV15==='active'?'active':''}" id="activeTabV15">🟢 Activos (${activeCount})</button>
+        <button class="btn ${managerViewV15==='inactive'?'active':''}" id="inactiveTabV15">⚪ Inactivos (${inactiveCount})</button>
+      </div>
+      <div class="managerGridV15">
+      ${rows.length?rows.map(x=>{
+        const q=x.q, count=x.kind==='core'?q.count:(Array.isArray(q.questions)?q.questions.length:0);
+        const ident=x.kind==='core'?q.id:x.idx;
+        const created=x.kind==='custom'&&q.createdAt?`<div class="createdV30">📅 Creado: ${escV30(fmtDateV30(q.createdAt))}</div>`:'';
+        const source=x.kind==='custom'&&q.sourceName?`<span class="sourceBadgeV30">📎 ${escV30(q.sourceName)}${q.sourceSize?' · '+escV30(fmtSizeV30(q.sourceSize)):''}</span>`:'';
+        const pending=x.kind==='custom'&&!count?`<div class="pendingQuestionsV30">⚠️ Archivo registrado. Aún no contiene preguntas convertidas para el modo de estudio.</div>`:'';
+        return `<div class="managerCardV15 ${q.enabled===false?'off':''}">
+          <div class="managerHeadV15"><div><b>${x.kind==='core'?q.icon:subjectIconV14(q.subject)} ${escV30(q.title)}</b>
+          <div class="hint">${escV30(q.subject||'General')} · ${count} preguntas ${x.kind==='core'?'· Cuestionario original':''}</div>
+          ${created}${source}${pending}</div>
+          <span class="statusBadgeV13 ${q.enabled!==false?'on':'off'}">${q.enabled!==false?'ACTIVO':'INACTIVO'}</span></div>
+          <div class="quizActionsV12">
+            <button class="btn" data-v30-toggle="${x.kind}|${ident}">${q.enabled!==false?'⏸ Inactivar':'▶ Activar'}</button>
+            ${x.kind==='custom'&&q.sourceKey?`<button class="btn" data-v30-source="${x.idx}">👁️ Ver archivo</button>`:''}
+            ${q.enabled!==false&&count?`<button class="btn" data-v30-use="${x.kind}|${ident}">🎮 Usar</button>`:''}
+            ${x.kind==='custom'?`<button class="btn" data-v30-delete="${x.idx}">🗑️ Eliminar</button>`:''}
+          </div>
+        </div>`}).join(''):'<div class="homeEmptyV15">No hay cuestionarios en este estado.</div>'}
+      </div>
+    </div>`;
+
+   $('activeTabV15').onclick=()=>{managerViewV15='active';renderManagerV15()};
+   $('inactiveTabV15').onclick=()=>{managerViewV15='inactive';renderManagerV15()};
+
+   const fileInput=$('quizFileV30'), meta=$('quizFileMetaV30');
+   fileInput.onchange=()=>{
+     const f=fileInput.files&&fileInput.files[0];
+     meta.textContent=f?`${f.name} · ${fmtSizeV30(f.size)} · ${f.type||'archivo'}`:'Selecciona una imagen o un archivo PDF.';
+   };
+
+   $('saveQuizV30').onclick=async()=>{
+     const status=$('generatorStatusV30'), name=$('quizNameV30').value.trim(), subject=$('quizSubjectV30').value.trim();
+     const file=fileInput.files&&fileInput.files[0];
+     if(!name){status.textContent='❌ Escribe un nombre para el cuestionario.';return}
+     if(!file){status.textContent='❌ Selecciona una imagen o un PDF.';return}
+     const isAllowed=file.type==='application/pdf'||file.type.startsWith('image/')||/\.pdf$/i.test(file.name);
+     if(!isAllowed){status.textContent='❌ Solo se permiten imágenes o archivos PDF.';return}
+     const sourceKey='quiz-source-'+Date.now()+'-'+Math.random().toString(36).slice(2);
+     status.textContent='⏳ Guardando archivo...';
+     try{
+       await putFileV30(sourceKey,file);
+       quizzesV12.push({
+         title:name,
+         subject:subject||'General',
+         questions:[],
+         enabled:true,
+         createdAt:new Date().toISOString(),
+         sourceKey,
+         sourceName:file.name,
+         sourceType:file.type||'application/octet-stream',
+         sourceSize:file.size
+       });
+       saveQuizzesV12();managerViewV15='active';renderManagerV15();renderHomeSelectorV15();
+     }catch(e){status.textContent='❌ No se pudo guardar el archivo en este navegador.'}
+   };
+
+   document.querySelectorAll('[data-v30-toggle]').forEach(b=>b.onclick=()=>{
+     const [kind,id]=b.dataset.v30Toggle.split('|');
+     if(kind==='core'){coreQuizStateV16[id]=!(coreQuizStateV16[id]!==false);saveCoreStateV16();}
+     else{quizzesV12[+id].enabled=!(quizzesV12[+id].enabled!==false);saveQuizzesV12();}
+     renderManagerV15();renderHomeSelectorV15();
+   });
+   document.querySelectorAll('[data-v30-use]').forEach(b=>b.onclick=()=>{
+     const [kind,id]=b.dataset.v30Use.split('|');
+     if(kind==='core')openCoreQuizV16(id);else{renderQuizLibraryV12();openQuizV12(+id);}
+   });
+   document.querySelectorAll('[data-v30-source]').forEach(b=>b.onclick=async()=>{
+     const q=quizzesV12[+b.dataset.v30Source];if(!q?.sourceKey)return;
+     try{
+       const blob=await getFileV30(q.sourceKey);
+       if(!blob){alert('No se encontró el archivo guardado en este navegador.');return}
+       const url=URL.createObjectURL(blob);window.open(url,'_blank','noopener');
+       setTimeout(()=>URL.revokeObjectURL(url),60000);
+     }catch(e){alert('No se pudo abrir el archivo guardado.')}
+   });
+   document.querySelectorAll('[data-v30-delete]').forEach(b=>b.onclick=async()=>{
+     const idx=+b.dataset.v30Delete,q=quizzesV12[idx];
+     if(!confirm('¿Eliminar este cuestionario? Esta acción también quitará el archivo guardado.'))return;
+     if(q?.sourceKey){try{await deleteFileV30(q.sourceKey)}catch(e){}}
+     quizzesV12.splice(idx,1);saveQuizzesV12();renderManagerV15();renderHomeSelectorV15();
+   });
+ };
+
+ // Si el módulo está abierto, redibujarlo con la nueva versión.
+ if(document.getElementById('questionnairesPanelV11')?.classList.contains('show'))renderManagerV15();
+})();
+</script>
+
 	</body></html>
