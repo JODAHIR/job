@@ -133,7 +133,80 @@
 .moduleHintV11{color:var(--muted);line-height:1.55}
 #achievements{display:none!important}
 </style>
+
+<style id="v12-dynamic-quizzes">
+.quizLibraryV12{margin-top:18px;display:grid;gap:12px}
+.quizCardV12{border:1px solid #dfe4f4;border-radius:18px;padding:16px;background:#f9faff}
+.quizCardV12 h3{margin:0 0 6px}.quizActionsV12{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.quizPlayerV12{display:none;margin-top:18px;padding:20px;border:2px solid #dfe4f4;border-radius:20px;background:#fff}
+.quizPlayerV12.show{display:block}.quizQuestionV12{font-size:clamp(21px,4vw,30px);font-weight:900;margin:14px 0}
+.quizAnswerV12{display:none;padding:16px;border-radius:16px;background:#eaf8ee;font-size:22px;font-weight:900}
+.quizAnswerV12.show{display:block}
+.importBoxV12{margin-top:18px;padding:16px;border:1px dashed #b9c3e8;border-radius:18px;background:#fafbff}
+.importBoxV12 textarea{width:100%;min-height:140px;border:1px solid #cbd3ef;border-radius:12px;padding:12px;box-sizing:border-box}
+.statusV12{margin-top:10px;font-weight:800}
+</style>
+
+<style id="v13-toggle">
+.quizToggleV13{display:flex;align-items:center;gap:10px;margin-left:auto}
+.switchV13{position:relative;width:54px;height:30px;display:inline-block}
+.switchV13 input{opacity:0;width:0;height:0}
+.sliderV13{position:absolute;inset:0;background:#bbb;border-radius:30px;cursor:pointer;transition:.2s}
+.sliderV13:before{content:"";position:absolute;width:22px;height:22px;left:4px;top:4px;background:#fff;border-radius:50%;transition:.2s}
+.switchV13 input:checked + .sliderV13{background:#2f9d57}
+.switchV13 input:checked + .sliderV13:before{transform:translateX(24px)}
+.quizCardV12.disabledV13{opacity:.62;background:#f2f2f4}
+.quizCardV12.disabledV13 [data-open-quiz-v12]{display:none}
+.statusBadgeV13{font-size:13px;font-weight:900;padding:5px 9px;border-radius:999px}
+.statusBadgeV13.on{background:#e7f8ec;color:#19733c}.statusBadgeV13.off{background:#eee;color:#666}
+.quizHeadV13{display:flex;gap:12px;align-items:flex-start;justify-content:space-between}
+</style>
+
+<style id="v14-subject-segments">
+.subjectSegmentsV14{display:grid;gap:18px;margin-top:16px}
+.subjectSectionV14{border:1px solid #dfe4f4;border-radius:22px;padding:18px;background:#fff}
+.subjectHeaderV14{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:12px}
+.subjectHeaderV14 h3{margin:0;font-size:21px}
+.subjectCountV14{background:#f0f2ff;color:#5555a8;padding:6px 10px;border-radius:999px;font-size:13px;font-weight:900}
+.subjectQuizGridV14{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px}
+.emptySubjectV14{padding:18px;text-align:center;color:var(--muted);background:#f9faff;border-radius:14px}
+</style>
+
+<style id="v15-home-selector">
+.homeSelectorV15{background:#fff;border-radius:24px;padding:clamp(18px,4vw,28px);margin:16px 0;box-shadow:0 12px 30px #30386d18}
+.homeSelectorV15 h2{margin:0 0 6px}.homeQuizGridV15{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:12px;margin-top:14px}
+.homeQuizV15{border:2px solid #e5e8f5;border-radius:18px;padding:16px;background:#fafbff}
+.homeQuizV15 h3{margin:0 0 5px}.homeQuizV15 .btn{width:100%;margin-top:12px}
+.quizManagerV15{margin-top:18px}.managerTabsV15{display:flex;gap:10px;flex-wrap:wrap;margin:12px 0}
+.managerTabsV15 .btn.active{background:#5b5bd6!important;color:#fff!important}
+.managerGridV15{display:grid;grid-template-columns:repeat(auto-fit,minmax(270px,1fr));gap:12px}
+.managerCardV15{border:1px solid #dfe4f4;border-radius:18px;padding:16px;background:#fafbff}
+.managerCardV15.off{opacity:.68;background:#f2f3f6}.managerHeadV15{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}
+.activeQuizPillV15{display:inline-block;background:#e8f8ee;color:#19733c;border-radius:999px;padding:6px 10px;font-weight:900;font-size:13px}
+.homeEmptyV15{padding:20px;text-align:center;color:var(--muted);background:#f8f9ff;border-radius:16px}
+</style>
+
+<style id="v17-clean-navigation">
+/* V17: la portada no lista cuestionarios; los módulos se muestran de forma exclusiva */
+#homeSelectorV15{display:none!important}
+body.moduleOpenV17 .tabs,
+body.moduleOpenV17 .progressWrap,
+body.moduleOpenV17 .modeToggle,
+body.moduleOpenV17 > main > .card,
+body.moduleOpenV17 > main > .nav,
+body.moduleOpenV17 > main > .tools,
+body.moduleOpenV17 #practiceListPanelV8,
+body.moduleOpenV17 #list{display:none!important}
+.moduleNavV11 .btn{min-width:180px}
+</style>
 </head><body><main class="app"><section class="hero"><h1>🌟 Aprendo Jugando</h1><p>Cuestionario interactivo de Primer Grado. Lee, practica, gana estrellas y aprende jugando.</p><div class="scorebar"><span class="pill" id="player">👧 Mia ⭐ <b id="score">0</b></span><span class="pill">🔥 Racha <b id="streak">0</b></span></div><div class="achievements" id="achievements"></div></section>
+
+<section class="homeSelectorV15" id="homeSelectorV15">
+  <h2>🎯 ¿Qué cuestionario quieres usar?</h2>
+  <p class="hint">Aquí aparecen solamente los cuestionarios activos. Puedes cambiar de cuestionario en cualquier momento.</p>
+  <div class="homeQuizGridV15" id="homeQuizGridV15"></div>
+</section>
+
 <div class="moduleNavV11">
 <button class="btn" id="achievementsNavV11">🏆 Logros</button>
 <button class="btn" id="questionnairesNavV11">📚 Nuevos cuestionarios</button>
@@ -300,5 +373,411 @@ if(importerV10)$('questionnaireImporterV11').appendChild(importerV10);
 // Mantiene actualizado el módulo de logros después de cambios de aprendizaje.
 ['learned','practice'].forEach(id=>{const b=$(id);if(b)b.addEventListener('click',()=>setTimeout(renderAchievementsV11,10))});
 renderAchievementsV11();
+
+
+// V12: banco independiente de cuestionarios importables.
+const starterQuizzesV12=[{"title": "Matemáticas — Primer grado", "subject": "Matemáticas", "questions": [["¿Cuánto es 2 + 3?", "5"], ["¿Cuánto es 1 + 4?", "5"], ["¿Cuánto es 5 + 2?", "7"], ["¿Cuánto es 3 + 3?", "6"], ["¿Cuánto es 4 + 1?", "5"], ["¿Cuánto es 2 + 6?", "8"], ["¿Cuánto es 5 - 2?", "3"], ["¿Cuánto es 7 - 3?", "4"], ["¿Cuánto es 6 - 1?", "5"], ["¿Cuánto es 8 - 4?", "4"], ["¿Cuánto es 9 - 5?", "4"], ["¿Cuánto es 4 - 2?", "2"], ["¿Qué número es mayor: 3, 8 o 5?", "8"], ["¿Qué número viene después del 4?", "5"], ["¿Qué número viene antes del 7?", "6"], ["¿Qué número falta: 1, 2, 3, 4, __, 6?", "5"], ["¿Cuál es el número menor: 8, 3, 6, 1 o 4?", "1"], ["¿Cuántos lados tiene un triángulo?", "3"], ["¿Cuántos lados tiene un cuadrado?", "4"], ["María tiene 4 manzanas y recibe 3 más. ¿Cuántas tiene en total?", "7"]]}];
+let quizzesV12=JSON.parse(localStorage.getItem('customQuizzesV12')||'null')||starterQuizzesV12;
+let activeQuizV12=null, activeQuestionV12=0;
+
+function saveQuizzesV12(){localStorage.setItem('customQuizzesV12',JSON.stringify(quizzesV12));}
+function renderQuizLibraryV12(){
+ const host=$('questionnaireImporterV11'); if(!host)return;
+ host.innerHTML=`
+ <div class="importBoxV12">
+   <h3>📷 Desde una imagen</h3>
+   <p class="hint"><b>Importante:</b> un archivo HTML sin Internet no puede interpretar por sí solo el texto de una foto. La imagen que subiste anteriormente solo se previsualizaba. En esta versión ya incorporé como cuestionario las 20 preguntas de Matemáticas de tu imagen.</p>
+   <p class="hint">Para próximas fotos: súbelas en este chat, convierto su contenido a un bloque importable y luego lo pegas aquí.</p>
+   <h3>📥 Importar bloque de preguntas</h3>
+   <textarea id="quizJsonV12" placeholder='{"title":"Mi cuestionario","subject":"Materia","questions":[["Pregunta","Respuesta"]]}'></textarea>
+   <div class="quizActionsV12"><button class="btn" id="importQuizV12">📥 Importar cuestionario</button></div>
+   <div id="importStatusV12" class="statusV12"></div>
+ </div>
+ <h3>📚 Cuestionarios disponibles</h3><div class="quizLibraryV12" id="quizLibraryV12"></div>
+ <div class="quizPlayerV12" id="quizPlayerV12">
+   <div class="hint" id="quizCounterV12"></div><div class="quizQuestionV12" id="quizQuestionV12"></div>
+   <div class="quizAnswerV12" id="quizAnswerV12"></div>
+   <div class="quizActionsV12">
+    <button class="btn" id="showAnswerV12">👀 Ver respuesta</button>
+    <button class="btn" id="prevQuizV12">← Anterior</button>
+    <button class="btn" id="nextQuizV12">Siguiente →</button>
+   </div>
+ </div>`;
+ $('importQuizV12').onclick=importQuizV12;
+ renderQuizCardsV12();
+}
+function renderQuizCardsV12(){
+ const host=$('quizLibraryV12'); if(!host)return;
+ host.innerHTML=quizzesV12.map((q,idx)=>`<div class="quizCardV12"><h3>📘 ${q.title}</h3><div class="hint">${q.subject||'General'} · ${q.questions.length} preguntas</div><div class="quizActionsV12"><button class="btn" data-open-quiz-v12="${idx}">▶ Comenzar</button><button class="btn" data-delete-quiz-v12="${idx}">🗑️ Eliminar</button></div></div>`).join('');
+ document.querySelectorAll('[data-open-quiz-v12]').forEach(b=>b.onclick=()=>openQuizV12(+b.dataset.openQuizV12));
+ document.querySelectorAll('[data-delete-quiz-v12]').forEach(b=>b.onclick=()=>{quizzesV12.splice(+b.dataset.deleteQuizV12,1);saveQuizzesV12();renderQuizCardsV12();});
+}
+function openQuizV12(idx){
+ activeQuizV12=idx;activeQuestionV12=0;$('quizPlayerV12').classList.add('show');renderQuizQuestionV12();
+}
+function renderQuizQuestionV12(){
+ const q=quizzesV12[activeQuizV12], item=q.questions[activeQuestionV12];
+ $('quizCounterV12').textContent=`${q.title} · Pregunta ${activeQuestionV12+1} de ${q.questions.length}`;
+ $('quizQuestionV12').textContent=item[0];$('quizAnswerV12').textContent='✅ '+item[1];$('quizAnswerV12').classList.remove('show');
+ $('showAnswerV12').onclick=()=>$('quizAnswerV12').classList.add('show');
+ $('prevQuizV12').onclick=()=>{activeQuestionV12=(activeQuestionV12-1+q.questions.length)%q.questions.length;renderQuizQuestionV12();};
+ $('nextQuizV12').onclick=()=>{activeQuestionV12=(activeQuestionV12+1)%q.questions.length;renderQuizQuestionV12();};
+}
+function importQuizV12(){
+ try{
+   const raw=JSON.parse($('quizJsonV12').value);
+   const q=Array.isArray(raw)?raw[0]:raw;
+   if(!q.title||!Array.isArray(q.questions)||!q.questions.length)throw new Error('Formato incompleto');
+   q.questions=q.questions.filter(x=>Array.isArray(x)&&x.length>=2&&x[0]&&x[1]);
+   if(!q.questions.length)throw new Error('No hay preguntas válidas');
+   quizzesV12.push(q);saveQuizzesV12();$('quizJsonV12').value='';
+   $('importStatusV12').textContent='✅ Cuestionario importado correctamente.';renderQuizCardsV12();
+ }catch(e){$('importStatusV12').textContent='❌ No se pudo importar. Verifica el bloque de preguntas.';}
+}
+// Reemplaza solamente el contenido interno del módulo V11; conserva su navegación.
+const oldOpenV11=openModuleV11;
+openModuleV11=function(which){oldOpenV11(which);if(which==='questionnaires')renderQuizLibraryV12();};
+
+
+// V13: activación/desactivación persistente de cuestionarios.
+function normalizeQuizEnabledV13(){
+  quizzesV12.forEach(q=>{if(typeof q.enabled!=='boolean')q.enabled=true;});
+  saveQuizzesV12();
+}
+const renderQuizCardsV12_baseV13=renderQuizCardsV12;
+renderQuizCardsV12=function(){
+ normalizeQuizEnabledV13();
+ const host=$('quizLibraryV12');if(!host)return;
+ host.innerHTML=quizzesV12.map((q,idx)=>`
+ <div class="quizCardV12 ${q.enabled?'':'disabledV13'}">
+   <div class="quizHeadV13">
+    <div><h3>📘 ${q.title}</h3><div class="hint">${q.subject||'General'} · ${q.questions.length} preguntas</div></div>
+    <div class="quizToggleV13">
+      <span class="statusBadgeV13 ${q.enabled?'on':'off'}">${q.enabled?'ACTIVO':'INACTIVO'}</span>
+      <label class="switchV13" title="${q.enabled?'Desactivar':'Activar'} cuestionario">
+       <input type="checkbox" data-toggle-quiz-v13="${idx}" ${q.enabled?'checked':''}>
+       <span class="sliderV13"></span>
+      </label>
+    </div>
+   </div>
+   <div class="quizActionsV12">
+    ${q.enabled?`<button class="btn" data-open-quiz-v12="${idx}">▶ Comenzar</button>`:''}
+    <button class="btn" data-delete-quiz-v12="${idx}">🗑️ Eliminar</button>
+   </div>
+ </div>`).join('');
+ document.querySelectorAll('[data-open-quiz-v12]').forEach(b=>b.onclick=()=>openQuizV12(+b.dataset.openQuizV12));
+ document.querySelectorAll('[data-delete-quiz-v12]').forEach(b=>b.onclick=()=>{quizzesV12.splice(+b.dataset.deleteQuizV12,1);saveQuizzesV12();renderQuizCardsV12();});
+ document.querySelectorAll('[data-toggle-quiz-v13]').forEach(t=>t.onchange=()=>{
+   const idx=+t.dataset.toggleQuizV13;quizzesV12[idx].enabled=t.checked;saveQuizzesV12();renderQuizCardsV12();
+ });
+};
+const openQuizV12_baseV13=openQuizV12;
+openQuizV12=function(idx){
+ if(!quizzesV12[idx]||quizzesV12[idx].enabled===false)return;
+ openQuizV12_baseV13(idx);
+};
+normalizeQuizEnabledV13();
+
+
+// V14: biblioteca segmentada automáticamente por materia.
+function subjectIconV14(subject){
+ const x=(subject||'').toLowerCase();
+ if(x.includes('matem'))return '🔢';
+ if(x.includes('social'))return '🏠';
+ if(x.includes('natural')||x.includes('salud'))return '🌱';
+ if(x.includes('lengua')||x.includes('comunica'))return '📖';
+ if(x.includes('ciencia'))return '🔬';
+ return '📚';
+}
+function normalizeSubjectV14(q){
+ let s=(q.subject||'General').trim();
+ return s||'General';
+}
+renderQuizCardsV12=function(){
+ normalizeQuizEnabledV13();
+ const host=$('quizLibraryV12');if(!host)return;
+ const groups={};
+ quizzesV12.forEach((q,idx)=>{
+   const subject=normalizeSubjectV14(q);
+   if(!groups[subject])groups[subject]=[];
+   groups[subject].push({q,idx});
+ });
+ const preferred=['Matemáticas','Vida Social y Trabajo','Medio Natural y Salud'];
+ const subjects=Object.keys(groups).sort((a,b)=>{
+   const ia=preferred.indexOf(a),ib=preferred.indexOf(b);
+   if(ia>=0||ib>=0)return (ia<0?999:ia)-(ib<0?999:ib);
+   return a.localeCompare(b,'es');
+ });
+ host.innerHTML=`<div class="subjectSegmentsV14">${subjects.map(subject=>`
+  <section class="subjectSectionV14">
+   <div class="subjectHeaderV14">
+    <h3>${subjectIconV14(subject)} ${subject}</h3>
+    <span class="subjectCountV14">${groups[subject].length} cuestionario${groups[subject].length===1?'':'s'}</span>
+   </div>
+   <div class="subjectQuizGridV14">
+    ${groups[subject].map(({q,idx})=>`
+     <div class="quizCardV12 ${q.enabled?'':'disabledV13'}">
+      <div class="quizHeadV13">
+       <div><h3>📘 ${q.title}</h3><div class="hint">${q.questions.length} preguntas</div></div>
+       <div class="quizToggleV13">
+        <span class="statusBadgeV13 ${q.enabled?'on':'off'}">${q.enabled?'ACTIVO':'INACTIVO'}</span>
+        <label class="switchV13" title="${q.enabled?'Desactivar':'Activar'} cuestionario">
+         <input type="checkbox" data-toggle-quiz-v13="${idx}" ${q.enabled?'checked':''}>
+         <span class="sliderV13"></span>
+        </label>
+       </div>
+      </div>
+      <div class="quizActionsV12">
+       ${q.enabled?`<button class="btn" data-open-quiz-v12="${idx}">▶ Comenzar</button>`:''}
+       <button class="btn" data-delete-quiz-v12="${idx}">🗑️ Eliminar</button>
+      </div>
+     </div>`).join('')}
+   </div>
+  </section>`).join('')}</div>`;
+ document.querySelectorAll('[data-open-quiz-v12]').forEach(b=>b.onclick=()=>openQuizV12(+b.dataset.openQuizV12));
+ document.querySelectorAll('[data-delete-quiz-v12]').forEach(b=>b.onclick=()=>{quizzesV12.splice(+b.dataset.deleteQuizV12,1);saveQuizzesV12();renderQuizCardsV12();});
+ document.querySelectorAll('[data-toggle-quiz-v13]').forEach(t=>t.onchange=()=>{
+   const idx=+t.dataset.toggleQuizV13;quizzesV12[idx].enabled=t.checked;saveQuizzesV12();renderQuizCardsV12();
+ });
+};
+// Al importar, el campo "subject" determina automáticamente el segmento donde aparecerá.
+
+
+// V15: selector inicial + administrador independiente de activos/inactivos.
+let managerViewV15='active';
+
+function enabledQuizzesV15(){
+  normalizeQuizEnabledV13();
+  return quizzesV12.map((q,idx)=>({q,idx})).filter(x=>x.q.enabled!==false);
+}
+function renderHomeSelectorV15(){
+  const host=$('homeQuizGridV15'); if(!host)return;
+  const rows=enabledQuizzesV15();
+  host.innerHTML=rows.length?rows.map(({q,idx})=>`
+    <div class="homeQuizV15">
+      <span class="activeQuizPillV15">● ACTIVO</span>
+      <h3>${subjectIconV14(q.subject)} ${q.title}</h3>
+      <div class="hint">${q.subject||'General'} · ${q.questions.length} preguntas</div>
+      <button class="btn primary" data-home-open-v15="${idx}">▶ Usar este cuestionario</button>
+    </div>`).join(''):`<div class="homeEmptyV15">No hay cuestionarios activos. Activa uno desde <b>📚 Nuevos cuestionarios</b>.</div>`;
+  document.querySelectorAll('[data-home-open-v15]').forEach(b=>b.onclick=()=>{
+    const idx=+b.dataset.homeOpenV15;
+    openModuleV11('questionnaires');
+    renderQuizLibraryV12();
+    openQuizV12(idx);
+    const player=$('quizPlayerV12'); if(player)player.scrollIntoView({behavior:'smooth',block:'start'});
+  });
+}
+
+function renderManagerV15(){
+  const host=$('questionnaireImporterV11'); if(!host)return;
+  normalizeQuizEnabledV13();
+  const rows=quizzesV12.map((q,idx)=>({q,idx})).filter(x=>managerViewV15==='active'?x.q.enabled!==false:x.q.enabled===false);
+  host.innerHTML=`
+    <div class="quizManagerV15">
+      <h3>⚙️ Administrar cuestionarios</h3>
+      <div class="managerTabsV15">
+        <button class="btn ${managerViewV15==='active'?'active':''}" id="activeTabV15">🟢 Activos (${quizzesV12.filter(q=>q.enabled!==false).length})</button>
+        <button class="btn ${managerViewV15==='inactive'?'active':''}" id="inactiveTabV15">⚪ Inactivos (${quizzesV12.filter(q=>q.enabled===false).length})</button>
+      </div>
+      <div class="managerGridV15">
+        ${rows.length?rows.map(({q,idx})=>`
+          <div class="managerCardV15 ${q.enabled===false?'off':''}">
+            <div class="managerHeadV15">
+              <div><b>${subjectIconV14(q.subject)} ${q.title}</b><div class="hint">${q.subject||'General'} · ${q.questions.length} preguntas</div></div>
+              <span class="statusBadgeV13 ${q.enabled!==false?'on':'off'}">${q.enabled!==false?'ACTIVO':'INACTIVO'}</span>
+            </div>
+            <div class="quizActionsV12">
+              <button class="btn" data-manager-toggle-v15="${idx}">${q.enabled!==false?'⏸ Desactivar':'▶ Activar'}</button>
+              ${q.enabled!==false?`<button class="btn" data-manager-open-v15="${idx}">🎮 Usar</button>`:''}
+              <button class="btn" data-manager-delete-v15="${idx}">🗑️ Eliminar</button>
+            </div>
+          </div>`).join(''):`<div class="homeEmptyV15">No hay cuestionarios ${managerViewV15==='active'?'activos':'inactivos'}.</div>`}
+      </div>
+      <div class="importBoxV12">
+        <h3>📥 Importar nuevo cuestionario</h3>
+        <p class="hint">Los cuestionarios nuevos quedan activos por defecto y aparecen automáticamente en el selector inicial.</p>
+        <textarea id="quizJsonV12" placeholder='{"title":"Mi cuestionario","subject":"Materia","questions":[["Pregunta","Respuesta"]]}'></textarea>
+        <div class="quizActionsV12"><button class="btn" id="importQuizV12">📥 Importar cuestionario</button></div>
+        <div id="importStatusV12" class="statusV12"></div>
+      </div>
+    </div>`;
+  $('activeTabV15').onclick=()=>{managerViewV15='active';renderManagerV15()};
+  $('inactiveTabV15').onclick=()=>{managerViewV15='inactive';renderManagerV15()};
+  document.querySelectorAll('[data-manager-toggle-v15]').forEach(b=>b.onclick=()=>{
+    const idx=+b.dataset.managerToggleV15; quizzesV12[idx].enabled=!(quizzesV12[idx].enabled!==false);
+    saveQuizzesV12(); renderManagerV15(); renderHomeSelectorV15();
+  });
+  document.querySelectorAll('[data-manager-open-v15]').forEach(b=>b.onclick=()=>{
+    const idx=+b.dataset.managerOpenV15; renderQuizLibraryV12(); openQuizV12(idx);
+    const p=$('quizPlayerV12');if(p)p.scrollIntoView({behavior:'smooth',block:'start'});
+  });
+  document.querySelectorAll('[data-manager-delete-v15]').forEach(b=>b.onclick=()=>{
+    const idx=+b.dataset.managerDeleteV15;
+    if(confirm('¿Eliminar este cuestionario?')){quizzesV12.splice(idx,1);saveQuizzesV12();renderManagerV15();renderHomeSelectorV15();}
+  });
+  $('importQuizV12').onclick=()=>{
+    try{
+      const raw=JSON.parse($('quizJsonV12').value), q=Array.isArray(raw)?raw[0]:raw;
+      if(!q.title||!Array.isArray(q.questions)||!q.questions.length)throw new Error();
+      q.questions=q.questions.filter(x=>Array.isArray(x)&&x.length>=2&&x[0]&&x[1]);
+      if(!q.questions.length)throw new Error();
+      q.enabled=true; quizzesV12.push(q); saveQuizzesV12();
+      managerViewV15='active'; renderManagerV15(); renderHomeSelectorV15();
+    }catch(e){$('importStatusV12').textContent='❌ No se pudo importar. Verifica el formato.'}
+  };
+}
+
+const openModuleV11_v15=openModuleV11;
+openModuleV11=function(which){
+  openModuleV11_v15(which);
+  if(which==='questionnaires')renderManagerV15();
+};
+renderHomeSelectorV15();
+
+
+// V16: Vida Social y Medio Natural también son cuestionarios activables/desactivables.
+let coreQuizStateV16=JSON.parse(localStorage.getItem('coreQuizStateV16')||'{"social":true,"natural":true}');
+function saveCoreStateV16(){localStorage.setItem('coreQuizStateV16',JSON.stringify(coreQuizStateV16));}
+function coreQuizzesV16(){
+ return [
+  {id:'social',title:'Vida Social y Trabajo',subject:'Vida Social y Trabajo',count:data.social.length,enabled:coreQuizStateV16.social!==false,icon:'🏠'},
+  {id:'natural',title:'Medio Natural y Salud',subject:'Medio Natural y Salud',count:data.natural.length,enabled:coreQuizStateV16.natural!==false,icon:'🌱'}
+ ];
+}
+function openCoreQuizV16(id){
+ if(coreQuizStateV16[id]===false)return;
+ closeModulesV11();
+ const hs=$('homeSelectorV15'); if(hs)hs.scrollIntoView({behavior:'smooth',block:'start'});
+ hideStatePanelV8();
+ setMode(id); i=0; view='study'; render();
+ document.querySelector('.card').scrollIntoView({behavior:'smooth',block:'start'});
+}
+
+// Reemplaza el selector inicial para incluir cuestionarios base + importados.
+renderHomeSelectorV15=function(){
+ const host=$('homeQuizGridV15');if(!host)return;
+ normalizeQuizEnabledV13();
+ const core=coreQuizzesV16().filter(q=>q.enabled);
+ const custom=quizzesV12.map((q,idx)=>({q,idx})).filter(x=>x.q.enabled!==false);
+ let cards=core.map(q=>`
+   <div class="homeQuizV15">
+    <span class="activeQuizPillV15">● ACTIVO</span>
+    <h3>${q.icon} ${q.title}</h3>
+    <div class="hint">${q.subject} · ${q.count} preguntas</div>
+    <button class="btn primary" data-core-open-v16="${q.id}">▶ Usar este cuestionario</button>
+   </div>`).join('');
+ cards+=custom.map(({q,idx})=>`
+   <div class="homeQuizV15">
+    <span class="activeQuizPillV15">● ACTIVO</span>
+    <h3>${subjectIconV14(q.subject)} ${q.title}</h3>
+    <div class="hint">${q.subject||'General'} · ${q.questions.length} preguntas</div>
+    <button class="btn primary" data-home-open-v15="${idx}">▶ Usar este cuestionario</button>
+   </div>`).join('');
+ host.innerHTML=cards||'<div class="homeEmptyV15">No hay cuestionarios activos. Activa uno desde <b>📚 Nuevos cuestionarios</b>.</div>';
+ document.querySelectorAll('[data-core-open-v16]').forEach(b=>b.onclick=()=>openCoreQuizV16(b.dataset.coreOpenV16));
+ document.querySelectorAll('[data-home-open-v15]').forEach(b=>b.onclick=()=>{
+   const idx=+b.dataset.homeOpenV15;openModuleV11('questionnaires');renderQuizLibraryV12();openQuizV12(idx);
+   const p=$('quizPlayerV12');if(p)p.scrollIntoView({behavior:'smooth',block:'start'});
+ });
+};
+
+// Administrador único: base + nuevos cuestionarios.
+renderManagerV15=function(){
+ const host=$('questionnaireImporterV11');if(!host)return;
+ normalizeQuizEnabledV13();
+ const core=coreQuizzesV16().map(q=>({kind:'core',q}));
+ const custom=quizzesV12.map((q,idx)=>({kind:'custom',q,idx}));
+ const all=[...core,...custom];
+ const rows=all.filter(x=>managerViewV15==='active'?x.q.enabled!==false:x.q.enabled===false);
+ const activeCount=all.filter(x=>x.q.enabled!==false).length;
+ const inactiveCount=all.filter(x=>x.q.enabled===false).length;
+ host.innerHTML=`
+  <div class="quizManagerV15">
+   <h3>⚙️ Administrar cuestionarios</h3>
+   <p class="hint">Aquí también puedes activar o desactivar las materias originales del sistema.</p>
+   <div class="managerTabsV15">
+    <button class="btn ${managerViewV15==='active'?'active':''}" id="activeTabV15">🟢 Activos (${activeCount})</button>
+    <button class="btn ${managerViewV15==='inactive'?'active':''}" id="inactiveTabV15">⚪ Inactivos (${inactiveCount})</button>
+   </div>
+   <div class="managerGridV15">
+   ${rows.length?rows.map(x=>{
+     const q=x.q, count=x.kind==='core'?q.count:q.questions.length;
+     const ident=x.kind==='core'?q.id:x.idx;
+     return `<div class="managerCardV15 ${q.enabled===false?'off':''}">
+      <div class="managerHeadV15"><div><b>${x.kind==='core'?q.icon:subjectIconV14(q.subject)} ${q.title}</b>
+      <div class="hint">${q.subject||'General'} · ${count} preguntas ${x.kind==='core'?'· Cuestionario original':''}</div></div>
+      <span class="statusBadgeV13 ${q.enabled!==false?'on':'off'}">${q.enabled!==false?'ACTIVO':'INACTIVO'}</span></div>
+      <div class="quizActionsV12">
+       <button class="btn" data-v16-toggle="${x.kind}|${ident}">${q.enabled!==false?'⏸ Desactivar':'▶ Activar'}</button>
+       ${q.enabled!==false?`<button class="btn" data-v16-use="${x.kind}|${ident}">🎮 Usar</button>`:''}
+       ${x.kind==='custom'?`<button class="btn" data-manager-delete-v15="${x.idx}">🗑️ Eliminar</button>`:''}
+      </div></div>`}).join(''):'<div class="homeEmptyV15">No hay cuestionarios en este estado.</div>'}
+   </div>
+   <div class="importBoxV12">
+    <h3>📥 Importar nuevo cuestionario</h3>
+    <p class="hint">Los nuevos cuestionarios quedan activos por defecto.</p>
+    <textarea id="quizJsonV12" placeholder='{"title":"Mi cuestionario","subject":"Materia","questions":[["Pregunta","Respuesta"]]}'></textarea>
+    <div class="quizActionsV12"><button class="btn" id="importQuizV12">📥 Importar cuestionario</button></div>
+    <div id="importStatusV12" class="statusV12"></div>
+   </div>
+  </div>`;
+ $('activeTabV15').onclick=()=>{managerViewV15='active';renderManagerV15()};
+ $('inactiveTabV15').onclick=()=>{managerViewV15='inactive';renderManagerV15()};
+ document.querySelectorAll('[data-v16-toggle]').forEach(b=>b.onclick=()=>{
+   const [kind,id]=b.dataset.v16Toggle.split('|');
+   if(kind==='core'){coreQuizStateV16[id]=!(coreQuizStateV16[id]!==false);saveCoreStateV16();}
+   else {quizzesV12[+id].enabled=!(quizzesV12[+id].enabled!==false);saveQuizzesV12();}
+   renderManagerV15();renderHomeSelectorV15();
+ });
+ document.querySelectorAll('[data-v16-use]').forEach(b=>b.onclick=()=>{
+   const [kind,id]=b.dataset.v16Use.split('|');
+   if(kind==='core')openCoreQuizV16(id); else {renderQuizLibraryV12();openQuizV12(+id);}
+ });
+ document.querySelectorAll('[data-manager-delete-v15]').forEach(b=>b.onclick=()=>{
+   const idx=+b.dataset.managerDeleteV15;
+   if(confirm('¿Eliminar este cuestionario?')){quizzesV12.splice(idx,1);saveQuizzesV12();renderManagerV15();renderHomeSelectorV15();}
+ });
+ $('importQuizV12').onclick=()=>{
+   try{
+    const raw=JSON.parse($('quizJsonV12').value),q=Array.isArray(raw)?raw[0]:raw;
+    if(!q.title||!Array.isArray(q.questions)||!q.questions.length)throw new Error();
+    q.questions=q.questions.filter(x=>Array.isArray(x)&&x.length>=2&&x[0]&&x[1]);
+    if(!q.questions.length)throw new Error();q.enabled=true;quizzesV12.push(q);saveQuizzesV12();
+    managerViewV15='active';renderManagerV15();renderHomeSelectorV15();
+   }catch(e){$('importStatusV12').textContent='❌ No se pudo importar. Verifica el formato.'}
+ };
+};
+renderHomeSelectorV15();
+
+
+// V17: navegación limpia y exclusiva entre estudio, Logros y Nuevos cuestionarios.
+function setModuleLayoutV17(open){
+ document.body.classList.toggle('moduleOpenV17',!!open);
+}
+const openModuleV11_v17=openModuleV11;
+openModuleV11=function(which){
+ setModuleLayoutV17(true);
+ openModuleV11_v17(which);
+ if(which==='questionnaires')renderManagerV15();
+};
+
+// Al volver a cualquiera de las materias originales, se cierra cualquier módulo.
+['socialBtn','naturalBtn','pendingBtn','practiceListNavV8'].forEach(id=>{
+ const b=$(id);
+ if(b)b.addEventListener('click',()=>{setModuleLayoutV17(false);closeModulesV11();});
+});
+
+// El selector de cuestionarios deja de formar parte de la página principal.
+const homeV17=$('homeSelectorV15');
+if(homeV17)homeV17.style.display='none';
+
+// Si desde el administrador se elige un cuestionario original, vuelve al área de estudio.
+const openCoreQuizV16_v17=openCoreQuizV16;
+openCoreQuizV16=function(id){
+ setModuleLayoutV17(false);
+ closeModulesV11();
+ openCoreQuizV16_v17(id);
+};
 
 </script></body></html>
