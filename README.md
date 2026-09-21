@@ -35,7 +35,7 @@ Este paso es necesario para que funcione **Ingresar con Google**. No reemplaces 
 ## 4. Usar el sitio
 
 - Abrí la dirección que GitHub te muestre.
-- Iniciá sesión con `user@gmail.com`.
+- Iniciá sesión con `javier.odahir@gmail.com`.
 - Entrá en **Administrar conocimientos**.
 - Elegí **Nuevo procedimiento**, completá la información, marcá **Publicar** y guardá.
 
