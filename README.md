@@ -26,7 +26,7 @@ La carpeta `docs` contiene la web ya compilada: no necesitás instalar programas
 
 ## 3. Permitir el inicio de sesión desde GitHub
 
-Abrí https://console.firebase.google.com/project/asistente-operativo-9ee58/authentication/settings
+Abrí https://console.firebase.google.com/project/asistente-operativo/authentication/settings
 
 En **Dominios autorizados → Agregar un dominio**, agregá `TU_USUARIO.github.io` (tu usuario real de GitHub, sin `https://`, sin barra y sin el nombre del repositorio). Si configurás un dominio propio, agregá también ese dominio.
 
@@ -35,7 +35,7 @@ Este paso es necesario para que funcione **Ingresar con Google**. No reemplaces 
 ## 4. Usar el sitio
 
 - Abrí la dirección que GitHub te muestre.
-- Iniciá sesión con `javier.odahir@gmail.com`.
+- Iniciá sesión con `user@gmail.com`.
 - Entrá en **Administrar conocimientos**.
 - Elegí **Nuevo procedimiento**, completá la información, marcá **Publicar** y guardá.
 
