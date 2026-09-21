@@ -1,0 +1,14 @@
+{
+  "name": "asistente-operativo",
+  "private": true,
+  "version": "1.1.0",
+  "scripts": {
+    "build": "esbuild src/admin.js src/cloud.js --bundle --minify --target=es2022 --outdir=docs --entry-names=[name]-bundle"
+  },
+  "dependencies": {
+    "firebase": "12.19.0"
+  },
+  "devDependencies": {
+    "esbuild": "0.25.10"
+  }
+}

@@ -1,0 +1,28 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function owner() {
+      return request.auth != null
+        && request.auth.token.email_verified == true
+        && request.auth.token.email == 'javier.odahir@gmail.com';
+    }
+    function valid(d) {
+      return d.keys().hasAll(['title','questions','support','steps','hours','good','bad','published','keywords','updatedAt'])
+        && d.keys().hasOnly(['title','questions','support','steps','hours','good','bad','published','keywords','updatedAt'])
+        && d.title is string && d.title.size() > 0 && d.title.size() <= 200
+        && d.steps is string && d.steps.size() > 0 && d.steps.size() <= 10000
+        && d.questions is string && d.questions.size() <= 3000
+        && d.support is string && d.support.size() <= 500
+        && d.hours is string && d.hours.size() <= 500
+        && d.good is string && d.good.size() <= 3000
+        && d.bad is string && d.bad.size() <= 3000
+        && d.published is bool && d.keywords is list && d.keywords.size() <= 100
+        && d.updatedAt == request.time;
+    }
+    match /procedimientos/{id} {
+      allow read: if owner();
+      allow create, update: if owner() && valid(request.resource.data);
+      allow delete: if false;
+    }
+  }
+}
