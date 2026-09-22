@@ -1,3 +1,5 @@
+// procedimientos: validated operational records; only published records may be read by approved users.
+// authorized_users/{lowercase email}: admin-managed consultation access; users can read only their own status.
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
@@ -5,6 +7,25 @@ service cloud.firestore {
       return request.auth != null
         && request.auth.token.email_verified == true
         && request.auth.token.email == 'javier.odahir@gmail.com';
+    }
+    function approved() {
+      return request.auth != null && request.auth.token.email_verified == true
+        && get(/databases/$(database)/documents/authorized_users/$(request.auth.token.email.lower())).data.active == true;
+    }
+    match /authorized_users/{email} {
+      allow get: if owner() || (request.auth != null && request.auth.token.email_verified == true && request.auth.token.email.lower() == email);
+      allow list: if owner();
+      allow create, update: if owner()
+        && request.resource.data.keys().hasAll(['email','active','updatedAt','updatedBy'])
+        && request.resource.data.keys().hasOnly(['email','active','updatedAt','updatedBy'])
+        && request.resource.data.email is string && request.resource.data.email == email
+        && email == email.lower() && email.size() <= 254
+        && email.matches('[^ /@]+@[^ /@]+[.][^ /@]+')
+        && email != 'javier.odahir@gmail.com'
+        && request.resource.data.active is bool
+        && request.resource.data.updatedAt == request.time
+        && request.resource.data.updatedBy == request.auth.uid;
+      allow delete: if false;
     }
     function valid(d) {
       return d.keys().hasAll(['title','questions','support','steps','hours','good','bad','published','keywords','updatedAt'])
@@ -20,7 +41,7 @@ service cloud.firestore {
         && d.updatedAt == request.time;
     }
     match /procedimientos/{id} {
-      allow read: if owner();
+      allow read: if owner() || (approved() && resource.data.published == true);
       allow create, update: if owner() && valid(request.resource.data);
       allow delete: if false;
     }

@@ -76,3 +76,20 @@ Si aparece un error de dominio no autorizado, revisá el paso 3. Si aparece un e
 
 - GitHub Pages: https://docs.github.com/en/pages/getting-started-with-github-pages/configuring-a-publishing-source-for-your-github-pages-site
 - Seguridad de Firestore: https://firebase.google.com/docs/firestore/security/overview
+
+## Autorización de personas
+
+En `admin.html`, ingresar con la cuenta administradora y usar **Personas autorizadas**. Agregar el correo exacto utilizado para iniciar sesión con Google. Cada persona autorizada puede consultar únicamente procedimientos publicados; no puede editar conocimientos ni gestionar accesos. **Revocar acceso** impide nuevas consultas; **Autorizar nuevamente** lo restablece. La cuenta administradora conserva su acceso.
+
+Las reglas de `firestore.rules` deben publicarse en la base `conocimientos` del proyecto Firebase antes de usar esta función. Subir archivos a GitHub Pages no despliega las reglas de Firebase. Los correos autorizados se guardan en Firestore, nunca en este repositorio.
+
+### Verificación de permisos
+
+Con las dependencias instaladas y Java 21 disponible:
+
+```sh
+npm run test:access
+npx firebase-tools@latest emulators:exec --project demo-access --config firebase.test.json --only firestore 'npm run test:rules'
+```
+
+Las pruebas usan datos ficticios y comprueban autorización, revocación, reactivación, acceso a borradores, privacidad de la lista y bloqueo de escrituras no autorizadas.
