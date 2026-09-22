@@ -93,3 +93,13 @@ npx firebase-tools@latest emulators:exec --project demo-access --config firebase
 ```
 
 Las pruebas usan datos ficticios y comprueban autorización, revocación, reactivación, acceso a borradores, privacidad de la lista y bloqueo de escrituras no autorizadas.
+
+## Panel moderno e historial
+
+Interfaz con Bootstrap 5.3.8, controles accesibles por teclado y diseño adaptable. Los procedimientos se agrupan en Publicados y Borradores; el buscador compara títulos, preguntas y sistemas sin distinguir tildes o mayúsculas. La biblioteca muestra los primeros 100 registros, igual que en la versión anterior.
+
+Cada guardado crea una revisión inmutable en `procedure_history` dentro de la misma transacción que modifica el procedimiento. Registra fecha, autor y contenido anterior/nuevo. La primera modificación de un registro existente conserva su versión previa; no reconstruye cambios históricos que nunca se registraron. Los historiales solo pueden leerse desde la cuenta administradora. Se rechaza un guardado si el procedimiento cambió desde que se abrió el editor.
+
+IMPORTANTE: publicar las reglas actualizadas de Firestore junto con la nueva versión del panel. Las reglas exigen una revisión para cada escritura; la versión anterior del editor deberá recargarse después del despliegue.
+
+Pruebas adicionales: `node tests/procedure-view.test.mjs`.

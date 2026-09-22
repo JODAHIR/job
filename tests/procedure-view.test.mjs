@@ -1,0 +1,12 @@
+import {strict as assert} from 'node:assert';
+import {filterProcedures,changedFields,displayValue} from '../src/procedure-view.js';
+const items=[{title:'Créditos — Resolución',questions:'préstamo canal',support:'SCA',published:true},{title:'Cobranzas',questions:'efectivo',support:'AS400',published:false}];
+assert.equal(filterProcedures(items,'CREDITOS resolucion').length,1);
+assert.equal(filterProcedures(items,'prestamo SCA').length,1);
+assert.equal(filterProcedures(items,'efectivo')[0].published,false);
+assert.equal(filterProcedures(items,'inexistente').length,0);
+assert.equal(filterProcedures(items,'   ').length,2);
+assert.deepEqual(changedFields({steps:'Antes',published:false},{steps:'Después',published:true}).map(x=>x.key),['steps','published']);
+assert.equal(displayValue('published',false),'Borrador');
+assert.deepEqual(changedFields({title:'Igual',updatedAt:1},{title:'Igual',updatedAt:2}),[]);
+console.log('8 pruebas de búsqueda y comparación correctas.');

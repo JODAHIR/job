@@ -1,5 +1,6 @@
 const {initializeTestEnvironment,assertFails,assertSucceeds}=require('@firebase/rules-unit-testing');
-const {doc,setDoc,getDoc,getDocs,collection,query,where,serverTimestamp,deleteDoc}=require('firebase/firestore');
+const {doc,setDoc,getDoc,getDocFromServer,getDocs,collection,query,where,serverTimestamp,deleteDoc,writeBatch}=require('firebase/firestore');
+const {randomUUID}=require('node:crypto');
 const fs=require('node:fs');
 const {execute,field}=require('firebase/firestore/pipelines');
 (async()=>{
@@ -11,11 +12,28 @@ const {execute,field}=require('firebase/firestore/pipelines');
  const anonymous=env.unauthenticatedContext().firestore();
  const member=(active=true)=>({email:'person@example.com',active,updatedAt:serverTimestamp(),updatedBy:'admin'});
  const procedure={title:'Prueba',questions:'prueba',support:'',steps:'Paso de prueba',hours:'',good:'',bad:'',published:true,keywords:['prueba'],updatedAt:serverTimestamp()};
+ async function save(id,data,overrides={}){
+  const ref=doc(admin,'procedimientos',id),old=await getDocFromServer(ref),revisionId=randomUUID();
+  const after={...data,revisionId},history={procedureId:id,before:old.exists()?old.data():null,after,changedAt:serverTimestamp(),changedBy:'admin',changedEmail:'javier.odahir@gmail.com',...overrides};
+  const batch=writeBatch(admin);batch.set(ref,after);batch.set(doc(admin,'procedure_history',revisionId),history);await batch.commit();return revisionId;
+ }
  let checks=0;async function ok(p){await assertSucceeds(p);checks++}async function no(p){await assertFails(p);checks++}
  try{
+ await env.withSecurityRulesDisabled(async context=>setDoc(doc(context.firestore(),'procedimientos/legacy'),procedure));
+ await ok(save('legacy',{...procedure,title:'Registro anterior actualizado'}));
  await ok(setDoc(doc(admin,'authorized_users/person@example.com'),member()));
- await ok(setDoc(doc(admin,'procedimientos/public'),procedure));
- await ok(setDoc(doc(admin,'procedimientos/draft'),{...procedure,published:false}));
+ await ok(save('public',procedure));
+ await ok(save('draft',{...procedure,published:false}));
+ const revision=await save('public',{...procedure,title:'Título modificado'});
+ await ok(getDoc(doc(admin,'procedure_history',revision)));
+ await ok(execute(admin._delegate.pipeline().collection('procedure_history').where(field('procedureId').equal('public')).sort(field('changedAt').descending())));
+ await no(execute(reader._delegate.pipeline().collection('procedure_history').where(field('procedureId').equal('public'))));
+ await no(getDoc(doc(reader,'procedure_history',revision)));
+ await no(setDoc(doc(admin,'procedure_history',revision),{changedBy:'other'},{merge:true}));
+ await no(deleteDoc(doc(admin,'procedure_history',revision)));
+ await no(save('public',procedure,{before:null}));
+ await no(save('public',procedure,{changedBy:'other'}));
+ await no(setDoc(doc(admin,'procedimientos/public'),{...procedure,revisionId:randomUUID()}));
  await ok(getDoc(doc(reader,'procedimientos/public')));
  await ok(execute(reader._delegate.pipeline().collection('procedimientos').where(field('published').equal(true)).where(field('keywords').arrayContainsAny(['prueba'])).limit(6)));
  await ok(getDocs(query(collection(reader,'procedimientos'),where('published','==',true))));
