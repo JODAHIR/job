@@ -1,0 +1,2880 @@
+	<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>CMA | Justas del saber</title><link href="favicon.ico" rel="icon">
+	<style>
+	:root{--bg:#f6f7ff;--card:#fff;--ink:#26324a;--muted:#667085;--pri:#6c63ff;--pri2:#8b83ff;--ok:#24a36a;--sun:#ffcc4d;--line:#e7e9f2}*{box-sizing:border-box}body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:linear-gradient(135deg,#eef2ff,#fff8e8);color:var(--ink)}button,select{font:inherit}.app{width:100%;min-height:100dvh;margin:0;padding:clamp(10px,2vw,24px);display:flex;flex-direction:column}.card{flex:1}.hero{background:linear-gradient(135deg,#6c63ff,#8f86ff);color:#fff;padding:22px;border-radius:24px;box-shadow:0 12px 30px #6c63ff25}.hero h1{margin:0 0 6px;font-size:clamp(26px,6vw,40px)}.hero p{margin:0;opacity:.92}.tabs,.tools,.nav{display:flex;gap:10px;flex-wrap:wrap;margin:16px 0}.btn{border:0;border-radius:14px;padding:12px 16px;background:#fff;color:var(--ink);font-weight:750;cursor:pointer;box-shadow:0 4px 14px #2221}.btn.active,.btn.primary{background:var(--pri);color:#fff}.btn.good{background:#eafaf2;color:#147a4c}.btn:disabled{opacity:.45;cursor:not-allowed}.progressWrap{background:#fff;border-radius:18px;padding:14px 16px;margin:14px 0;box-shadow:0 5px 18px #2221}.progress{height:12px;background:#eceefa;border-radius:999px;overflow:hidden}.bar{height:100%;width:0;background:linear-gradient(90deg,var(--pri),#2ec5ce);transition:.3s}.meta{display:flex;justify-content:space-between;gap:8px;margin-bottom:8px;font-weight:700}.card{background:var(--card);border-radius:26px;padding:clamp(20px,5vw,36px);min-height:350px;box-shadow:0 14px 36px #30386d18;border:1px solid #fff}.badge{display:inline-flex;background:#f0efff;color:#5148d7;border-radius:999px;padding:7px 11px;font-weight:800;font-size:14px}.q{font-size:clamp(23px,5vw,34px);line-height:1.25;margin:22px 0}.answer{display:none;background:#eefbf4;border:2px solid #bfead2;border-radius:18px;padding:18px;margin-top:18px;font-size:clamp(19px,4vw,25px);line-height:1.45}.answer.show{display:block;animation:pop .2s ease}.answer strong{color:#147a4c}.center{text-align:center}.big{padding:15px 22px;font-size:18px}.star{font-size:28px}.hint{color:var(--muted);font-size:14px}.search{flex:1;min-width:220px;border:1px solid var(--line);border-radius:14px;padding:12px 14px;background:#fff}.list{display:none;background:#fff;border-radius:20px;padding:12px;margin-top:12px}.list.show{display:block}.item{padding:13px;border-bottom:1px solid var(--line)}.item:last-child{border:0}.item b{display:block;margin-bottom:5px}.item.learnedItem{background:#eefbf4}.item .status{display:inline-block;margin-top:7px;font-weight:800;color:#147a4c}.item.pendingItem .status{color:#b26a00}.footer{text-align:center;color:var(--muted);padding:18px;font-size:13px}@keyframes pop{from{transform:scale(.98);opacity:.3}to{transform:scale(1);opacity:1}}@media(max-width:520px){.app{padding:10px}.hero,.card{border-radius:20px}.nav .btn{flex:1}.tools .btn{flex:1}}
+	.practiceBox{display:none;margin-top:18px}.practiceBox.show{display:block}.choices{display:grid;gap:12px;margin-top:14px}.choice{width:100%;text-align:left;border:2px solid var(--line);border-radius:16px;padding:15px;background:#fff;font-weight:750;cursor:pointer}.choice:hover{border-color:var(--pri)}.choice.correct{background:#eafaf2;border-color:#72d4a5}.choice.wrong{background:#fff0f0;border-color:#ef9a9a}.feedback{min-height:30px;margin-top:12px;font-size:19px;font-weight:850}.scorebar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:12px}.pill{background:#fff;border-radius:999px;padding:8px 12px;color:var(--ink);font-weight:850}.achievements{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}.award{background:#fff7d6;color:#765900;border-radius:12px;padding:8px 10px;font-weight:800}.modeToggle{background:#fff;border-radius:16px;padding:6px;display:inline-flex;gap:6px}.modeToggle .btn{box-shadow:none;padding:9px 13px}.modeToggle .btn.active{background:var(--pri);color:#fff}@media(max-width:520px){.choice{font-size:16px;padding:14px}.scorebar{justify-content:center}}
+	</style>
+	<style id="active-state-v5">
+	.btn.active,
+	.tabs button.active,
+	.modeToggle button.active,
+	.topnav .btn.active {
+	  background: linear-gradient(135deg,#5b5bd6,#7b61ff) !important;
+	  color:#fff !important;
+	  border-color:#5b5bd6 !important;
+	  box-shadow:0 7px 18px rgba(91,91,214,.28) !important;
+	  transform:translateY(-1px);
+	}
+	.btn.active::before,
+	.tabs button.active::before,
+	.modeToggle button.active::before,
+	.topnav .btn.active::before { content:"✓ "; font-weight:900; }
+	.btn:active,.tabs button:active,.modeToggle button:active{transform:scale(.98)}
+	.learningInfo{
+	  margin:12px 0 0;padding:12px 14px;border-radius:16px;
+	  background:#f5f7ff;border:1px solid #dfe4f4;color:#4c5577;
+	  font-size:14px;line-height:1.45;font-weight:700
+	}
+	</style>
+
+	<style id="bottom-button-colors-v6">
+	/* Botones inferiores: cada acción conserva una identidad visual propia */
+	.nav .btn:nth-child(1){
+	  background:#eaf2ff !important;color:#2457a6 !important;border-color:#a9c8ff !important;
+	}
+	.nav .btn:nth-child(2){
+	  background:#fff1d9 !important;color:#9a5a00 !important;border-color:#ffd28a !important;
+	}
+	.nav .btn:nth-child(3){
+	  background:#e9f9ef !important;color:#19733c !important;border-color:#9bddb3 !important;
+	}
+	.nav .btn:nth-child(4){
+	  background:#f4eaff !important;color:#7139a6 !important;border-color:#d4afeF !important;
+	}
+	.nav .btn:hover{filter:brightness(.96);box-shadow:0 6px 16px rgba(40,50,90,.12)}
+	.nav .btn:active{filter:brightness(.90);transform:scale(.98)}
+	/* Si alguno queda activo, conserva su familia de color pero se vuelve más intenso */
+	.nav .btn:nth-child(1).active{background:#3977d5 !important;color:white !important;border-color:#3977d5 !important}
+	.nav .btn:nth-child(2).active{background:#e89418 !important;color:white !important;border-color:#e89418 !important}
+	.nav .btn:nth-child(3).active{background:#2d9b58 !important;color:white !important;border-color:#2d9b58 !important}
+	.nav .btn:nth-child(4).active{background:#8b52bd !important;color:white !important;border-color:#8b52bd !important}
+	</style>
+
+	<style id="action-button-colors-v7">
+	/* Colores individuales para las acciones didácticas */
+	#speakQ{
+	  background:#e8f2ff !important;color:#175fa8 !important;border-color:#93c5fd !important;
+	}
+	#speakBoth{
+	  background:#eee9ff !important;color:#6341a5 !important;border-color:#c4b5fd !important;
+	}
+	#speakA{
+	  background:#e6fbfb !important;color:#08777a !important;border-color:#86dddd !important;
+	}
+	#practiceBtn{
+	  background:#fff2cc !important;color:#8a5a00 !important;border-color:#f5c451 !important;
+	}
+	#learnBtn{
+	  background:#e7f8ec !important;color:#19733c !important;border-color:#8fd3a6 !important;
+	}
+	#randomBtn{
+	  background:#ffeaf2 !important;color:#a33d67 !important;border-color:#f3a5c2 !important;
+	}
+	#speakQ:hover,#speakBoth:hover,#speakA:hover,#practiceBtn:hover,#learnBtn:hover,#randomBtn:hover{
+	  filter:brightness(.96);box-shadow:0 7px 17px rgba(40,50,90,.13);transform:translateY(-1px);
+	}
+	#speakQ:active,#speakBoth:active,#speakA:active,#practiceBtn:active,#learnBtn:active,#randomBtn:active{
+	  filter:brightness(.90);transform:scale(.98);
+	}
+	/* Estados activos más intensos */
+	#practiceBtn.active{background:#e6a817 !important;color:#fff !important;border-color:#e6a817 !important}
+	#learnBtn.active{background:#2f9d57 !important;color:#fff !important;border-color:#2f9d57 !important}
+	</style>
+
+	<style id="practicing-list-v8">
+	.practiceListPanel{display:none;background:#fff;border-radius:24px;padding:clamp(18px,4vw,30px);box-shadow:0 12px 30px #30386d18;margin-top:14px}
+	.practiceListPanel.show{display:block}
+	.stateTabsV8{display:flex;gap:10px;flex-wrap:wrap;margin:12px 0}
+	.stateTabsV8 .btn{font-weight:850}
+	#pendingListV8{background:#ffe9e9;color:#9b3131;border-color:#f1aaaa}
+	#practicingListV8{background:#fff2cc;color:#8a5a00;border-color:#f5c451}
+	#learnedListV8{background:#e7f8ec;color:#19733c;border-color:#8fd3a6}
+	.stateTabsV8 .btn.active{color:#fff!important}
+	#pendingListV8.active{background:#d9534f!important;border-color:#d9534f!important}
+	#practicingListV8.active{background:#e6a817!important;border-color:#e6a817!important}
+	#learnedListV8.active{background:#2f9d57!important;border-color:#2f9d57!important}
+	.practiceItemV8{display:flex;justify-content:space-between;align-items:center;gap:14px;padding:13px;border-bottom:1px solid var(--line)}
+	.practiceItemV8:last-child{border-bottom:0}
+	.practiceItemV8 .meta{font-size:13px;color:var(--muted);margin-top:4px;font-weight:700}
+	.practiceItemV8 .btn{flex:none}
+	@media(max-width:650px){.practiceItemV8{flex-direction:column;align-items:stretch}.practiceItemV8 .btn{width:100%}}
+	</style>
+
+	<style id="v10-trophy-import">
+	.trophyV10{display:none;margin:14px 0;padding:18px;border-radius:20px;background:linear-gradient(135deg,#fff7cc,#ffe5a0);border:2px solid #f0c94f;text-align:center;font-weight:900;color:#7a5700}
+	.trophyV10.show{display:block}.trophyV10 .cup{font-size:48px;display:block}
+	.importV10{background:#fff;border-radius:24px;padding:22px;box-shadow:0 12px 30px #30386d18;margin-top:16px}
+	.importV10 input[type=file]{width:100%;padding:12px;border:2px dashed #cbd3ef;border-radius:14px;background:#f8f9ff}
+	.previewV10{max-width:100%;max-height:320px;border-radius:16px;margin:12px auto;display:none}
+	</style>
+
+	<style id="v11-modules">
+	/* Un solo color para todas las funcionalidades propias de cada pregunta */
+	#reveal,#speakQ,#speakAll,#speak,#practice,#learned,#random{
+	  background:#5b5bd6!important;color:#fff!important;border:1px solid #5b5bd6!important;
+	  box-shadow:0 5px 14px rgba(91,91,214,.20)!important;
+	}
+	#reveal:hover,#speakQ:hover,#speakAll:hover,#speak:hover,#practice:hover,#learned:hover,#random:hover{
+	  background:#4848bd!important;border-color:#4848bd!important;filter:none!important;transform:translateY(-1px)
+	}
+	#reveal:disabled,#speakQ:disabled,#speakAll:disabled,#speak:disabled,#practice:disabled,#learned:disabled,#random:disabled{
+	  background:#b9b9dc!important;border-color:#b9b9dc!important;color:#fff!important
+	}
+	#practice.active,#learned.active{background:#39399e!important;border-color:#39399e!important}
+	.moduleNavV11{display:flex;gap:10px;flex-wrap:wrap;margin:14px 0}
+	#achievementsNavV11{background:#fff1b8;color:#795800;border:1px solid #efcf5c}
+	#questionnairesNavV11{background:#e8f2ff;color:#2457a6;border:1px solid #a9c8ff}
+	#achievementsNavV11.active{background:#d99f12!important;color:#fff!important;border-color:#d99f12!important}
+	#questionnairesNavV11.active{background:#3977d5!important;color:#fff!important;border-color:#3977d5!important}
+	.modulePanelV11{display:none;background:#fff;border-radius:24px;padding:clamp(18px,4vw,30px);box-shadow:0 12px 30px #30386d18;margin:14px 0}
+	.modulePanelV11.show{display:block}
+	.achievementGridV11{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin-top:16px}
+	.achievementCardV11{padding:18px;border-radius:18px;background:#fff9df;border:1px solid #f0d87c;text-align:center}
+	.achievementCardV11 .icon{font-size:42px;display:block;margin-bottom:8px}
+	.moduleHintV11{color:var(--muted);line-height:1.55}
+	#achievements{display:none!important}
+	</style>
+
+	<style id="v12-dynamic-quizzes">
+	.quizLibraryV12{margin-top:18px;display:grid;gap:12px}
+	.quizCardV12{border:1px solid #dfe4f4;border-radius:18px;padding:16px;background:#f9faff}
+	.quizCardV12 h3{margin:0 0 6px}.quizActionsV12{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+	.quizPlayerV12{display:none;margin-top:18px;padding:20px;border:2px solid #dfe4f4;border-radius:20px;background:#fff}
+	.quizPlayerV12.show{display:block}.quizQuestionV12{font-size:clamp(21px,4vw,30px);font-weight:900;margin:14px 0}
+	.quizAnswerV12{display:none;padding:16px;border-radius:16px;background:#eaf8ee;font-size:22px;font-weight:900}
+	.quizAnswerV12.show{display:block}
+	.importBoxV12{margin-top:18px;padding:16px;border:1px dashed #b9c3e8;border-radius:18px;background:#fafbff}
+	.importBoxV12 textarea{width:100%;min-height:140px;border:1px solid #cbd3ef;border-radius:12px;padding:12px;box-sizing:border-box}
+	.statusV12{margin-top:10px;font-weight:800}
+	</style>
+
+	<style id="v13-toggle">
+	.quizToggleV13{display:flex;align-items:center;gap:10px;margin-left:auto}
+	.switchV13{position:relative;width:54px;height:30px;display:inline-block}
+	.switchV13 input{opacity:0;width:0;height:0}
+	.sliderV13{position:absolute;inset:0;background:#bbb;border-radius:30px;cursor:pointer;transition:.2s}
+	.sliderV13:before{content:"";position:absolute;width:22px;height:22px;left:4px;top:4px;background:#fff;border-radius:50%;transition:.2s}
+	.switchV13 input:checked + .sliderV13{background:#2f9d57}
+	.switchV13 input:checked + .sliderV13:before{transform:translateX(24px)}
+	.quizCardV12.disabledV13{opacity:.62;background:#f2f2f4}
+	.quizCardV12.disabledV13 [data-open-quiz-v12]{display:none}
+	.statusBadgeV13{font-size:13px;font-weight:900;padding:5px 9px;border-radius:999px}
+	.statusBadgeV13.on{background:#e7f8ec;color:#19733c}.statusBadgeV13.off{background:#eee;color:#666}
+	.quizHeadV13{display:flex;gap:12px;align-items:flex-start;justify-content:space-between}
+	</style>
+
+	<style id="v14-subject-segments">
+	.subjectSegmentsV14{display:grid;gap:18px;margin-top:16px}
+	.subjectSectionV14{border:1px solid #dfe4f4;border-radius:22px;padding:18px;background:#fff}
+	.subjectHeaderV14{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:12px}
+	.subjectHeaderV14 h3{margin:0;font-size:21px}
+	.subjectCountV14{background:#f0f2ff;color:#5555a8;padding:6px 10px;border-radius:999px;font-size:13px;font-weight:900}
+	.subjectQuizGridV14{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px}
+	.emptySubjectV14{padding:18px;text-align:center;color:var(--muted);background:#f9faff;border-radius:14px}
+	</style>
+
+	<style id="v15-home-selector">
+	.homeSelectorV15{background:#fff;border-radius:24px;padding:clamp(18px,4vw,28px);margin:16px 0;box-shadow:0 12px 30px #30386d18}
+	.homeSelectorV15 h2{margin:0 0 6px}.homeQuizGridV15{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:12px;margin-top:14px}
+	.homeQuizV15{border:2px solid #e5e8f5;border-radius:18px;padding:16px;background:#fafbff}
+	.homeQuizV15 h3{margin:0 0 5px}.homeQuizV15 .btn{width:100%;margin-top:12px}
+	.quizManagerV15{margin-top:18px}.managerTabsV15{display:flex;gap:10px;flex-wrap:wrap;margin:12px 0}
+	.managerTabsV15 .btn.active{background:#5b5bd6!important;color:#fff!important}
+	.managerGridV15{display:grid;grid-template-columns:repeat(auto-fit,minmax(270px,1fr));gap:12px}
+	.managerCardV15{border:1px solid #dfe4f4;border-radius:18px;padding:16px;background:#fafbff}
+	.managerCardV15.off{opacity:.68;background:#f2f3f6}.managerHeadV15{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}
+	.activeQuizPillV15{display:inline-block;background:#e8f8ee;color:#19733c;border-radius:999px;padding:6px 10px;font-weight:900;font-size:13px}
+	.homeEmptyV15{padding:20px;text-align:center;color:var(--muted);background:#f8f9ff;border-radius:16px}
+	</style>
+
+	<style id="v17-clean-navigation">
+	/* V17: la portada no lista cuestionarios; los módulos se muestran de forma exclusiva */
+	#homeSelectorV15{display:none!important}
+	body.moduleOpenV17 .tabs,
+	body.moduleOpenV17 .progressWrap,
+	body.moduleOpenV17 .modeToggle,
+	body.moduleOpenV17 > main > .card,
+	body.moduleOpenV17 > main > .nav,
+	body.moduleOpenV17 > main > .tools,
+	body.moduleOpenV17 #practiceListPanelV8,
+	body.moduleOpenV17 #list{display:none!important}
+	.moduleNavV11 .btn{min-width:180px}
+	</style>
+
+	<style id="v18-selector-status">
+	#homeSelectorV15{display:block!important}
+	body.moduleOpenV17 #homeSelectorV15{display:none!important}
+	.homeQuizV15.inactiveV18{opacity:.78;background:#f4f5f8;border-color:#d8dbe5}
+	.inactivePillV18{display:inline-block;background:#eceef3;color:#687083;border-radius:999px;padding:6px 10px;font-weight:900;font-size:13px}
+	.inactiveMsgV18{margin-top:10px;padding:10px 12px;border-radius:12px;background:#fff3cd;color:#7a5a00;font-size:14px;font-weight:800}
+	</style>
+
+	<style id="v19-pass-practice">
+	#passPracticeV19{
+	 background:#fff0d9!important;color:#925600!important;border:1px solid #ffc76b!important;
+	}
+	#passPracticeV19:hover{background:#ffe3b5!important}
+	</style>
+
+	<style id="v21-focus-quiz">
+	/* V21: al elegir un cuestionario se ocultan los demás selectores/materias */
+	body.quizFocusV21 .tabs{display:none!important}
+	body.quizFocusV21 #homeSelectorV15{display:none!important}
+	body.quizFocusV21 .moduleNavV11{display:flex!important}
+	.focusBarV21{display:none;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;
+	background:#fff;border-radius:16px;padding:10px 14px;margin:10px 0;box-shadow:0 7px 20px #30386d12}
+	body.quizFocusV21 .focusBarV21{display:flex}
+	.focusTitleV21{font-weight:900}
+	</style>
+
+	<style id="v22-gated-quiz">
+	/* V22: ningún detalle de preguntas se muestra hasta elegir explícitamente "Usar". */
+	body.awaitQuizV22 .tabs,
+	body.awaitQuizV22 .progressWrap,
+	body.awaitQuizV22 .modeToggle,
+	body.awaitQuizV22 > main > .card,
+	body.awaitQuizV22 > main > .nav,
+	body.awaitQuizV22 > main > .tools,
+	body.awaitQuizV22 #practiceListPanelV8,
+	body.awaitQuizV22 #list{display:none!important}
+
+	/* En modo cuestionario seleccionado, oculta la lista de selección y otras materias. */
+	body.quizFocusV21 #homeSelectorV15,
+	body.quizFocusV21 .tabs{display:none!important}
+
+	/* Un inactivo es informativo: no ofrece acción de uso ni activación desde la portada. */
+	.homeQuizV15.inactiveV18 button{display:none!important}
+	</style>
+
+	<style id="v24-state-access">
+	/* V24: estados del cuestionario activo siempre accesibles dentro del cuestionario */
+	.stateNavV24{display:none;gap:10px;flex-wrap:wrap;margin:12px 0}
+	body.quizFocusV21 .stateNavV24{display:flex}
+	.stateNavV24 .btn{min-width:150px}
+	.statePanelV24{display:none;background:#fff;border-radius:22px;padding:22px;margin:14px 0;box-shadow:0 10px 26px #30386d14}
+	.statePanelV24.show{display:block}
+	.stateListV24{display:grid;gap:8px;margin-top:14px}
+	.stateRowV24{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:12px;border-bottom:1px solid #e7e9f3}
+	.stateRowV24:last-child{border-bottom:0}
+	.stateRowV24 .meta{font-size:13px;color:var(--muted)}
+	@media(max-width:600px){.stateRowV24{align-items:flex-start;flex-direction:column}.stateRowV24 .btn{width:100%}}
+	</style>
+
+	<style id="v25-achievements-summary">
+	.achievementSummaryV25{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:14px;margin-top:16px}
+	.achievementCardV25{background:#fff;border:1px solid #e4e7f2;border-radius:20px;padding:18px}
+	.achievementTopV25{display:flex;justify-content:space-between;gap:10px;align-items:center}
+	.achievementPctV25{font-size:32px;font-weight:1000;color:#5b55e7;margin:8px 0 4px}
+	.achievementBarV25{height:10px;background:#eceef8;border-radius:999px;overflow:hidden;margin-top:12px}
+	.achievementBarV25>span{display:block;height:100%;background:linear-gradient(90deg,#6258ef,#8c7cff);border-radius:999px}
+	.totalAchievementV25{background:linear-gradient(135deg,#f4f1ff,#fff);border:2px solid #dcd6ff}
+	.totalNumberV25{font-size:38px;font-weight:1000;color:#4f46d8}
+	</style>
+
+	<style id="v26-fixes">
+	/* V26: los estados permanecen siempre visibles dentro del cuestionario elegido */
+	body.quizFocusV21 .stateNavV24{display:flex!important}
+	body.quizFocusV21 #statePanelV24.show{display:block!important}
+	.stateNavV24 .btn.activeStateV26{background:#655cf1!important;color:#fff!important}
+	.achievementSummaryV26{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;margin-top:16px}
+	.achievementCardV26{background:#fff;border:1px solid #e3e6f1;border-radius:20px;padding:18px}
+	.achievementCardV26 h3{margin:0 0 8px}.achievementPctV26{font-size:34px;font-weight:1000;color:#5d55e8}
+	.achievementStatsV26{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:12px;font-size:13px}
+	.achievementStatsV26 span{background:#f5f6fb;border-radius:10px;padding:8px;text-align:center}
+	.achievementTotalV26{background:#f5f2ff;border:2px solid #d9d3ff}
+	</style>
+
+	<style id="v27-achievements-clean">
+	.achievementHistoryV27{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px;margin-top:16px}
+	.achievementMetricV27{border:1px solid #f0cc63;background:#fff9df;border-radius:20px;padding:20px;text-align:center}
+	.achievementMetricV27 .ico{font-size:42px;line-height:1}
+	.achievementMetricV27 .big{font-size:30px;font-weight:1000;margin:8px 0 3px}
+	.achievementMetricV27 .sub{color:var(--muted);font-size:14px}
+	</style>
+
+	<style id="v28-completed-popup">
+	.completedOverlayV28{display:none;position:fixed;inset:0;background:#11182799;z-index:9999;padding:18px;align-items:center;justify-content:center}
+	.completedOverlayV28.show{display:flex}
+	.completedPopupV28{width:min(560px,100%);background:#fff;border-radius:26px;padding:26px;box-shadow:0 24px 70px #0004;text-align:center}
+	.completedPopupV28 .trophy{font-size:58px;line-height:1;margin-bottom:8px}
+	.completedPopupV28 h2{margin:5px 0 8px;font-size:28px}
+	.completedStatsV28{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin:18px 0}
+	.completedStatsV28>div{background:#f5f6fb;border-radius:14px;padding:12px 7px}
+	.completedStatsV28 strong{display:block;font-size:24px}
+	.completedAchievementV28{background:#fff6cf;border:1px solid #efc64f;border-radius:16px;padding:14px;margin:14px 0;font-weight:800}
+	.completedActionsV28{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:18px}
+	@media(max-width:480px){.completedStatsV28{grid-template-columns:1fr}.completedActionsV28 .btn{width:100%}}
+	</style>
+	</head><body><main class="app"><section class="hero"><h1>🌟 Aprendo Jugando</h1>
+		<p>Cuestionario interactivo lee, practica, gana estrellas y aprende jugando.</p>
+		<div class="scorebar"><span class="pill" id="player">🎯 Total de puntos  <b id="score">0</b></span>
+			<span class="pill">🔥 Racha <b id="streak">0</b></span></div><div class="achievements" id="achievements"></div></section>
+
+	<section class="homeSelectorV15" id="homeSelectorV15">
+	  <h2>📚 ¿Qué cuestionario quieres usar?</h2>
+	  <p class="hint">Aquí aparecen solamente los cuestionarios, puedes cambiar de cuestionario en cualquier momento.</p>
+	  <div class="homeQuizGridV15" id="homeQuizGridV15"></div>
+	</section>
+
+	<div class="focusBarV21" id="focusBarV21">
+	  <span class="focusTitleV21" id="focusTitleV21">📘 Cuestionario seleccionado</span>
+	  <button class="btn" id="changeQuizV21">🔄 Cambiar cuestionario</button>
+	</div>
+	<div class="moduleNavV11">
+	<button class="btn" id="homeNavV34">🏠 Inicio</button>
+	<button class="btn" id="achievementsNavV11">🏆 Logros</button>
+	<button class="btn" id="questionnairesNavV11">📚 Cuestionarios</button>
+	</div>
+	<section class="modulePanelV11" id="achievementsPanelV11">
+	<h2>🏆 Mis logros</h2>
+	<p class="moduleHintV11">Aquí se concentran los premios obtenidos por progreso, rachas y materias completadas.</p>
+	<div class="achievementGridV11" id="achievementGridV11"></div>
+	<div id="subjectTrophiesV11"></div>
+	</section>
+	<section class="modulePanelV11" id="questionnairesPanelV11">
+	<h2>📚 Cuestionarios</h2>
+	<p class="moduleHintV11">Módulo independiente para el banco de preguntas.</p>
+	<div id="questionnaireImporterV11"></div>
+	</section>
+	<div class="tabs"><button class="btn active" id="socialBtn">🏠 Vida Social y Trabajo</button>
+		<button class="btn" id="naturalBtn">🌱 Medio Natural y Salud</button>
+		<button class="btn" id="pendingBtn">📖 Falta aprender <span id="pendingCount"></span></button>
+		<button class="btn" id="practiceListNavV8">📘 A estudiar<span id="practiceNavCountV8">(0)</span></button></div>
+	<div class="stateNavV24" id="stateNavV24">
+	 <button class="btn" id="pendingV24">📖 Falta aprender <span id="pendingCountV24"></span></button>
+	 <button class="btn" id="practicingV24">📘 A estudiar<span id="practicingCountV24"></span></button>
+	 <button class="btn" id="learnedV24">🟢 Aprendidas <span id="learnedCountV24"></span></button>
+	</div>
+	<div class="statePanelV24" id="statePanelV24">
+	 <h2 id="stateTitleV24">Preguntas</h2>
+	 <p class="hint" id="stateHintV24">Preguntas registradas en este cuestionario.</p>
+	 <div class="stateListV24" id="stateListV24"></div>
+	</div>
+	<div class="progressWrap"><div class="meta"><span id="counter">Pregunta 1 de 40</span><span id="stars">⭐ 0 aprendidas</span></div><div class="progress"><div class="bar" id="bar"></div></div></div><div class="modeToggle"><button class="btn active" id="studyMode">📖 Aprender</button><button class="btn" id="practiceMode">🎮 Prueba</button></div><section class="card"><span class="badge" id="subject"></span><div class="q" id="question"></div><div class="center"><button class="btn primary big" id="reveal">👀 Ver respuesta</button></div><div class="answer" id="answer"></div><div class="practiceBox" id="practiceBox"><div class="choices" id="choices"></div><div class="feedback" id="feedback"></div></div><div class="tools"><button class="btn" id="speakQ">🔊 Leer pregunta</button><button class="btn" id="speakAll">🔊 Leer pregunta y respuesta</button><button class="btn good" id="speak" disabled>🔊 Escuchar respuesta</button><button class="btn" id="practice">🟡 A estudiar</button><button class="btn" id="learned" disabled>⭐ Ya la aprendí</button><button class="btn" id="random">🎲 Pregunta al azar</button><button class="btn" id="passPracticeV19">⏭️ Paso</button></div></section><div class="nav"><button class="btn" id="prev">← Anterior</button><button class="btn primary" id="next">Siguiente →</button></div><div class="tools"><input class="search" id="search" placeholder="🔎 Buscar una pregunta…"><button class="btn" id="showAll">📚 Ver todas</button><button class="btn" id="reset">↻ Reiniciar progreso</button></div><section class="list" id="list"></section><section class="practiceListPanel" id="practiceListPanelV8">
+	<h2>🟡 Preguntas a estudiar</h2>
+	<p class="hint">Aquí puedes consultar las preguntas y volver a estudiarlas.</p>
+	<div class="stateTabsV8">
+	<button class="btn" id="pendingListV8">🔴 Por aprender <span id="pendingCountV8">(0)</span></button>
+	<button class="btn active" id="practicingListV8">📘 A estudiar<span id="practicingCountV8">(0)</span></button>
+	<button class="btn" id="learnedListV8">🟢 Aprendidas <span id="learnedCountV8">(0)</span></button>
+	</div><div id="stateListV8"></div></section>
+	<div id="socialTrophyV10" class="trophyV10"><span class="cup">🏆</span>¡Vida Social y Trabajo totalmente aprendido!</div>
+	<div id="naturalTrophyV10" class="trophyV10"><span class="cup">🏆</span>¡Medio Natural y Salud totalmente aprendido!</div>
+	
+	<section class="importV10">
+	<h2>📷 Actualizar cuestionario</h2>
+	<p class="hint">Puedes seleccionar una foto del nuevo cuestionario para verla dentro de la página. La imagen queda solamente en tu dispositivo. Para convertir una foto en preguntas automáticamente se necesita un motor de reconocimiento de texto (OCR/IA); esta versión mantiene el funcionamiento 100% sin Internet, por eso no envía la imagen a ningún servicio externo.</p>
+	<input type="file" id="questionImageV10" accept="image/*" capture="environment">
+	<img id="questionPreviewV10" class="previewV10" alt="Vista previa del nuevo cuestionario">
+	<div class="tools">
+	<button class="btn" id="removeImageV10">🗑️ Quitar imagen</button>
+	</div>
+	<p class="hint"><b>Opción recomendada:</b> sube la foto en ChatGPT y puedo convertirla al formato de preguntas del sistema. Luego podrás importar ese bloque en una futura versión sin modificar el código base.</p>
+	</section>
+	<div class="footer">Diseñado para estudiar de forma simple, visual y divertida.</div></main><script>
+	const data={social:[
+	["¿Qué es el reloj?","El reloj es un instrumento que sirve para medir el tiempo."],["¿Cómo se llama la manecilla más corta del reloj?","La manecilla más corta del reloj se llama horario y marca la hora."],["¿Cómo se llama la manecilla más larga del reloj?","La manecilla más larga del reloj se llama minutero e indica los minutos que pasan."],["¿Cuántas horas tiene el día?","El día tiene 24 horas."],["¿Cuántos días tiene una semana?","Una semana tiene 7 días."],["¿Cuántos meses tiene un año?","Un año tiene 365 días y 12 meses."],["¿Qué es la familia?","La familia es el primer grupo social. Puede estar formada por los padres, hermanos, abuelos, tíos o primos."],["¿En qué fecha y año se fundó la ciudad de San Lorenzo?","La ciudad de San Lorenzo fue fundada el 10 de agosto del año 1775."],["¿Quién fundó la ciudad de San Lorenzo?","La ciudad de San Lorenzo fue fundada por el gobernador Agustín Fernando de Pinedo."],["¿En qué fecha y año se fundó la ciudad de Asunción?","La ciudad de Asunción se fundó el 15 de agosto del año 1537."],["¿Quién fundó la ciudad de Asunción?","La ciudad de Asunción fue fundada por el capitán Juan de Salazar y Espinoza."],["¿Cuántas banderas tuvo el Paraguay?","El Paraguay tuvo 4 banderas."],["¿Cuáles fueron los países que pelearon en la Guerra del Chaco?","Los países que pelearon en la Guerra del Chaco fueron Paraguay y Bolivia."],["¿Cuántos años duró la Guerra del Chaco?","La Guerra del Chaco duró 3 años."],["¿En qué fecha se firmó el protocolo de paz?","El protocolo de paz se firmó el 12 de junio del año 1935."],["¿Cuáles son las necesidades del hogar?","Todas las familias tienen necesidades básicas como alimento, vivienda, educación, ropa, salud y otras más."],["¿Cuáles son los derechos del niño/a?","Los derechos del niño/a son: tener una familia, una nacionalidad y un nombre; derecho a la alimentación y derecho a una vivienda."],["¿Qué son los Símbolos Nacionales?","Los Símbolos Nacionales son los emblemas que representan a un país y su historia."],["¿Cuáles son los Símbolos Nacionales?","La Constitución Nacional del año 1992, en su artículo 139, establece que nuestros símbolos nacionales son: el Pabellón de la República, el Himno Nacional y los Escudos."],["¿Qué son los instrumentos de orientación?","Los instrumentos de orientación son herramientas que nos ayudan a saber dónde estamos y a encontrar nuestro camino."],["¿Cuáles son los instrumentos de orientación?","Algunos instrumentos de orientación son: mapa, brújula, GPS, veleta y radar, entre otros."],["¿Cuáles son las emociones que podemos expresar?","Podemos expresar alegría, enojo, susto, tristeza, sorpresa, miedo y asco."],["¿Qué es la autoestima?","La autoestima es cuánto nos valoramos a nosotros mismos."],["¿Cuáles son los valores que debemos practicar en el seno familiar?","Amor, respeto, responsabilidad, solidaridad, comprensión, diálogo y obediencia, entre otros."],["¿Cuáles son los deberes de la casa?","Respetar a los miembros de la familia, honrar a la familia y la nación, valorar los alimentos y colaborar con los quehaceres del hogar."],["¿Qué es la participación democrática en la familia?","Es que todos tenemos la oportunidad de hablar y compartir nuestras ideas."],["¿Cuáles son los roles que realizan los adultos?","Los adultos son quienes proveen el alimento, trabajan, velan por nuestra salud y enseñan las normas de comportamiento."],["¿Cuáles son los tipos de familia?","Los tipos de familia son: familia nuclear y familia extensa."],["¿Qué es ahorrar?","Ahorrar es guardar dinero para utilizarlo cuando haya una necesidad urgente."],["¿Cuáles son las dependencias de la escuela?","Dirección, aula, secretaría, biblioteca, cantina, baño, patio y sala de informática."],["¿Quiénes son los miembros de la familia escolar?","Estudiantes, maestros, director, secretaria, coordinadora, bibliotecaria, padres, portero, cantinero y limpiadora."],["¿Cuáles son los derechos en la escuela?","Derecho a la igualdad, a la recreación, a la educación y a la libre expresión."],["¿Cuáles son los deberes en la escuela?","Respetar y obedecer a los maestros, respetar las normas, mantener limpio el entorno, realizar las tareas y asistir a clases."],["¿Qué es la participación democrática en la escuela?","Significa que todos los niños tienen oportunidad de decidir y trabajar juntos."],["¿Qué tenemos que tener en cuenta para realizar las tareas?","Tener una sala iluminada, limpia y ordenada; contar con útiles escolares; evitar distractores y usar sillas y mesas acordes a nuestra estatura."],["¿Cuáles son los momentos del día?","Los momentos del día son: mañana, tarde y noche."],["¿Cuáles son los meses del año?","Enero, Febrero, Marzo, Abril, Mayo, Junio, Julio, Agosto, Setiembre, Octubre, Noviembre y Diciembre."],["¿Cuáles son los días de la semana?","Domingo, Lunes, Martes, Miércoles, Jueves, Viernes y Sábado."],["¿Cuántos días asistimos en la escuela?","Asistimos en la escuela 5 días."],["¿Cuáles son las estaciones del año?","Otoño, Invierno, Primavera y Verano."]],natural:[
+	["¿Qué es la materia?","La materia es todo aquello que forma parte del universo. Puede presentarse en diferentes tamaños, colores y formas."],["¿Cuáles son las clases de materia?","Las clases de materia son materia orgánica y materia inorgánica."],["¿Qué es la mezcla?","Una mezcla es la combinación de dos o más sustancias. Por ejemplo, al preparar un caldo de verduras se mezclan distintos ingredientes."],["¿Cuáles son las clases de mezclas?","Las clases de mezclas son mezcla homogénea y mezcla heterogénea."],["¿Qué es la energía?","La energía es lo que nos permite hacer muchas actividades. Para que funcionen los aparatos usamos energía eléctrica."],["¿Cuáles son los tipos de energía?","Los tipos de energía son: energía eólica, energía solar y energía hidroeléctrica."],["¿Qué son los animales vivíparos?","Son animales que crecen dentro del cuerpo de su madre y nacen ya formados, como perros, gatos y seres humanos."],["¿Qué son los animales ovíparos?","Los animales que nacen de huevos se llaman ovíparos."],["¿Qué son las plantas?","Las plantas son seres vivos que pueden crecer en el suelo, en el agua o sobre otras plantas."],["¿Cuáles son las partes del cuerpo humano?","Cabeza, tronco, extremidades superiores y extremidades inferiores."],["¿Qué son los ecosistemas?","Son conjuntos de seres vivos —plantas, animales y microorganismos— y elementos no vivos como agua, aire y luz solar."],["¿Cuáles son los movimientos de la Tierra?","Movimiento de traslación y movimiento de rotación."],["¿Qué son los recursos naturales?","Son aquellos que provienen de la naturaleza y que los seres humanos utilizan para crear objetos y dar soluciones a sus necesidades."],["¿Cuándo sucede la contaminación ambiental?","Sucede cuando las personas ensucian el aire, el agua o el suelo."],["¿Cuáles son los tipos de contaminación?","Contaminación del aire, contaminación del agua y contaminación del suelo."],["¿Qué es el agua potable?","Es el agua que podemos beber sin que nos haga daño. Es limpia, transparente y no tiene mal olor ni sabor raro."],["¿Qué es la higiene personal?","Es el conjunto de prácticas que realizamos todos los días para mantener nuestro cuerpo limpio y saludable."],["¿Qué es la postura correcta?","Es la forma en que debemos colocar nuestro cuerpo cuando estamos sentados, parados o en movimiento."],["¿Cuáles son los tipos de suelo?","Suelo arcilloso, suelo húmico y suelo arenoso."],["¿Qué es el sol?","El sol es una estrella muy grande y está formada de gases muy calientes."],["¿Cuáles son las consecuencias del humo del tabaco?","Afecta la salud: puede producir dificultad para respirar, tos constante y enfermedades del corazón y los pulmones. También contamina el aire y deja basura en las calles."],["¿Cuáles son las coberturas de los animales?","Pelos, plumas, piel desnuda, escamas y caparazón."],["¿Cuántas patas pueden tener los animales?","Los animales pueden tener dos, cuatro, seis, ocho o más patas."],["¿Cómo se pueden desplazar los animales?","Pueden desplazarse nadando, volando, caminando, saltando o reptando."],["¿Cuáles son las partes de la planta?","Hoja, flor, fruto, tallo y raíz."],["¿Cuáles son los tipos de ecosistemas?","Acuáticos, terrestres, mixtos y urbanos."],["¿Adónde se desarrollan los ecosistemas acuáticos?","Los ecosistemas acuáticos se desarrollan en el agua."],["¿Adónde se desarrollan los ecosistemas terrestres?","Los ecosistemas terrestres se desarrollan en la tierra."],["¿Adónde se desarrollan los ecosistemas mixtos?","Los ecosistemas mixtos tienen partes tanto en agua como en la tierra."],["¿Adónde se desarrollan los ecosistemas urbanos?","Los ecosistemas urbanos poseen elementos artificiales creados por los seres humanos."],["¿Qué es un recurso natural?","Un recurso natural es un elemento que hace posible la vida."],["¿Qué son las basuras?","Las basuras son los desechos que ya no necesitamos."],["¿Cuáles son los tipos de basuras?","Orgánica, inorgánica, peligrosos y reciclables."],["¿Cuáles son las materias orgánicas?","Las materias orgánicas son los seres vivos."],["¿Cuáles son las materias inorgánicas?","El agua, las rocas y el aire."],["¿De dónde viene la energía eólica?","La energía eólica viene del viento."],["¿Cómo se produce la energía hidroeléctrica?","La energía hidroeléctrica se produce con el movimiento del agua."],["¿De dónde proviene la energía solar?","La energía solar proviene del sol."],["¿Cómo cuidamos la energía eléctrica?","Cuidamos la energía eléctrica apagando los aparatos que no usamos."],["¿Por qué es importante el Sol?","El Sol es importante porque nos da luz, calor y energía, entre otros beneficios."] ]};
+	let mode='social',i=0,view='study',learningMode='study';let learned=JSON.parse(localStorage.getItem('aprendo1')||'{}');let practicing=JSON.parse(localStorage.getItem('practicando1')||'{}');let stats=JSON.parse(localStorage.getItem('aprendoStats2')||'{}');let score=+(localStorage.getItem('aprendoScore2')||0),streak=+(localStorage.getItem('aprendoStreak2')||0);let attempts=0;const $=id=>document.getElementById(id);function key(){return mode+'-'+i}function currentArr(){return data[mode]}function key(n=i,m=mode){return m+'-'+n}function pendingEntries(){let out=[];for(const m of ['social','natural'])data[m].forEach((x,n)=>{if(!learned[key(n,m)])out.push({m,n,x})});return out}function render(){if(view==='pending'){renderPending();return}const a=currentArr();$('subject').textContent=mode==='social'?'🏠 Vida Social y Trabajo':'🌱 Medio Natural y Salud';$('question').textContent=(i+1)+'. '+a[i][0];$('answer').innerHTML='<strong>✅ Respuesta correcta:</strong><br>'+a[i][1];$('answer').classList.remove('show');$('reveal').style.display=learningMode==='practice'?'none':'inline-block';$('speak').disabled=learningMode==='practice';$('learned').disabled=learningMode==='practice';$('practiceBox').classList.toggle('show',learningMode==='practice');$('feedback').textContent='';attempts=0;if(learningMode==='practice') buildChoices();$('practice').textContent=practicing[key()]?'❌ Quitar practica':'🟡 A estudiar';$('learned').textContent=learned[key()]?'✅ Aprendida · Quitar marca':'⭐ Marcar como aprendida';$('counter').textContent=`Pregunta ${i+1} de ${a.length}`;$('bar').style.width=((i+1)/a.length*100)+'%';$('prev').disabled=i===0;$('next').disabled=i===a.length-1;updateStars();renderList()}function updateStars(){let n=Object.keys(learned).filter(k=>k.startsWith(mode+'-')&&learned[k]).length;let total=data[mode].length;let pr=Object.keys(practicing).filter(k=>k.startsWith(mode+'-')&&practicing[k]&&!learned[k]).length;$('stars').textContent=`⭐ ${n} aprendidas · 🟡 ${pr} practicando · 📖 ${total-n-pr} por aprender`;$('pendingCount').textContent='('+pendingEntries().length+')'}function setMode(m){view='study';mode=m;i=0;$('socialBtn').classList.toggle('active',m==='social');$('naturalBtn').classList.toggle('active',m==='natural');$('pendingBtn').classList.remove('active');$('list').classList.remove('show');render()}function setPending(){view='pending';$('socialBtn').classList.remove('active');$('naturalBtn').classList.remove('active');$('pendingBtn').classList.add('active');renderPending()}function renderPending(){let p=pendingEntries();$('subject').textContent='📖 Falta aprender';$('question').textContent=p.length?`Todavía faltan ${p.length} preguntas por aprender.`:'🎉 ¡Felicitaciones! Ya aprendiste todas las preguntas.';$('answer').classList.remove('show');$('reveal').style.display='none';$('speak').disabled=true;$('learned').disabled=true;$('counter').textContent=`${80-p.length} de 80 aprendidas`;$('stars').textContent=`⭐ ${80-p.length} aprendidas · 📖 ${p.length} faltan`;$('pendingCount').textContent='('+p.length+')';$('bar').style.width=((80-p.length)/80*100)+'%';$('prev').disabled=true;$('next').disabled=true;$('list').classList.add('show');$('list').innerHTML=p.length?p.map(o=>`<div class="item pendingItem" data-m="${o.m}" data-n="${o.n}"><b>${o.m==='social'?'🏠':'🌱'} ${o.n+1}. ${o.x[0]}</b><span>${o.x[1]}</span><span class="status">📖 Falta aprender</span></div>`).join(''):'<div class="item learnedItem center"><b>🌟 ¡Todo aprendido!</b><span>Excelente trabajo. Puedes reiniciar el progreso para volver a practicar.</span></div>';document.querySelectorAll('.item[data-n]').forEach(el=>el.onclick=()=>{mode=el.dataset.m;i=+el.dataset.n;view='study';$('pendingBtn').classList.remove('active');$('socialBtn').classList.toggle('active',mode==='social');$('naturalBtn').classList.toggle('active',mode==='natural');$('list').classList.remove('show');render();scrollTo({top:0,behavior:'smooth'})})}
+	function saveSmart(){localStorage.setItem('aprendoStats2',JSON.stringify(stats));localStorage.setItem('aprendoScore2',score);localStorage.setItem('aprendoStreak2',streak);localStorage.setItem('aprendo1',JSON.stringify(learned));localStorage.setItem('practicando1',JSON.stringify(practicing));updateSmartUI()}
+	function updateSmartUI(){if($('score'))$('score').textContent=score;if($('streak'))$('streak').textContent=streak;let totalLearned=Object.values(learned).filter(Boolean).length, nat=Object.keys(learned).filter(k=>k.startsWith('natural-')&&learned[k]).length;let a=[];if(totalLearned>=10)a.push('🏆 Aprendiste 10 preguntas');if(streak>=5)a.push('🔥 5 correctas seguidas');if(nat>=data.natural.length)a.push('🌱 Experta en Medio Natural');$('achievements').innerHTML=a.map(x=>'<span class="award">'+x+'</span>').join('')}
+	function shuffle(a){return [...a].sort(()=>Math.random()-.5)}
+	function buildChoices(){let arr=data[mode],correct=arr[i][1],pool=arr.map(x=>x[1]).filter(x=>x!==correct);let opts=shuffle([correct,...shuffle(pool).slice(0,2)]);$('choices').innerHTML=opts.map((x,n)=>`<button class="choice" data-c="${x===correct?'1':'0'}">${x}</button>`).join('');document.querySelectorAll('.choice').forEach(b=>b.onclick=()=>answerChoice(b))}
+	function answerChoice(btn){if(btn.disabled)return;attempts++;let k=key(),st=stats[k]||{correct:0,wrong:0};if(btn.dataset.c==='1'){btn.classList.add('correct');document.querySelectorAll('.choice').forEach(b=>b.disabled=true);st.correct++;streak++;let gain=attempts===1?2:1;if(st.correct>=3&&attempts===1)gain=3;score+=gain;$('feedback').textContent=`✅ ¡Muy bien! +${gain} ⭐`;practicing[k]=true;if(st.correct>=3){learned[k]=true;practicing[k]=false;$('feedback').textContent+=' · 🟢 ¡Pregunta aprendida!'}stats[k]=st;saveSmart();updateStars()}else{btn.classList.add('wrong');btn.disabled=true;st.wrong++;streak=0;learned[k]=false;practicing[k]=true;stats[k]=st;saveSmart();$('feedback').textContent=attempts>=2?'❌ La respuesta correcta es: '+data[mode][i][1]:'❌ Intenta otra vez';if(attempts>=2){$('answer').classList.add('show');$('speak').disabled=false}updateStars()}}
+	function setLearningMode(m){learningMode=m;$('studyMode').classList.toggle('active',m==='study');$('practiceMode').classList.toggle('active',m==='practice');render()}
+	$('studyMode').onclick=()=>setLearningMode('study');$('practiceMode').onclick=()=>setLearningMode('practice');
+	$('speakAll').onclick=()=>{speechSynthesis.cancel();let u=new SpeechSynthesisUtterance(data[mode][i][0]+'. '+data[mode][i][1]);u.lang='es-PY';u.rate=.82;speechSynthesis.speak(u)};
+	$('socialBtn').onclick=()=>setMode('social');$('naturalBtn').onclick=()=>setMode('natural');$('pendingBtn').onclick=setPending;$('reveal').onclick=()=>{$('answer').classList.add('show');$('reveal').style.display='none';$('speak').disabled=false;$('learned').disabled=false};$('speakQ').onclick=()=>{speechSynthesis.cancel();let u=new SpeechSynthesisUtterance(data[mode][i][0]);u.lang='es-PY';u.rate=.82;speechSynthesis.speak(u)};$('speak').onclick=()=>{speechSynthesis.cancel();let u=new SpeechSynthesisUtterance(data[mode][i][1]);u.lang='es-PY';u.rate=.85;speechSynthesis.speak(u)};$('practice').onclick=()=>{let k=key();practicing[k]=!practicing[k];if(practicing[k])learned[k]=false;localStorage.setItem('practicando1',JSON.stringify(practicing));localStorage.setItem('aprendo1',JSON.stringify(learned));render()};$('learned').onclick=()=>{let k=key();learned[k]=!learned[k];if(learned[k])practicing[k]=false;localStorage.setItem('aprendo1',JSON.stringify(learned));localStorage.setItem('practicando1',JSON.stringify(practicing));render()};$('prev').onclick=()=>{if(view==='study'&&i>0){i--;render();scrollTo({top:0,behavior:'smooth'})}};$('next').onclick=()=>{if(view==='study'&&i<data[mode].length-1){i++;render();scrollTo({top:0,behavior:'smooth'})}};$('random').onclick=()=>{view='study';i=Math.floor(Math.random()*data[mode].length);render()};$('reset').onclick=()=>{if(confirm('¿Borrar todas las preguntas marcadas como aprendidas?')){learned={};practicing={};localStorage.removeItem('aprendo1');localStorage.removeItem('practicando1');stats={};score=0;streak=0;localStorage.removeItem('aprendoStats2');localStorage.removeItem('aprendoScore2');localStorage.removeItem('aprendoStreak2');updateSmartUI();render()}};$('showAll').onclick=()=>{if(view==='pending')return;$('list').classList.toggle('show');$('showAll').textContent=$('list').classList.contains('show')?'🙈 Ocultar lista':'📚 Ver todas'};$('search').oninput=()=>{if(view==='pending')setMode(mode);renderList()};function renderList(){if(view==='pending')return;let q=$('search').value.toLowerCase().trim();let arr=data[mode].map((x,n)=>({x,n})).filter(o=>!q||(o.x[0]+' '+o.x[1]).toLowerCase().includes(q));$('list').innerHTML=arr.map(o=>`<div class="item ${learned[key(o.n)]?'learnedItem':'pendingItem'}" data-n="${o.n}"><b>${o.n+1}. ${o.x[0]}</b><span>${o.x[1]}</span><span class="status">${learned[key(o.n)]?'✅ Aprendida':'📖 Falta aprender'}</span></div>`).join('');if(q)$('list').classList.add('show');document.querySelectorAll('.item[data-n]').forEach(el=>el.onclick=()=>{i=+el.dataset.n;$('list').classList.remove('show');$('search').value='';render();scrollTo({top:0,behavior:'smooth'})})}
+	// V5: active visual state for the main navigation.
+	['learnNav','hardNav','quickNav','adultNav'].forEach(id=>{
+	  const el=$(id);
+	  if(el) el.addEventListener('click',()=>{
+	    ['learnNav','hardNav','quickNav','adultNav'].forEach(x=>{const b=$(x);if(b)b.classList.remove('active')});
+	    el.classList.add('active');
+	  });
+	});
+
+	updateSmartUI();render();
+
+	// V9 - listado por estado, autocontenido y compatible con el código base.
+	let stateViewV8='practicing';
+	function stateRowsV8(kind){
+	  const rows=[];
+	  ['social','natural'].forEach(m=>data[m].forEach((x,n)=>{
+	    const k=m+'-'+n, isLearned=!!learned[k], isPracticing=!!practicing[k]&&!isLearned;
+	    const match=kind==='learned'?isLearned:kind==='practicing'?isPracticing:(!isLearned&&!isPracticing);
+	    if(match) rows.push({m,n,q:x[0]});
+	  }));
+	  return rows;
+	}
+	function updateStateCountsV8(){
+	  const p=stateRowsV8('pending').length,r=stateRowsV8('practicing').length,l=stateRowsV8('learned').length;
+	  $('pendingCountV8').textContent='('+p+')'; $('practicingCountV8').textContent='('+r+')';
+	  $('learnedCountV8').textContent='('+l+')'; $('practiceNavCountV8').textContent='('+r+')';
+	}
+	function renderStateListV8(kind){
+	  stateViewV8=kind; updateStateCountsV8();
+	  ['pendingListV8','practicingListV8','learnedListV8'].forEach(id=>$(id).classList.remove('active'));
+	  $(kind==='pending'?'pendingListV8':kind==='learned'?'learnedListV8':'practicingListV8').classList.add('active');
+	  const rows=stateRowsV8(kind);
+	  $('stateListV8').innerHTML=rows.length?rows.map(r=>`<div class="practiceItemV8"><div><b>${r.m==='social'?'🏠':'🌱'} ${r.q}</b><div class="meta">${r.m==='social'?'Vida Social y Trabajo':'Medio Natural y Salud'}</div></div><button class="btn primary" data-state-open-v8="${r.m}|${r.n}">▶ Estudiar</button></div>`).join(''):'<div class="emptyState">✨ No hay preguntas en este estado.</div>';
+	  document.querySelectorAll('[data-state-open-v8]').forEach(b=>b.onclick=()=>{const [m,n]=b.dataset.stateOpenV8.split('|');hideStatePanelV8();setMode(m);i=+n;render();scrollTo({top:0,behavior:'smooth'})});
+	}
+	function showStatePanelV8(){
+	  $('practiceListPanelV8').classList.add('show');
+	  document.querySelector('.card').style.display='none'; document.querySelector('.nav').style.display='none';
+	  document.querySelector('.modeToggle').style.display='none'; document.querySelector('.progressWrap').style.display='none';
+	  $('list').classList.remove('show');
+	  ['socialBtn','naturalBtn','pendingBtn','practiceListNavV8'].forEach(id=>$(id).classList.remove('active'));
+	  $('practiceListNavV8').classList.add('active'); renderStateListV8('practicing');
+	}
+	function hideStatePanelV8(){
+	  $('practiceListPanelV8').classList.remove('show');
+	  document.querySelector('.card').style.display='block'; document.querySelector('.nav').style.display='flex';
+	  document.querySelector('.modeToggle').style.display='inline-flex'; document.querySelector('.progressWrap').style.display='block';
+	}
+	$('practiceListNavV8').onclick=showStatePanelV8;
+	$('pendingListV8').onclick=()=>renderStateListV8('pending');
+	$('practicingListV8').onclick=()=>renderStateListV8('practicing');
+	$('learnedListV8').onclick=()=>renderStateListV8('learned');
+	['socialBtn','naturalBtn','pendingBtn'].forEach(id=>$(id).addEventListener('click',hideStatePanelV8));
+	updateStateCountsV8();
+
+	// V10: trofeos por materia + vista previa local de nuevas hojas.
+	function updateTrophiesV10(){
+	  const socialTotal=data.social.length,naturalTotal=data.natural.length;
+	  const socialLearned=data.social.filter((_,n)=>!!learned['social-'+n]).length;
+	  const naturalLearned=data.natural.filter((_,n)=>!!learned['natural-'+n]).length;
+	  $('socialTrophyV10').classList.toggle('show',socialTotal>0&&socialLearned===socialTotal);
+	  $('naturalTrophyV10').classList.toggle('show',naturalTotal>0&&naturalLearned===naturalTotal);
+	}
+	const imageInputV10=$('questionImageV10'), imagePreviewV10=$('questionPreviewV10');
+	imageInputV10.onchange=()=>{
+	  const f=imageInputV10.files&&imageInputV10.files[0]; if(!f)return;
+	  const r=new FileReader();
+	  r.onload=e=>{imagePreviewV10.src=e.target.result;imagePreviewV10.style.display='block'};
+	  r.readAsDataURL(f);
+	};
+	$('removeImageV10').onclick=()=>{imageInputV10.value='';imagePreviewV10.removeAttribute('src');imagePreviewV10.style.display='none'};
+	updateTrophiesV10();
+	// Actualiza trofeos después de acciones que cambian el aprendizaje.
+	['learnBtn','practiceBtn'].forEach(id=>{const b=$(id);if(b)b.addEventListener('click',()=>setTimeout(updateTrophiesV10,0))});
+
+
+	// V11: módulos independientes de Logros y Nuevos cuestionarios.
+	function closeModulesV11(){
+	  $('achievementsPanelV11').classList.remove('show');
+	  $('questionnairesPanelV11').classList.remove('show');
+	  $('achievementsNavV11').classList.remove('active');
+	  $('questionnairesNavV11').classList.remove('active');
+	}
+	function openModuleV11(which){
+	  closeModulesV11();
+	  const panel=$(which==='achievements'?'achievementsPanelV11':'questionnairesPanelV11');
+	  const nav=$(which==='achievements'?'achievementsNavV11':'questionnairesNavV11');
+	  panel.classList.add('show');nav.classList.add('active');
+	  panel.scrollIntoView({behavior:'smooth',block:'start'});
+	  if(which==='achievements')renderAchievementsV11();
+	}
+	function renderAchievementsV11(){
+	  const totalLearned=Object.values(learned).filter(Boolean).length;
+	  const socialLearned=data.social.filter((_,n)=>!!learned['social-'+n]).length;
+	  const naturalLearned=data.natural.filter((_,n)=>!!learned['natural-'+n]).length;
+	  const cards=[];
+	  cards.push({icon:'⭐',title:'Preguntas aprendidas',text:totalLearned+' de '+(data.social.length+data.natural.length)});
+	  cards.push({icon:'🔥',title:'Mejor racha actual',text:streak+' respuestas correctas seguidas'});
+	  if(totalLearned>=10)cards.push({icon:'🏅',title:'Primer gran logro',text:'Aprendiste al menos 10 preguntas'});
+	  if(streak>=5)cards.push({icon:'🔥',title:'Racha de estudio',text:'Lograste 5 respuestas correctas seguidas'});
+	  if(socialLearned===data.social.length)cards.push({icon:'🏆',title:'Vida Social y Trabajo',text:'¡Materia totalmente aprendida!'});
+	  if(naturalLearned===data.natural.length)cards.push({icon:'🏆',title:'Medio Natural y Salud',text:'¡Materia totalmente aprendida!'});
+	  $('achievementGridV11').innerHTML=cards.map(c=>`<div class="achievementCardV11"><span class="icon">${c.icon}</span><b>${c.title}</b><div class="hint">${c.text}</div></div>`).join('');
+	}
+	$('achievementsNavV11').onclick=()=>openModuleV11('achievements');
+	$('questionnairesNavV11').onclick=()=>openModuleV11('questionnaires');
+
+	// Reubica el importador V10 dentro del módulo independiente, sin duplicar su lógica.
+	const importerV10=document.querySelector('.importV10');
+	if(importerV10)$('questionnaireImporterV11').appendChild(importerV10);
+	// Los trofeos anteriores se concentran ahora en Logros.
+	['socialTrophyV10','naturalTrophyV10'].forEach(id=>{const el=$(id);if(el)$('subjectTrophiesV11').appendChild(el)});
+
+	// Mantiene actualizado el módulo de logros después de cambios de aprendizaje.
+	['learned','practice'].forEach(id=>{const b=$(id);if(b)b.addEventListener('click',()=>setTimeout(renderAchievementsV11,10))});
+	renderAchievementsV11();
+
+
+	// V12: banco independiente de cuestionarios importables.
+	const starterQuizzesV12=[{"title": "Matemáticas — Primer grado", "subject": "Matemáticas", "questions": [["¿Cuánto es 2 + 3?", "5"], ["¿Cuánto es 1 + 4?", "5"], ["¿Cuánto es 5 + 2?", "7"], ["¿Cuánto es 3 + 3?", "6"], ["¿Cuánto es 4 + 1?", "5"], ["¿Cuánto es 2 + 6?", "8"], ["¿Cuánto es 5 - 2?", "3"], ["¿Cuánto es 7 - 3?", "4"], ["¿Cuánto es 6 - 1?", "5"], ["¿Cuánto es 8 - 4?", "4"], ["¿Cuánto es 9 - 5?", "4"], ["¿Cuánto es 4 - 2?", "2"], ["¿Qué número es mayor: 3, 8 o 5?", "8"], ["¿Qué número viene después del 4?", "5"], ["¿Qué número viene antes del 7?", "6"], ["¿Qué número falta: 1, 2, 3, 4, __, 6?", "5"], ["¿Cuál es el número menor: 8, 3, 6, 1 o 4?", "1"], ["¿Cuántos lados tiene un triángulo?", "3"], ["¿Cuántos lados tiene un cuadrado?", "4"], ["María tiene 4 manzanas y recibe 3 más. ¿Cuántas tiene en total?", "7"]]}];
+	let quizzesV12=JSON.parse(localStorage.getItem('customQuizzesV12')||'null')||starterQuizzesV12;
+	let activeQuizV12=null, activeQuestionV12=0;
+
+	function saveQuizzesV12(){localStorage.setItem('customQuizzesV12',JSON.stringify(quizzesV12));}
+	function renderQuizLibraryV12(){
+	 const host=$('questionnaireImporterV11'); if(!host)return;
+	 host.innerHTML=`
+	 <div class="importBoxV12">
+	   <h3>📷 Desde una imagen</h3>
+	   <p class="hint"><b>Importante:</b> un archivo HTML sin Internet no puede interpretar por sí solo el texto de una foto. La imagen que subiste anteriormente solo se previsualizaba. En esta versión ya incorporé como cuestionario las 20 preguntas de Matemáticas de tu imagen.</p>
+	   <p class="hint">Para próximas fotos: súbelas en este chat, convierto su contenido a un bloque importable y luego lo pegas aquí.</p>
+	   <h3>📥 Importar bloque de preguntas</h3>
+	   <textarea id="quizJsonV12" placeholder='{"title":"Mi cuestionario","subject":"Materia","questions":[["Pregunta","Respuesta"]]}'></textarea>
+	   <div class="quizActionsV12"><button class="btn" id="importQuizV12">📥 Importar cuestionario</button></div>
+	   <div id="importStatusV12" class="statusV12"></div>
+	 </div>
+	 <h3>📚 Cuestionarios disponibles</h3><div class="quizLibraryV12" id="quizLibraryV12"></div>
+	 <div class="quizPlayerV12" id="quizPlayerV12">
+	   <div class="hint" id="quizCounterV12"></div><div class="quizQuestionV12" id="quizQuestionV12"></div>
+	   <div class="quizAnswerV12" id="quizAnswerV12"></div>
+	   <div class="quizActionsV12">
+	    <button class="btn" id="showAnswerV12">👀 Ver respuesta</button>
+	    <button class="btn" id="prevQuizV12">← Anterior</button>
+	    <button class="btn" id="nextQuizV12">Siguiente →</button>
+	   </div>
+	 </div>`;
+	 $('importQuizV12').onclick=importQuizV12;
+	 renderQuizCardsV12();
+	}
+	function renderQuizCardsV12(){
+	 const host=$('quizLibraryV12'); if(!host)return;
+	 host.innerHTML=quizzesV12.map((q,idx)=>`<div class="quizCardV12"><h3>📘 ${q.title}</h3><div class="hint">${q.subject||'General'} · ${q.questions.length} preguntas</div><div class="quizActionsV12"><button class="btn" data-open-quiz-v12="${idx}">▶ Comenzar</button><button class="btn" data-delete-quiz-v12="${idx}">🗑️ Eliminar</button></div></div>`).join('');
+	 document.querySelectorAll('[data-open-quiz-v12]').forEach(b=>b.onclick=()=>openQuizV12(+b.dataset.openQuizV12));
+	 document.querySelectorAll('[data-delete-quiz-v12]').forEach(b=>b.onclick=()=>{quizzesV12.splice(+b.dataset.deleteQuizV12,1);saveQuizzesV12();renderQuizCardsV12();});
+	}
+	function openQuizV12(idx){
+	 activeQuizV12=idx;activeQuestionV12=0;$('quizPlayerV12').classList.add('show');renderQuizQuestionV12();
+	}
+	function renderQuizQuestionV12(){
+	 const q=quizzesV12[activeQuizV12], item=q.questions[activeQuestionV12];
+	 $('quizCounterV12').textContent=`${q.title} · Pregunta ${activeQuestionV12+1} de ${q.questions.length}`;
+	 $('quizQuestionV12').textContent=item[0];$('quizAnswerV12').textContent='✅ '+item[1];$('quizAnswerV12').classList.remove('show');
+	 $('showAnswerV12').onclick=()=>$('quizAnswerV12').classList.add('show');
+	 $('prevQuizV12').onclick=()=>{activeQuestionV12=(activeQuestionV12-1+q.questions.length)%q.questions.length;renderQuizQuestionV12();};
+	 $('nextQuizV12').onclick=()=>{activeQuestionV12=(activeQuestionV12+1)%q.questions.length;renderQuizQuestionV12();};
+	}
+	function importQuizV12(){
+	 try{
+	   const raw=JSON.parse($('quizJsonV12').value);
+	   const q=Array.isArray(raw)?raw[0]:raw;
+	   if(!q.title||!Array.isArray(q.questions)||!q.questions.length)throw new Error('Formato incompleto');
+	   q.questions=q.questions.filter(x=>Array.isArray(x)&&x.length>=2&&x[0]&&x[1]);
+	   if(!q.questions.length)throw new Error('No hay preguntas válidas');
+	   quizzesV12.push(q);saveQuizzesV12();$('quizJsonV12').value='';
+	   $('importStatusV12').textContent='✅ Cuestionario importado correctamente.';renderQuizCardsV12();
+	 }catch(e){$('importStatusV12').textContent='❌ No se pudo importar. Verifica el bloque de preguntas.';}
+	}
+	// Reemplaza solamente el contenido interno del módulo V11; conserva su navegación.
+	const oldOpenV11=openModuleV11;
+	openModuleV11=function(which){oldOpenV11(which);if(which==='questionnaires')renderQuizLibraryV12();};
+
+
+	// V13: activación/desactivación persistente de cuestionarios.
+	function normalizeQuizEnabledV13(){
+	  quizzesV12.forEach(q=>{if(typeof q.enabled!=='boolean')q.enabled=true;});
+	  saveQuizzesV12();
+	}
+	const renderQuizCardsV12_baseV13=renderQuizCardsV12;
+	renderQuizCardsV12=function(){
+	 normalizeQuizEnabledV13();
+	 const host=$('quizLibraryV12');if(!host)return;
+	 host.innerHTML=quizzesV12.map((q,idx)=>`
+	 <div class="quizCardV12 ${q.enabled?'':'disabledV13'}">
+	   <div class="quizHeadV13">
+	    <div><h3>📘 ${q.title}</h3><div class="hint">${q.subject||'General'} · ${q.questions.length} preguntas</div></div>
+	    <div class="quizToggleV13">
+	      <span class="statusBadgeV13 ${q.enabled?'on':'off'}">${q.enabled?'ACTIVO':'INACTIVO'}</span>
+	      <label class="switchV13" title="${q.enabled?'Desactivar':'Activar'} cuestionario">
+	       <input type="checkbox" data-toggle-quiz-v13="${idx}" ${q.enabled?'checked':''}>
+	       <span class="sliderV13"></span>
+	      </label>
+	    </div>
+	   </div>
+	   <div class="quizActionsV12">
+	    ${q.enabled?`<button class="btn" data-open-quiz-v12="${idx}">▶ Comenzar</button>`:''}
+	    <button class="btn" data-delete-quiz-v12="${idx}">🗑️ Eliminar</button>
+	   </div>
+	 </div>`).join('');
+	 document.querySelectorAll('[data-open-quiz-v12]').forEach(b=>b.onclick=()=>openQuizV12(+b.dataset.openQuizV12));
+	 document.querySelectorAll('[data-delete-quiz-v12]').forEach(b=>b.onclick=()=>{quizzesV12.splice(+b.dataset.deleteQuizV12,1);saveQuizzesV12();renderQuizCardsV12();});
+	 document.querySelectorAll('[data-toggle-quiz-v13]').forEach(t=>t.onchange=()=>{
+	   const idx=+t.dataset.toggleQuizV13;quizzesV12[idx].enabled=t.checked;saveQuizzesV12();renderQuizCardsV12();
+	 });
+	};
+	const openQuizV12_baseV13=openQuizV12;
+	openQuizV12=function(idx){
+	 if(!quizzesV12[idx]||quizzesV12[idx].enabled===false)return;
+	 openQuizV12_baseV13(idx);
+	};
+	normalizeQuizEnabledV13();
+
+
+	// V14: biblioteca segmentada automáticamente por materia.
+	function subjectIconV14(subject){
+	 const x=(subject||'').toLowerCase();
+	 if(x.includes('matem'))return '🔢';
+	 if(x.includes('social'))return '🏠';
+	 if(x.includes('natural')||x.includes('salud'))return '🌱';
+	 if(x.includes('lengua')||x.includes('comunica'))return '📖';
+	 if(x.includes('ciencia'))return '🔬';
+	 return '📚';
+	}
+	function normalizeSubjectV14(q){
+	 let s=(q.subject||'General').trim();
+	 return s||'General';
+	}
+	renderQuizCardsV12=function(){
+	 normalizeQuizEnabledV13();
+	 const host=$('quizLibraryV12');if(!host)return;
+	 const groups={};
+	 quizzesV12.forEach((q,idx)=>{
+	   const subject=normalizeSubjectV14(q);
+	   if(!groups[subject])groups[subject]=[];
+	   groups[subject].push({q,idx});
+	 });
+	 const preferred=['Matemáticas','Vida Social y Trabajo','Medio Natural y Salud'];
+	 const subjects=Object.keys(groups).sort((a,b)=>{
+	   const ia=preferred.indexOf(a),ib=preferred.indexOf(b);
+	   if(ia>=0||ib>=0)return (ia<0?999:ia)-(ib<0?999:ib);
+	   return a.localeCompare(b,'es');
+	 });
+	 host.innerHTML=`<div class="subjectSegmentsV14">${subjects.map(subject=>`
+	  <section class="subjectSectionV14">
+	   <div class="subjectHeaderV14">
+	    <h3>${subjectIconV14(subject)} ${subject}</h3>
+	    <span class="subjectCountV14">${groups[subject].length} cuestionario${groups[subject].length===1?'':'s'}</span>
+	   </div>
+	   <div class="subjectQuizGridV14">
+	    ${groups[subject].map(({q,idx})=>`
+	     <div class="quizCardV12 ${q.enabled?'':'disabledV13'}">
+	      <div class="quizHeadV13">
+	       <div><h3>📘 ${q.title}</h3><div class="hint">${q.questions.length} preguntas</div></div>
+	       <div class="quizToggleV13">
+		<span class="statusBadgeV13 ${q.enabled?'on':'off'}">${q.enabled?'ACTIVO':'INACTIVO'}</span>
+		<label class="switchV13" title="${q.enabled?'Desactivar':'Activar'} cuestionario">
+		 <input type="checkbox" data-toggle-quiz-v13="${idx}" ${q.enabled?'checked':''}>
+		 <span class="sliderV13"></span>
+		</label>
+	       </div>
+	      </div>
+	      <div class="quizActionsV12">
+	       ${q.enabled?`<button class="btn" data-open-quiz-v12="${idx}">▶ Comenzar</button>`:''}
+	       <button class="btn" data-delete-quiz-v12="${idx}">🗑️ Eliminar</button>
+	      </div>
+	     </div>`).join('')}
+	   </div>
+	  </section>`).join('')}</div>`;
+	 document.querySelectorAll('[data-open-quiz-v12]').forEach(b=>b.onclick=()=>openQuizV12(+b.dataset.openQuizV12));
+	 document.querySelectorAll('[data-delete-quiz-v12]').forEach(b=>b.onclick=()=>{quizzesV12.splice(+b.dataset.deleteQuizV12,1);saveQuizzesV12();renderQuizCardsV12();});
+	 document.querySelectorAll('[data-toggle-quiz-v13]').forEach(t=>t.onchange=()=>{
+	   const idx=+t.dataset.toggleQuizV13;quizzesV12[idx].enabled=t.checked;saveQuizzesV12();renderQuizCardsV12();
+	 });
+	};
+	// Al importar, el campo "subject" determina automáticamente el segmento donde aparecerá.
+
+
+	// V15: selector inicial + administrador independiente de activos/inactivos.
+	let managerViewV15='active';
+
+	function enabledQuizzesV15(){
+	  normalizeQuizEnabledV13();
+	  return quizzesV12.map((q,idx)=>({q,idx})).filter(x=>x.q.enabled!==false);
+	}
+	function renderHomeSelectorV15(){
+	  const host=$('homeQuizGridV15'); if(!host)return;
+	  const rows=enabledQuizzesV15();
+	  host.innerHTML=rows.length?rows.map(({q,idx})=>`
+	    <div class="homeQuizV15">
+	      <span class="activeQuizPillV15">● ACTIVO</span>
+	      <h3>${subjectIconV14(q.subject)} ${q.title}</h3>
+	      <div class="hint">${q.subject||'General'} · ${q.questions.length} preguntas</div>
+	      <button class="btn primary" data-home-open-v15="${idx}">▶ Usar este cuestionario</button>
+	    </div>`).join(''):`<div class="homeEmptyV15">No hay cuestionarios activos. Activa uno desde <b>📚 Cuestionarios</b>.</div>`;
+	  document.querySelectorAll('[data-home-open-v15]').forEach(b=>b.onclick=()=>{
+	    const idx=+b.dataset.homeOpenV15;
+	    openModuleV11('questionnaires');
+	    renderQuizLibraryV12();
+	    openQuizV12(idx);
+	    const player=$('quizPlayerV12'); if(player)player.scrollIntoView({behavior:'smooth',block:'start'});
+	  });
+	}
+
+	function renderManagerV15(){
+	  const host=$('questionnaireImporterV11'); if(!host)return;
+	  normalizeQuizEnabledV13();
+	  const rows=quizzesV12.map((q,idx)=>({q,idx})).filter(x=>managerViewV15==='active'?x.q.enabled!==false:x.q.enabled===false);
+	  host.innerHTML=`
+	    <div class="quizManagerV15">
+	      <h3>⚙️ Administrar cuestionarios</h3>
+	      <div class="managerTabsV15">
+		<button class="btn ${managerViewV15==='active'?'active':''}" id="activeTabV15">🟢 Activos (${quizzesV12.filter(q=>q.enabled!==false).length})</button>
+		<button class="btn ${managerViewV15==='inactive'?'active':''}" id="inactiveTabV15">⚪ Inactivos (${quizzesV12.filter(q=>q.enabled===false).length})</button>
+	      </div>
+	      <div class="managerGridV15">
+		${rows.length?rows.map(({q,idx})=>`
+		  <div class="managerCardV15 ${q.enabled===false?'off':''}">
+		    <div class="managerHeadV15">
+		      <div><b>${subjectIconV14(q.subject)} ${q.title}</b><div class="hint">${q.subject||'General'} · ${q.questions.length} preguntas</div></div>
+		      <span class="statusBadgeV13 ${q.enabled!==false?'on':'off'}">${q.enabled!==false?'ACTIVO':'INACTIVO'}</span>
+		    </div>
+		    <div class="quizActionsV12">
+		      <button class="btn" data-manager-toggle-v15="${idx}">${q.enabled!==false?'⏸ Desactivar':'▶ Activar'}</button>
+		      ${q.enabled!==false?`<button class="btn" data-manager-open-v15="${idx}">🎮 Usar</button>`:''}
+		      <button class="btn" data-manager-delete-v15="${idx}">🗑️ Eliminar</button>
+		    </div>
+		  </div>`).join(''):`<div class="homeEmptyV15">No hay cuestionarios ${managerViewV15==='active'?'activos':'inactivos'}.</div>`}
+	      </div>
+	      <div class="importBoxV12">
+		<h3>📥 Importar nuevo cuestionario</h3>
+		<p class="hint">Los cuestionarios nuevos quedan activos por defecto y aparecen automáticamente en el selector inicial.</p>
+		<textarea id="quizJsonV12" placeholder='{"title":"Mi cuestionario","subject":"Materia","questions":[["Pregunta","Respuesta"]]}'></textarea>
+		<div class="quizActionsV12"><button class="btn" id="importQuizV12">📥 Importar cuestionario</button></div>
+		<div id="importStatusV12" class="statusV12"></div>
+	      </div>
+	    </div>`;
+	  $('activeTabV15').onclick=()=>{managerViewV15='active';renderManagerV15()};
+	  $('inactiveTabV15').onclick=()=>{managerViewV15='inactive';renderManagerV15()};
+	  document.querySelectorAll('[data-manager-toggle-v15]').forEach(b=>b.onclick=()=>{
+	    const idx=+b.dataset.managerToggleV15; quizzesV12[idx].enabled=!(quizzesV12[idx].enabled!==false);
+	    saveQuizzesV12(); renderManagerV15(); renderHomeSelectorV15();
+	  });
+	  document.querySelectorAll('[data-manager-open-v15]').forEach(b=>b.onclick=()=>{
+	    const idx=+b.dataset.managerOpenV15; renderQuizLibraryV12(); openQuizV12(idx);
+	    const p=$('quizPlayerV12');if(p)p.scrollIntoView({behavior:'smooth',block:'start'});
+	  });
+	  document.querySelectorAll('[data-manager-delete-v15]').forEach(b=>b.onclick=()=>{
+	    const idx=+b.dataset.managerDeleteV15;
+	    if(confirm('¿Eliminar este cuestionario?')){quizzesV12.splice(idx,1);saveQuizzesV12();renderManagerV15();renderHomeSelectorV15();}
+	  });
+	  $('importQuizV12').onclick=()=>{
+	    try{
+	      const raw=JSON.parse($('quizJsonV12').value), q=Array.isArray(raw)?raw[0]:raw;
+	      if(!q.title||!Array.isArray(q.questions)||!q.questions.length)throw new Error();
+	      q.questions=q.questions.filter(x=>Array.isArray(x)&&x.length>=2&&x[0]&&x[1]);
+	      if(!q.questions.length)throw new Error();
+	      q.enabled=true; quizzesV12.push(q); saveQuizzesV12();
+	      managerViewV15='active'; renderManagerV15(); renderHomeSelectorV15();
+	    }catch(e){$('importStatusV12').textContent='❌ No se pudo importar. Verifica el formato.'}
+	  };
+	}
+
+	const openModuleV11_v15=openModuleV11;
+	openModuleV11=function(which){
+	  openModuleV11_v15(which);
+	  if(which==='questionnaires')renderManagerV15();
+	};
+	renderHomeSelectorV15();
+
+
+	// V16: Vida Social y Medio Natural también son cuestionarios activables/desactivables.
+	let coreQuizStateV16=JSON.parse(localStorage.getItem('coreQuizStateV16')||'{"social":true,"natural":true}');
+	function saveCoreStateV16(){localStorage.setItem('coreQuizStateV16',JSON.stringify(coreQuizStateV16));}
+	function coreQuizzesV16(){
+	 return [
+	  {id:'social',title:'Vida Social y Trabajo',subject:'Vida Social y Trabajo',count:data.social.length,enabled:coreQuizStateV16.social!==false,icon:'🏠'},
+	  {id:'natural',title:'Medio Natural y Salud',subject:'Medio Natural y Salud',count:data.natural.length,enabled:coreQuizStateV16.natural!==false,icon:'🌱'}
+	 ];
+	}
+	function openCoreQuizV16(id){
+	 if(coreQuizStateV16[id]===false)return;
+	 closeModulesV11();
+	 const hs=$('homeSelectorV15'); if(hs)hs.scrollIntoView({behavior:'smooth',block:'start'});
+	 hideStatePanelV8();
+	 setMode(id); i=0; view='study'; render();
+	 document.querySelector('.card').scrollIntoView({behavior:'smooth',block:'start'});
+	}
+
+	// Reemplaza el selector inicial para incluir cuestionarios base + importados.
+	renderHomeSelectorV15=function(){
+	 const host=$('homeQuizGridV15');if(!host)return;
+	 normalizeQuizEnabledV13();
+	 const core=coreQuizzesV16().filter(q=>q.enabled);
+	 const custom=quizzesV12.map((q,idx)=>({q,idx})).filter(x=>x.q.enabled!==false);
+	 let cards=core.map(q=>`
+	   <div class="homeQuizV15">
+	    <span class="activeQuizPillV15">● ACTIVO</span>
+	    <h3>${q.icon} ${q.title}</h3>
+	    <div class="hint">${q.subject} · ${q.count} preguntas</div>
+	    <button class="btn primary" data-core-open-v16="${q.id}">▶ Usar este cuestionario</button>
+	   </div>`).join('');
+	 cards+=custom.map(({q,idx})=>`
+	   <div class="homeQuizV15">
+	    <span class="activeQuizPillV15">● ACTIVO</span>
+	    <h3>${subjectIconV14(q.subject)} ${q.title}</h3>
+	    <div class="hint">${q.subject||'General'} · ${q.questions.length} preguntas</div>
+	    <button class="btn primary" data-home-open-v15="${idx}">▶ Usar este cuestionario</button>
+	   </div>`).join('');
+	 host.innerHTML=cards||'<div class="homeEmptyV15">No hay cuestionarios activos. Activa uno desde <b>📚 Cuestionarios</b>.</div>';
+	 document.querySelectorAll('[data-core-open-v16]').forEach(b=>b.onclick=()=>openCoreQuizV16(b.dataset.coreOpenV16));
+	 document.querySelectorAll('[data-home-open-v15]').forEach(b=>b.onclick=()=>{
+	   const idx=+b.dataset.homeOpenV15;openModuleV11('questionnaires');renderQuizLibraryV12();openQuizV12(idx);
+	   const p=$('quizPlayerV12');if(p)p.scrollIntoView({behavior:'smooth',block:'start'});
+	 });
+	};
+
+	// Administrador único: base + nuevos cuestionarios.
+	renderManagerV15=function(){
+	 const host=$('questionnaireImporterV11');if(!host)return;
+	 normalizeQuizEnabledV13();
+	 const core=coreQuizzesV16().map(q=>({kind:'core',q}));
+	 const custom=quizzesV12.map((q,idx)=>({kind:'custom',q,idx}));
+	 const all=[...core,...custom];
+	 const rows=all.filter(x=>managerViewV15==='active'?x.q.enabled!==false:x.q.enabled===false);
+	 const activeCount=all.filter(x=>x.q.enabled!==false).length;
+	 const inactiveCount=all.filter(x=>x.q.enabled===false).length;
+	 host.innerHTML=`
+	  <div class="quizManagerV15">
+	   <h3>⚙️ Administrar cuestionarios</h3>
+	   <p class="hint">Aquí también puedes activar o desactivar las materias originales del sistema.</p>
+	   <div class="managerTabsV15">
+	    <button class="btn ${managerViewV15==='active'?'active':''}" id="activeTabV15">🟢 Activos (${activeCount})</button>
+	    <button class="btn ${managerViewV15==='inactive'?'active':''}" id="inactiveTabV15">⚪ Inactivos (${inactiveCount})</button>
+	   </div>
+	   <div class="managerGridV15">
+	   ${rows.length?rows.map(x=>{
+	     const q=x.q, count=x.kind==='core'?q.count:q.questions.length;
+	     const ident=x.kind==='core'?q.id:x.idx;
+	     return `<div class="managerCardV15 ${q.enabled===false?'off':''}">
+	      <div class="managerHeadV15"><div><b>${x.kind==='core'?q.icon:subjectIconV14(q.subject)} ${q.title}</b>
+	      <div class="hint">${q.subject||'General'} · ${count} preguntas ${x.kind==='core'?'· Cuestionario original':''}</div></div>
+	      <span class="statusBadgeV13 ${q.enabled!==false?'on':'off'}">${q.enabled!==false?'ACTIVO':'INACTIVO'}</span></div>
+	      <div class="quizActionsV12">
+	       <button class="btn" data-v16-toggle="${x.kind}|${ident}">${q.enabled!==false?'⏸ Desactivar':'▶ Activar'}</button>
+	       ${q.enabled!==false?`<button class="btn" data-v16-use="${x.kind}|${ident}">🎮 Usar</button>`:''}
+	       ${x.kind==='custom'?`<button class="btn" data-manager-delete-v15="${x.idx}">🗑️ Eliminar</button>`:''}
+	      </div></div>`}).join(''):'<div class="homeEmptyV15">No hay cuestionarios en este estado.</div>'}
+	   </div>
+	   <div class="importBoxV12">
+	    <h3>📥 Importar nuevo cuestionario</h3>
+	    <p class="hint">Los nuevos cuestionarios quedan activos por defecto.</p>
+	    <textarea id="quizJsonV12" placeholder='{"title":"Mi cuestionario","subject":"Materia","questions":[["Pregunta","Respuesta"]]}'></textarea>
+	    <div class="quizActionsV12"><button class="btn" id="importQuizV12">📥 Importar cuestionario</button></div>
+	    <div id="importStatusV12" class="statusV12"></div>
+	   </div>
+	  </div>`;
+	 $('activeTabV15').onclick=()=>{managerViewV15='active';renderManagerV15()};
+	 $('inactiveTabV15').onclick=()=>{managerViewV15='inactive';renderManagerV15()};
+	 document.querySelectorAll('[data-v16-toggle]').forEach(b=>b.onclick=()=>{
+	   const [kind,id]=b.dataset.v16Toggle.split('|');
+	   if(kind==='core'){coreQuizStateV16[id]=!(coreQuizStateV16[id]!==false);saveCoreStateV16();}
+	   else {quizzesV12[+id].enabled=!(quizzesV12[+id].enabled!==false);saveQuizzesV12();}
+	   renderManagerV15();renderHomeSelectorV15();
+	 });
+	 document.querySelectorAll('[data-v16-use]').forEach(b=>b.onclick=()=>{
+	   const [kind,id]=b.dataset.v16Use.split('|');
+	   if(kind==='core')openCoreQuizV16(id); else {renderQuizLibraryV12();openQuizV12(+id);}
+	 });
+	 document.querySelectorAll('[data-manager-delete-v15]').forEach(b=>b.onclick=()=>{
+	   const idx=+b.dataset.managerDeleteV15;
+	   if(confirm('¿Eliminar este cuestionario?')){quizzesV12.splice(idx,1);saveQuizzesV12();renderManagerV15();renderHomeSelectorV15();}
+	 });
+	 $('importQuizV12').onclick=()=>{
+	   try{
+	    const raw=JSON.parse($('quizJsonV12').value),q=Array.isArray(raw)?raw[0]:raw;
+	    if(!q.title||!Array.isArray(q.questions)||!q.questions.length)throw new Error();
+	    q.questions=q.questions.filter(x=>Array.isArray(x)&&x.length>=2&&x[0]&&x[1]);
+	    if(!q.questions.length)throw new Error();q.enabled=true;quizzesV12.push(q);saveQuizzesV12();
+	    managerViewV15='active';renderManagerV15();renderHomeSelectorV15();
+	   }catch(e){$('importStatusV12').textContent='❌ No se pudo importar. Verifica el formato.'}
+	 };
+	};
+	renderHomeSelectorV15();
+
+
+	// V17: navegación limpia y exclusiva entre estudio, Logros y Nuevos cuestionarios.
+	function setModuleLayoutV17(open){
+	 document.body.classList.toggle('moduleOpenV17',!!open);
+	}
+	const openModuleV11_v17=openModuleV11;
+	openModuleV11=function(which){
+	 setModuleLayoutV17(true);
+	 openModuleV11_v17(which);
+	 if(which==='questionnaires')renderManagerV15();
+	};
+
+	// Al volver a cualquiera de las materias originales, se cierra cualquier módulo.
+	['socialBtn','naturalBtn','pendingBtn','practiceListNavV8'].forEach(id=>{
+	 const b=$(id);
+	 if(b)b.addEventListener('click',()=>{setModuleLayoutV17(false);closeModulesV11();});
+	});
+
+	// El selector de cuestionarios deja de formar parte de la página principal.
+	const homeV17=$('homeSelectorV15');
+	if(homeV17)homeV17.style.display='none';
+
+	// Si desde el administrador se elige un cuestionario original, vuelve al área de estudio.
+	const openCoreQuizV16_v17=openCoreQuizV16;
+	openCoreQuizV16=function(id){
+	 setModuleLayoutV17(false);
+	 closeModulesV11();
+	 openCoreQuizV16_v17(id);
+	};
+
+
+	// V18: restaura "¿Qué cuestionario quieres usar?" y muestra también los inactivos.
+	renderHomeSelectorV15=function(){
+	 const host=$('homeQuizGridV15');if(!host)return;
+	 normalizeQuizEnabledV13();
+	 const core=coreQuizzesV16().map(q=>({kind:'core',q}));
+	 const custom=quizzesV12.map((q,idx)=>({kind:'custom',q,idx}));
+	 const all=[...core,...custom];
+
+	 host.innerHTML=all.length?all.map(x=>{
+	   const q=x.q, active=q.enabled!==false;
+	   const count=x.kind==='core'?q.count:q.questions.length;
+	   const ident=x.kind==='core'?q.id:x.idx;
+	   const icon=x.kind==='core'?q.icon:subjectIconV14(q.subject);
+	   return `<div class="homeQuizV15 ${active?'':'inactiveV18'}">
+	     <span class="${active?'activeQuizPillV15':'inactivePillV18'}">${active?'● ACTIVO':'○ INACTIVO'}</span>
+	     <h3>${icon} ${q.title}</h3>
+	     <div class="hint">${q.subject||'General'} · ${count} preguntas</div>
+	     ${active
+	       ? `<button class="btn primary" data-v18-use="${x.kind}|${ident}">▶ Usar este cuestionario</button>`
+	       : `<div class="inactiveMsgV18">🔒 Necesitas activar este cuestionario para poder usarlo.</div>
+		  <button class="btn" data-v18-activate="${x.kind}|${ident}">✅ Activar cuestionario</button>`}
+	   </div>`;
+	 }).join(''):'<div class="homeEmptyV15">No hay cuestionarios disponibles.</div>';
+
+	 document.querySelectorAll('[data-v18-use]').forEach(b=>b.onclick=()=>{
+	   const [kind,id]=b.dataset.v18Use.split('|');
+	   if(kind==='core') openCoreQuizV16(id);
+	   else{
+	     openModuleV11('questionnaires');
+	     renderQuizLibraryV12();
+	     openQuizV12(+id);
+	     const p=$('quizPlayerV12');if(p)p.scrollIntoView({behavior:'smooth',block:'start'});
+	   }
+	 });
+	 document.querySelectorAll('[data-v18-activate]').forEach(b=>b.onclick=()=>{
+	   const [kind,id]=b.dataset.v18Activate.split('|');
+	   if(kind==='core'){coreQuizStateV16[id]=true;saveCoreStateV16();}
+	   else{quizzesV12[+id].enabled=true;saveQuizzesV12();}
+	   renderHomeSelectorV15();
+	 });
+	};
+
+	// V17 ocultaba el selector de forma directa. V18 lo vuelve a habilitar en la portada.
+	const homeV18=$('homeSelectorV15');
+	if(homeV18)homeV18.style.removeProperty('display');
+	document.body.classList.remove('moduleOpenV17');
+	renderHomeSelectorV15();
+
+
+	// V19: botón PASO en modo práctica.
+	// Al usarlo se revela/marca automáticamente la respuesta correcta y la pregunta queda practicando.
+	function syncPassButtonV19(){
+	 const b=$('passPracticeV19'); if(!b)return;
+	 b.style.display=(view==='study')?'inline-block':'none';
+	}
+	function passPracticeV19(){
+	 if(view!=='study')return;
+	 const k=key();
+	 practicing[k]=true;
+	 learned[k]=false;
+	 const st=stats[k]||{correct:0,wrong:0};
+	 st.wrong=(st.wrong||0)+1;
+	 stats[k]=st;
+	 streak=0;
+
+	 const correct=data[mode][i][1];
+	 document.querySelectorAll('.choice').forEach(btn=>{
+	   btn.disabled=true;
+	   if(btn.dataset.c==='1')btn.classList.add('correct');
+	 });
+	 $('feedback').textContent=learningMode==='practice'?'⏭️ Paso · La respuesta correcta quedó marcada para practicar.':'⏭️ Paso · La respuesta correcta quedó marcada. Esta pregunta quedará en Practicando para reforzarla.';
+	 $('answer').classList.add('show');
+	 $('speak').disabled=false;
+	 saveSmart();updateStars();updateStateCountsV8();
+	}
+	$('passPracticeV19').onclick=passPracticeV19;
+
+	// Mantiene visible el botón tanto en Aprender como en Practicar.
+	const setLearningMode_v19=setLearningMode;
+	setLearningMode=function(m){setLearningMode_v19(m);syncPassButtonV19();};
+	const render_v19=render;
+	render=function(){render_v19();syncPassButtonV19();};
+	syncPassButtonV19();
+
+
+	// V21: modo de enfoque por cuestionario + sonido de check al aprender.
+	let selectedQuizV21=null;
+
+	function enterQuizFocusV21(title){
+	 selectedQuizV21=title||'Cuestionario';
+	 document.body.classList.add('quizFocusV21');
+	 const t=$('focusTitleV21'); if(t)t.textContent='📘 '+selectedQuizV21;
+	}
+	function leaveQuizFocusV21(){
+	 selectedQuizV21=null;
+	 document.body.classList.remove('quizFocusV21','moduleOpenV17');
+	 closeModulesV11();
+	 const home=$('homeSelectorV15'); if(home)home.scrollIntoView({behavior:'smooth',block:'start'});
+	}
+	$('changeQuizV21').onclick=leaveQuizFocusV21;
+
+	// Sonido corto de confirmación sin archivos externos.
+	function learnedCheckSoundV21(){
+	 try{
+	   const AC=window.AudioContext||window.webkitAudioContext;
+	   if(!AC)return;
+	   const ctx=new AC();
+	   const now=ctx.currentTime;
+	   [[659.25,0],[880,0.09]].forEach(([freq,delay])=>{
+	     const o=ctx.createOscillator(),g=ctx.createGain();
+	     o.type='sine';o.frequency.setValueAtTime(freq,now+delay);
+	     g.gain.setValueAtTime(0.0001,now+delay);
+	     g.gain.exponentialRampToValueAtTime(0.16,now+delay+0.012);
+	     g.gain.exponentialRampToValueAtTime(0.0001,now+delay+0.13);
+	     o.connect(g);g.connect(ctx.destination);
+	     o.start(now+delay);o.stop(now+delay+0.14);
+	   });
+	   setTimeout(()=>ctx.close(),350);
+	 }catch(e){}
+	}
+
+	// Cuestionarios originales: al entrar, oculta los demás cuestionarios.
+	const openCoreQuizV16_v21=openCoreQuizV16;
+	openCoreQuizV16=function(id){
+	 const q=coreQuizzesV16().find(x=>x.id===id);
+	 if(!q||q.enabled===false)return;
+	 openCoreQuizV16_v21(id);
+	 enterQuizFocusV21(q.title);
+	};
+
+	// Cuestionarios importados: también entran en modo exclusivo.
+	const openQuizV12_v21=openQuizV12;
+	openQuizV12=function(idx){
+	 const q=quizzesV12[idx];
+	 if(!q||q.enabled===false)return;
+	 openQuizV12_v21(idx);
+	 enterQuizFocusV21(q.title);
+	};
+
+	// Detecta el momento exacto en que una pregunta pasa a aprendida.
+	// Funciona tanto al marcar manualmente como cuando el aprendizaje inteligente la promociona.
+	const learnedSnapshotV21=()=>new Set(Object.keys(learned).filter(k=>learned[k]));
+	function watchLearnedV21(action){
+	 const before=learnedSnapshotV21();
+	 action();
+	 const after=learnedSnapshotV21();
+	 for(const k of after){
+	   if(!before.has(k)){learnedCheckSoundV21();break;}
+	 }
+	}
+
+	// Botón "Marcar como aprendida".
+	const learnedBtnV21=$('learned');
+	if(learnedBtnV21){
+	 learnedBtnV21.addEventListener('click',()=>{
+	   // El listener base se ejecuta antes; comprobamos el resultado en el siguiente microturno.
+	   setTimeout(()=>{
+	     const k=key();
+	     if(learned[k] && window._lastSoundLearnedV21!==k){
+	       window._lastSoundLearnedV21=k;
+	       learnedCheckSoundV21();
+	     }
+	   },0);
+	 });
+	}
+
+	// Para promociones automáticas tras respuestas correctas, observa cambios en el estado al pulsar opciones.
+	document.addEventListener('click',e=>{
+	 const c=e.target.closest&&e.target.closest('.choice');
+	 if(!c)return;
+	 const before=learnedSnapshotV21();
+	 setTimeout(()=>{
+	   const after=learnedSnapshotV21();
+	   for(const k of after){
+	     if(!before.has(k)){
+	       if(window._lastSoundLearnedV21!==k){
+		 window._lastSoundLearnedV21=k; learnedCheckSoundV21();
+	       }
+	       break;
+	     }
+	   }
+	 },0);
+	},true);
+
+
+	// V22: portada cerrada hasta que el usuario pulse "Usar este cuestionario".
+	function awaitQuizSelectionV22(){
+	 document.body.classList.add('awaitQuizV22');
+	 document.body.classList.remove('quizFocusV21','moduleOpenV17');
+	 closeModulesV11();
+	}
+	function selectedQuizV22(){
+	 document.body.classList.remove('awaitQuizV22');
+	}
+
+	// La portada ya no permite activar un cuestionario inactivo.
+	// Solo informa que debe activarse desde "Nuevos cuestionarios".
+	const renderHomeSelectorV15_v22=renderHomeSelectorV15;
+	renderHomeSelectorV15=function(){
+	 renderHomeSelectorV15_v22();
+	 document.querySelectorAll('[data-v18-activate]').forEach(b=>{
+	   const card=b.closest('.homeQuizV15');
+	   if(card){
+	     b.remove();
+	     const msg=card.querySelector('.inactiveMsgV18');
+	     if(msg)msg.innerHTML='🔒 Este cuestionario está inactivo. Debes activarlo desde <b>📚 Cuestionarios</b> para poder usarlo.';
+	   }
+	 });
+	};
+
+	// Refuerzo de seguridad: aunque se invoque por código, un inactivo nunca abre.
+	const openCoreQuizV16_v22=openCoreQuizV16;
+	openCoreQuizV16=function(id){
+	 const q=coreQuizzesV16().find(x=>x.id===id);
+	 if(!q || q.enabled===false){renderHomeSelectorV15();awaitQuizSelectionV22();return;}
+	 selectedQuizV22();
+	 openCoreQuizV16_v22(id);
+	};
+
+	const openQuizV12_v22=openQuizV12;
+	openQuizV12=function(idx){
+	 const q=quizzesV12[idx];
+	 if(!q || q.enabled===false){renderHomeSelectorV15();awaitQuizSelectionV22();return;}
+	 selectedQuizV22();
+	 openQuizV12_v22(idx);
+	};
+
+	// Cambiar cuestionario vuelve a la portada sin mostrar preguntas anteriores.
+	$('changeQuizV21').onclick=()=>{
+	 selectedQuizV21=null;
+	 document.body.classList.remove('quizFocusV21','moduleOpenV17');
+	 renderHomeSelectorV15();
+	 awaitQuizSelectionV22();
+	 const home=$('homeSelectorV15');if(home)home.scrollIntoView({behavior:'smooth',block:'start'});
+	};
+
+	// Al entrar a módulos independientes tampoco se muestra el cuestionario que estaba detrás.
+	const openModuleV11_v22=openModuleV11;
+	openModuleV11=function(which){
+	 document.body.classList.remove('quizFocusV21');
+	 document.body.classList.add('awaitQuizV22');
+	 openModuleV11_v22(which);
+	 if(which==='questionnaires')renderManagerV15();
+	};
+
+	// Estado inicial: mostrar selector, pero ocultar todo el detalle de preguntas.
+	renderHomeSelectorV15();
+	awaitQuizSelectionV22();
+
+
+	// V23: eliminar definitivamente el cuestionario de Matemáticas del catálogo dinámico.
+	// Se limpia también cualquier copia que hubiera quedado guardada en localStorage.
+	function isMathQuizV23(q){
+	 const txt=((q&&q.title)||'')+' '+((q&&q.subject)||'');
+	 return /matem[aá]tica/i.test(txt);
+	}
+	function removeMathQuizV23(){
+	 let changed=false;
+	 for(let n=quizzesV12.length-1;n>=0;n--){
+	   if(isMathQuizV23(quizzesV12[n])){
+	     quizzesV12.splice(n,1);
+	     changed=true;
+	   }
+	 }
+	 if(changed) saveQuizzesV12();
+	}
+	removeMathQuizV23();
+
+	// Evita que el cuestionario inicial de Matemáticas vuelva a incorporarse
+	// aunque exista en versiones anteriores del almacenamiento local.
+	if(typeof starterQuizzesV12!=='undefined'){
+	 for(let n=starterQuizzesV12.length-1;n>=0;n--){
+	   if(isMathQuizV23(starterQuizzesV12[n])) starterQuizzesV12.splice(n,1);
+	 }
+	}
+
+	renderHomeSelectorV15();
+
+
+	// V24: acceso a Por aprender / Practicando / Aprendidas por cuestionario seleccionado.
+	let stateViewV24=null;
+
+	function activeCoreModeV24(){
+	 return (mode==='social'||mode==='natural')?mode:null;
+	}
+	function rowsForActiveQuizV24(){
+	 const m=activeCoreModeV24();
+	 if(!m)return [];
+	 return data[m].map((qa,idx)=>{
+	   const k=m+'-'+idx;
+	   return {idx,q:qa[0],a:qa[1],k,
+	     learned:!!learned[k],
+	     practicing:!!practicing[k],
+	     state:learned[k]?'learned':(practicing[k]?'practicing':'pending')
+	   };
+	 });
+	}
+	function updateStateNavV24(){
+	 const rows=rowsForActiveQuizV24();
+	 const counts={pending:0,practicing:0,learned:0};
+	 rows.forEach(r=>counts[r.state]++);
+	 $('pendingCountV24').textContent=`(${counts.pending})`;
+	 $('practicingCountV24').textContent=`(${counts.practicing})`;
+	 $('learnedCountV24').textContent=`(${counts.learned})`;
+	}
+	function closeStatePanelV24(){
+	 stateViewV24=null;
+	 $('statePanelV24').classList.remove('show');
+	 // restore normal study card
+	 document.querySelector('.progressWrap').style.display='';
+	 document.querySelector('.modeToggle').style.display='';
+	 document.querySelector('main > .card').style.display='';
+	 document.querySelector('main > .nav').style.display='';
+	 document.querySelector('main > .tools').style.display='';
+	}
+	function openStatePanelV24(which){
+	 stateViewV24=which;
+	 updateStateNavV24();
+	 const labels={
+	   pending:['📖 Preguntas por aprender','Preguntas que todavía no fueron marcadas para practicar ni aprendidas.'],
+	   practicing:['🟡 Preguntas a estudiar','Preguntas que marcaste para seguir practicando.'],
+	   learned:['🟢 Preguntas aprendidas','Preguntas que ya fueron registradas como aprendidas.']
+	 };
+	 $('stateTitleV24').textContent=labels[which][0];
+	 $('stateHintV24').textContent=labels[which][1];
+	 const rows=rowsForActiveQuizV24().filter(r=>r.state===which);
+	 $('stateListV24').innerHTML=rows.length?rows.map(r=>`
+	   <div class="stateRowV24">
+	    <div><b>${r.q}</b><div class="meta">${mode==='social'?'🏠 Vida Social y Trabajo':'🌱 Medio Natural y Salud'}</div></div>
+	    <button class="btn primary" data-study-v24="${r.idx}">▶ Estudiar</button>
+	   </div>`).join(''):`<div class="homeEmptyV15">No hay preguntas registradas en esta sección.</div>`;
+	 $('statePanelV24').classList.add('show');
+
+	 // Hide question detail while reviewing a state list.
+	 document.querySelector('.progressWrap').style.display='none';
+	 document.querySelector('.modeToggle').style.display='none';
+	 document.querySelector('main > .card').style.display='none';
+	 document.querySelector('main > .nav').style.display='none';
+	 document.querySelector('main > .tools').style.display='none';
+
+	 document.querySelectorAll('[data-study-v24]').forEach(b=>b.onclick=()=>{
+	   i=+b.dataset.studyV24;
+	   closeStatePanelV24();
+	   view='study';
+	   render();
+	   updateStateNavV24();
+	   document.querySelector('main > .card').scrollIntoView({behavior:'smooth',block:'start'});
+	 });
+	}
+	$('pendingV24').onclick=()=>openStatePanelV24('pending');
+	$('practicingV24').onclick=()=>openStatePanelV24('practicing');
+	$('learnedV24').onclick=()=>openStatePanelV24('learned');
+
+	// Al abrir un cuestionario, actualiza sus contadores y no mezcla estados con otra materia.
+	const enterQuizFocusV21_v24=enterQuizFocusV21;
+	enterQuizFocusV21=function(title){
+	 enterQuizFocusV21_v24(title);
+	 closeStatePanelV24();
+	 updateStateNavV24();
+	};
+
+	// Actualiza los contadores después de cualquier cambio de pregunta/estado.
+	document.addEventListener('click',()=>{
+	 if(document.body.classList.contains('quizFocusV21'))setTimeout(updateStateNavV24,0);
+	});
+
+	updateStateNavV24();
+
+
+	// V25: resumen de logros por materia/cuestionario y total general.
+	function achievementDataV25(){
+	 const subjects=[
+	   {id:'social',title:'Vida Social y Trabajo',icon:'🏠',total:data.social.length},
+	   {id:'natural',title:'Medio Natural y Salud',icon:'🌱',total:data.natural.length}
+	 ];
+	 return subjects.map(x=>{
+	   let learnedCount=0;
+	   for(let n=0;n<x.total;n++) if(learned[x.id+'-'+n]) learnedCount++;
+	   return {...x,learned:learnedCount,pct:x.total?Math.round(learnedCount*100/x.total):0};
+	 });
+	}
+	function renderAchievementsV25(){
+	 const host=$('achievementsContentV11');
+	 if(!host)return;
+	 const rows=achievementDataV25();
+	 const totalLearned=rows.reduce((a,x)=>a+x.learned,0);
+	 const totalQuestions=rows.reduce((a,x)=>a+x.total,0);
+	 const overallPct=totalQuestions?Math.round(totalLearned*100/totalQuestions):0;
+	 host.innerHTML=`
+	   <h2>🏆 Resumen de logros</h2>
+	   <p class="hint">Tu progreso se calcula de forma independiente para cada cuestionario.</p>
+	   <div class="achievementSummaryV25">
+	    ${rows.map(x=>`
+	      <div class="achievementCardV25">
+	       <div class="achievementTopV25"><b>${x.icon} ${x.title}</b><span>⭐</span></div>
+	       <div class="achievementPctV25">${x.pct}%</div>
+	       <div><b>${x.learned}</b> de ${x.total} aprendidas</div>
+	       <div class="achievementBarV25"><span style="width:${x.pct}%"></span></div>
+	      </div>`).join('')}
+	      <div class="achievementCardV25 totalAchievementV25">
+	       <div class="achievementTopV25"><b>🌟 Total general</b><span>🏆</span></div>
+	       <div class="totalNumberV25">${totalLearned}</div>
+	       <div>preguntas aprendidas de ${totalQuestions}</div>
+	       <div class="achievementBarV25"><span style="width:${overallPct}%"></span></div>
+	       <div class="hint" style="margin-top:8px">${overallPct}% de progreso general</div>
+	      </div>
+	   </div>`;
+	}
+
+	// Actualiza Logros al abrir el módulo.
+	const openModuleV11_v25=openModuleV11;
+	openModuleV11=function(which){
+	 openModuleV11_v25(which);
+	 if(which==='achievements')renderAchievementsV25();
+	 if(which==='questionnaires')renderManagerV15();
+	};
+
+	// Actualiza los datos tras cambios de estado.
+	document.addEventListener('click',()=>setTimeout(()=>{
+	 if($('achievementsModuleV11') && !$('achievementsModuleV11').classList.contains('hidden')) renderAchievementsV25();
+	},0));
+
+
+	// V26: corrección consolidada de estados + resumen real por cuestionario.
+	function stateCountsForV26(m){
+	 const total=data[m].length;
+	 let l=0,p=0;
+	 for(let n=0;n<total;n++){
+	   const k=m+'-'+n;
+	   if(learned[k]) l++;
+	   else if(practicing[k]) p++;
+	 }
+	 return {total,learned:l,practicing:p,pending:total-l-p,pct:total?Math.round(l*100/total):0};
+	}
+	function refreshStateButtonsV26(){
+	 if(!(mode==='social'||mode==='natural'))return;
+	 const c=stateCountsForV26(mode);
+	 if($('pendingCountV24'))$('pendingCountV24').textContent=`(${c.pending})`;
+	 if($('practicingCountV24'))$('practicingCountV24').textContent=`(${c.practicing})`;
+	 if($('learnedCountV24'))$('learnedCountV24').textContent=`(${c.learned})`;
+	}
+
+	// Asegura que los botones abran las listas correspondientes.
+	['pendingV24','practicingV24','learnedV24'].forEach(id=>{
+	 const b=$(id); if(b)b.classList.remove('activeStateV26');
+	});
+	function activateStateButtonV26(which){
+	 ['pendingV24','practicingV24','learnedV24'].forEach(id=>$(id)?.classList.remove('activeStateV26'));
+	 const map={pending:'pendingV24',practicing:'practicingV24',learned:'learnedV24'};
+	 $(map[which])?.classList.add('activeStateV26');
+	}
+	const openStatePanelV24_v26=openStatePanelV24;
+	openStatePanelV24=function(which){
+	 openStatePanelV24_v26(which);
+	 activateStateButtonV26(which);
+	};
+	const closeStatePanelV24_v26=closeStatePanelV24;
+	closeStatePanelV24=function(){
+	 closeStatePanelV24_v26();
+	 ['pendingV24','practicingV24','learnedV24'].forEach(id=>$(id)?.classList.remove('activeStateV26'));
+	 refreshStateButtonsV26();
+	};
+
+	// Resumen solicitado: por cuestionario, con los 3 estados y total general.
+	renderAchievementsV25=function(){
+	 const host=$('achievementsContentV11'); if(!host)return;
+	 const defs=[
+	   {id:'social',title:'Vida Social y Trabajo',icon:'🏠'},
+	   {id:'natural',title:'Medio Natural y Salud',icon:'🌱'}
+	 ];
+	 const rows=defs.map(d=>({...d,...stateCountsForV26(d.id)}));
+	 const total=rows.reduce((a,r)=>a+r.total,0);
+	 const learnedTotal=rows.reduce((a,r)=>a+r.learned,0);
+	 const practiceTotal=rows.reduce((a,r)=>a+r.practicing,0);
+	 const pendingTotal=rows.reduce((a,r)=>a+r.pending,0);
+	 const pct=total?Math.round(learnedTotal*100/total):0;
+	 host.innerHTML=`
+	  <h2>🏆 Resumen de logros</h2>
+	  <p class="hint">Progreso guardado de forma independiente para cada cuestionario.</p>
+	  <div class="achievementSummaryV26">
+	   ${rows.map(r=>`
+	    <div class="achievementCardV26">
+	     <h3>${r.icon} ${r.title}</h3>
+	     <div class="achievementPctV26">${r.pct}%</div>
+	     <div><b>${r.learned}</b> de ${r.total} aprendidas</div>
+	     <div class="achievementBarV25"><span style="width:${r.pct}%"></span></div>
+	     <div class="achievementStatsV26">
+	      <span>📖<br><b>${r.pending}</b><br>Faltan</span>
+	      <span>📖<br><b>${r.practicing}</b><br>Estudiando</span>
+	      <span>🟢<br><b>${r.learned}</b><br>Aprendidas</span>
+	     </div>
+	    </div>`).join('')}
+	    <div class="achievementCardV26 achievementTotalV26">
+	     <h3>🌟 Total general</h3>
+	     <div class="achievementPctV26">${pct}%</div>
+	     <div><b>${learnedTotal}</b> preguntas aprendidas de ${total}</div>
+	     <div class="achievementBarV25"><span style="width:${pct}%"></span></div>
+	     <div class="achievementStatsV26">
+	      <span>📖<br><b>${pendingTotal}</b><br>Faltan</span>
+	      <span>🟡<br><b>${practiceTotal}</b><br>Practicando</span>
+	      <span>🟢<br><b>${learnedTotal}</b><br>Aprendidas</span>
+	     </div>
+	    </div>
+	  </div>`;
+	};
+
+	// Recalcula siempre después de marcar Practicando, Aprendida, Paso o responder.
+	document.addEventListener('click',()=>setTimeout(()=>{
+	 refreshStateButtonsV26();
+	 if($('achievementsModuleV11') && !$('achievementsModuleV11').classList.contains('hidden')) renderAchievementsV25();
+	},10));
+
+	refreshStateButtonsV26();
+
+
+	// V27: Logros es un módulo exclusivo. No muestra listas/estados de cuestionarios.
+	const trophyHistoryKeyV27='aprendoTrophyHistoryV27';
+	let trophyHistoryV27=JSON.parse(localStorage.getItem(trophyHistoryKeyV27)||'{}');
+
+	function dateV27(ts){
+	 if(!ts)return 'Aún no obtenido';
+	 return new Intl.DateTimeFormat('es-PY',{day:'2-digit',month:'2-digit',year:'numeric'}).format(new Date(ts));
+	}
+	function syncTrophyHistoryV27(){
+	 const defs=[
+	   {id:'social',title:'Vida Social y Trabajo'},
+	   {id:'natural',title:'Medio Natural y Salud'}
+	 ];
+	 const now=Date.now();
+	 defs.forEach(d=>{
+	   const c=stateCountsForV26(d.id);
+	   if(c.total>0 && c.learned===c.total && !trophyHistoryV27[d.id]){
+	     trophyHistoryV27[d.id]=now;
+	   }
+	 });
+	 // Primer gran logro: primera fecha registrada en que llegó al menos a 10 aprendidas.
+	 // Desde V27 se registra al detectarse el logro si aún no existía historial.
+	 const totalLearned=defs.reduce((a,d)=>a+stateCountsForV26(d.id).learned,0);
+	 if(totalLearned>=10 && !trophyHistoryV27.first10)trophyHistoryV27.first10=now;
+	 localStorage.setItem(trophyHistoryKeyV27,JSON.stringify(trophyHistoryV27));
+	}
+	function fullTrophiesV27(){
+	 const defs=[
+	   {id:'social',title:'Vida Social y Trabajo'},
+	   {id:'natural',title:'Medio Natural y Salud'}
+	 ];
+	 return defs.filter(d=>{
+	   const c=stateCountsForV26(d.id);
+	   return c.total>0 && c.learned===c.total;
+	 });
+	}
+	function renderAchievementsV25(){
+	 const host=$('achievementsContentV11');if(!host)return;
+	 syncTrophyHistoryV27();
+	 const full=fullTrophiesV27();
+	 const dated=full.map(x=>({...x,ts:trophyHistoryV27[x.id]||0})).sort((a,b)=>b.ts-a.ts);
+	 const last=dated[0];
+	 const totalLearned=['social','natural'].reduce((a,m)=>a+stateCountsForV26(m).learned,0);
+	 host.innerHTML=`
+	   <h2>🏆 Mis logros</h2>
+	   <p class="hint">Aquí se concentran tus hitos generales de aprendizaje.</p>
+	   <div class="achievementHistoryV27">
+	    <div class="achievementMetricV27">
+	      <div class="ico">⭐</div>
+	      <b>Preguntas aprendidas</b>
+	      <div class="big">${totalLearned}</div>
+	      <div class="sub">preguntas registradas como aprendidas</div>
+	    </div>
+	    <div class="achievementMetricV27">
+	      <div class="ico">🔥</div>
+	      <b>Mejor racha actual</b>
+	      <div class="big">${streak||0}</div>
+	      <div class="sub">respuestas correctas seguidas</div>
+	    </div>
+	    <div class="achievementMetricV27">
+	      <div class="ico">🥇</div>
+	      <b>Primer gran logro</b>
+	      <div class="big">${dateV27(trophyHistoryV27.first10)}</div>
+	      <div class="sub">fecha en que alcanzaste al menos 10 preguntas aprendidas</div>
+	    </div>
+	    <div class="achievementMetricV27">
+	      <div class="ico">🏆</div>
+	      <b>Cuestionarios completados</b>
+	      <div class="big">${full.length}</div>
+	      <div class="sub">cuestionarios aprendidos en su totalidad</div>
+	    </div>
+	    <div class="achievementMetricV27">
+	      <div class="ico">🎖️</div>
+	      <b>Último trofeo</b>
+	      <div class="big">${last?dateV27(last.ts):'Sin trofeos'}</div>
+	      <div class="sub">${last?last.title:'Aún no completaste un cuestionario'}</div>
+	    </div>
+	   </div>`;
+	}
+
+	// Logros debe ocultar por completo cualquier panel/listado de estados de cuestionarios.
+	const openModuleV11_v27=openModuleV11;
+	openModuleV11=function(which){
+	 if(which==='achievements'){
+	   if($('statePanelV24'))$('statePanelV24').classList.remove('show');
+	   document.body.classList.remove('quizFocusV21');
+	   document.body.classList.add('awaitQuizV22','moduleOpenV17');
+	 }
+	 openModuleV11_v27(which);
+	 if(which==='achievements')renderAchievementsV25();
+	 if(which==='questionnaires')renderManagerV15();
+	};
+
+	// Registrar fechas cuando se produzcan nuevos logros.
+	document.addEventListener('click',()=>setTimeout(syncTrophyHistoryV27,20));
+	syncTrophyHistoryV27();
+
+
+	// V28: popup al intentar usar un cuestionario completado al 100%.
+	let pendingCompletedQuizV28=null;
+
+	function completedInfoV28(kind,id){
+	 if(kind==='core'){
+	   const q=coreQuizzesV16().find(x=>x.id===id);
+	   if(!q)return null;
+	   const c=stateCountsForV26(id);
+	   return {kind,id,title:q.title,total:c.total,learned:c.learned,pct:c.pct,complete:c.total>0&&c.learned===c.total};
+	 }
+	 const idx=+id,q=quizzesV12[idx];
+	 if(!q)return null;
+	 // Para cuestionarios dinámicos, si aún no tienen progreso compatible, no se bloquea.
+	 return {kind,id:idx,title:q.title,total:q.questions.length,learned:0,pct:0,complete:false};
+	}
+	function showCompletedPopupV28(info){
+	 pendingCompletedQuizV28=info;
+	 $('completedSubjectV28').textContent=info.title;
+	 $('completedLearnedV28').textContent=info.learned;
+	 $('completedTotalV28').textContent=info.total;
+	 $('completedPctV28').textContent=info.pct+'%';
+	 const ts=trophyHistoryV27&&trophyHistoryV27[info.id];
+	 $('completedAchievementV28').textContent='🏆 Logro obtenido: '+info.title+' completado'+(ts?' · '+dateV27(ts):'');
+	 const overlay=$('completedOverlayV28'); if(overlay) overlay.classList.add('show');
+	}
+	function closeCompletedPopupV28(){
+	 const overlay=$('completedOverlayV28'); if(overlay) overlay.classList.remove('show');
+	 pendingCompletedQuizV28=null;
+	}
+	function initCompletedPopupV29(){
+	 const closeBtn=$('closeCompletedV28');
+	 const overlay=$('completedOverlayV28');
+	 const viewBtn=$('viewCompletedQuizV28');
+
+	 if(closeBtn) closeBtn.onclick=closeCompletedPopupV28;
+
+	 if(overlay) overlay.addEventListener('click',e=>{
+	   if(e.target===overlay) closeCompletedPopupV28();
+	 });
+
+	 if(viewBtn) viewBtn.onclick=()=>{
+	   const x=pendingCompletedQuizV28;if(!x)return;
+	   if(overlay) overlay.classList.remove('show');
+	   if(x.kind==='core'){
+	     // Permite consultar el cuestionario terminado sin alterar su logro.
+	     selectedQuizV22();
+	     openCoreQuizV16_v22(x.id);
+	   }else{
+	     selectedQuizV22();
+	     openQuizV12_v22(x.id);
+	   }
+	   pendingCompletedQuizV28=null;
+	 };
+	}
+	if(document.readyState==='loading'){
+	 document.addEventListener('DOMContentLoaded',initCompletedPopupV29,{once:true});
+	}else{
+	 initCompletedPopupV29();
+	}
+
+	// Intercepta los botones "Usar este cuestionario" de la portada.
+	document.addEventListener('click',e=>{
+	 const b=e.target.closest&&e.target.closest('[data-v18-use]');
+	 if(!b)return;
+	 const [kind,id]=b.dataset.v18Use.split('|');
+	 const info=completedInfoV28(kind,id);
+	 if(info&&info.complete){
+	   e.preventDefault();e.stopImmediatePropagation();
+	   syncTrophyHistoryV27();
+	   showCompletedPopupV28(info);
+	 }
+	},true);
+
+	// Terminología: cualquier texto dinámico "Practicar" pasa a "Estudiar".
+	function renamePracticeTextV28(){
+	 document.querySelectorAll('button,a,span,b,h1,h2,h3,p,div').forEach(el=>{
+	   if(el.children.length===0 && el.textContent && /\bPracticar\b/.test(el.textContent))
+	     el.textContent=el.textContent.replace(/\bPracticar\b/g,'Estudiar');
+	 });
+	}
+	renamePracticeTextV28();
+	const moV28=new MutationObserver(()=>renamePracticeTextV28());
+	moV28.observe(document.body,{childList:true,subtree:true});
+
+	</script>
+	<div class="completedOverlayV28" id="completedOverlayV28" role="dialog" aria-modal="true" aria-labelledby="completedTitleV28">
+	 <div class="completedPopupV28">
+	  <div class="trophy">🏆</div>
+	  <h2 id="completedTitleV28">¡Cuestionario finalizado!</h2>
+	  <p id="completedSubjectV28"></p>
+	  <div class="completedStatsV28">
+	   <div><strong id="completedLearnedV28">0</strong><span>Aprendidas</span></div>
+	   <div><strong id="completedTotalV28">0</strong><span>Total</span></div>
+	   <div><strong id="completedPctV28">100%</strong><span>Completado</span></div>
+	  </div>
+	  <div class="completedAchievementV28" id="completedAchievementV28">🏆 Logro obtenido</div>
+	  <div class="completedActionsV28">
+	   <button class="btn primary" id="viewCompletedQuizV28">📖 Ver cuestionario</button>
+	   <button class="btn" id="closeCompletedV28">✕ Cerrar</button>
+	  </div>
+	 </div>
+	</div>
+
+
+<style id="v30-questionnaire-generator">
+.generatorV30{margin-top:18px;padding:20px;border:1px solid #dfe4f4;border-radius:20px;background:#fafbff}
+.generatorGridV30{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:14px}
+.fieldV30{display:grid;gap:7px}.fieldV30.full{grid-column:1/-1}
+.fieldV30 label{font-weight:850}.fieldV30 input,.fieldV30 select{width:100%;min-height:46px;border:1px solid #cbd3ef;border-radius:13px;padding:10px 12px;background:#fff;color:var(--ink)}
+.fileDropV30{border:2px dashed #b8c3ea;border-radius:16px;padding:18px;background:#fff;text-align:center}
+.fileDropV30 input{border:0;padding:8px}
+.fileMetaV30{margin-top:8px;color:var(--muted);font-size:13px;font-weight:700}
+.createdV30{margin-top:6px;font-size:13px;color:var(--muted)}
+.sourceBadgeV30{display:inline-block;margin-top:7px;padding:5px 9px;border-radius:999px;background:#eef2ff;color:#4f55a8;font-size:12px;font-weight:850}
+.pendingQuestionsV30{margin-top:9px;padding:9px 11px;border-radius:11px;background:#fff4d6;color:#805b00;font-size:13px;font-weight:800}
+.generatorActionsV30{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}
+.generatorStatusV30{min-height:22px;margin-top:10px;font-weight:800}
+@media(max-width:650px){.generatorGridV30{grid-template-columns:1fr}.fieldV30.full{grid-column:auto}.generatorActionsV30 .btn{width:100%}}
+</style>
+<script id="v30-questionnaire-generator-js">
+(()=>{
+ const DB_NAME='AprendoJugandoFilesV30', STORE='sources';
+ function openDbV30(){
+   return new Promise((resolve,reject)=>{
+     const req=indexedDB.open(DB_NAME,1);
+     req.onupgradeneeded=()=>{const db=req.result;if(!db.objectStoreNames.contains(STORE))db.createObjectStore(STORE)};
+     req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error);
+   });
+ }
+ async function putFileV30(key,file){
+   const db=await openDbV30();
+   return new Promise((resolve,reject)=>{
+     const tx=db.transaction(STORE,'readwrite');tx.objectStore(STORE).put(file,key);
+     tx.oncomplete=()=>{db.close();resolve()};tx.onerror=()=>{db.close();reject(tx.error)};
+   });
+ }
+ async function getFileV30(key){
+   const db=await openDbV30();
+   return new Promise((resolve,reject)=>{
+     const req=db.transaction(STORE,'readonly').objectStore(STORE).get(key);
+     req.onsuccess=()=>{db.close();resolve(req.result)};req.onerror=()=>{db.close();reject(req.error)};
+   });
+ }
+ async function deleteFileV30(key){
+   const db=await openDbV30();
+   return new Promise((resolve,reject)=>{
+     const tx=db.transaction(STORE,'readwrite');tx.objectStore(STORE).delete(key);
+     tx.oncomplete=()=>{db.close();resolve()};tx.onerror=()=>{db.close();reject(tx.error)};
+   });
+ }
+ const escV30=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+ const fmtDateV30=iso=>{
+   if(!iso)return 'Sin fecha registrada';
+   const d=new Date(iso);return isNaN(d)?'Sin fecha registrada':new Intl.DateTimeFormat('es-PY',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'}).format(d);
+ };
+ const fmtSizeV30=n=>n<1024?n+' B':n<1048576?(n/1024).toFixed(1)+' KB':(n/1048576).toFixed(1)+' MB';
+
+ // La etiqueta del módulo queda consolidada como "Cuestionarios".
+ const nav=document.getElementById('questionnairesNavV11');if(nav)nav.textContent='📚 Cuestionarios';
+ const title=document.querySelector('#questionnairesPanelV11 h2');if(title)title.textContent='📚 Cuestionarios';
+
+ // No mostrar cuestionarios sin preguntas en el selector principal: el archivo fuente puede guardarse
+ // primero y luego completarse con preguntas sin romper el reproductor.
+ const oldHome=renderHomeSelectorV15;
+ renderHomeSelectorV15=function(){
+   oldHome();
+   document.querySelectorAll('[data-home-open-v15]').forEach(b=>{
+     const idx=+b.dataset.homeOpenV15;
+     if(!quizzesV12[idx] || !Array.isArray(quizzesV12[idx].questions) || !quizzesV12[idx].questions.length){
+       b.closest('.homeQuizV15')?.remove();
+     }
+   });
+ };
+
+ renderManagerV15=function(){
+   const host=$('questionnaireImporterV11');if(!host)return;
+   normalizeQuizEnabledV13();
+   const core=coreQuizzesV16().map(q=>({kind:'core',q}));
+   const custom=quizzesV12.map((q,idx)=>({kind:'custom',q,idx}));
+   const all=[...core,...custom];
+   const rows=all.filter(x=>managerViewV15==='active'?x.q.enabled!==false:x.q.enabled===false);
+   const activeCount=all.filter(x=>x.q.enabled!==false).length;
+   const inactiveCount=all.filter(x=>x.q.enabled===false).length;
+
+   host.innerHTML=`
+    <div class="generatorV30">
+      <h3>➕ Generar nuevo cuestionario</h3>
+      <p class="hint">Registra un cuestionario desde una imagen o PDF. El archivo queda guardado localmente en este navegador junto con el nombre y la fecha de creación.</p>
+      <div class="generatorGridV30">
+        <div class="fieldV30"><label for="quizNameV30">Nombre del cuestionario</label><input id="quizNameV30" maxlength="100" placeholder="Ej.: Evaluación de Ciencias"></div>
+        <div class="fieldV30"><label for="quizSubjectV30">Materia</label><input id="quizSubjectV30" maxlength="80" placeholder="Ej.: Medio Natural y Salud"></div>
+        <div class="fieldV30 full">
+          <label for="quizFileV30">Imagen o PDF</label>
+          <div class="fileDropV30">
+            <input type="file" id="quizFileV30" accept="image/*,application/pdf,.pdf">
+            <div class="fileMetaV30" id="quizFileMetaV30">Selecciona una imagen o un archivo PDF.</div>
+          </div>
+        </div>
+      </div>
+      <div class="generatorActionsV30"><button class="btn primary" id="saveQuizV30">💾 Guardar cuestionario</button></div>
+      <div class="generatorStatusV30" id="generatorStatusV30"></div>
+    </div>
+    <div class="quizManagerV15">
+      <h3>⚙️ Administrar cuestionarios</h3>
+      <p class="hint">Puedes activar o inactivar los cuestionarios. Los cuestionarios creados también pueden eliminarse.</p>
+      <div class="managerTabsV15">
+        <button class="btn ${managerViewV15==='active'?'active':''}" id="activeTabV15">🟢 Activos (${activeCount})</button>
+        <button class="btn ${managerViewV15==='inactive'?'active':''}" id="inactiveTabV15">⚪ Inactivos (${inactiveCount})</button>
+      </div>
+      <div class="managerGridV15">
+      ${rows.length?rows.map(x=>{
+        const q=x.q, count=x.kind==='core'?q.count:(Array.isArray(q.questions)?q.questions.length:0);
+        const ident=x.kind==='core'?q.id:x.idx;
+        const created=x.kind==='custom'&&q.createdAt?`<div class="createdV30">📅 Creado: ${escV30(fmtDateV30(q.createdAt))}</div>`:'';
+        const source=x.kind==='custom'&&q.sourceName?`<span class="sourceBadgeV30">📎 ${escV30(q.sourceName)}${q.sourceSize?' · '+escV30(fmtSizeV30(q.sourceSize)):''}</span>`:'';
+        const pending=x.kind==='custom'&&!count?`<div class="pendingQuestionsV30">⚠️ Archivo registrado. Aún no contiene preguntas convertidas para el modo de estudio.</div>`:'';
+        return `<div class="managerCardV15 ${q.enabled===false?'off':''}">
+          <div class="managerHeadV15"><div><b>${x.kind==='core'?q.icon:subjectIconV14(q.subject)} ${escV30(q.title)}</b>
+          <div class="hint">${escV30(q.subject||'General')} · ${count} preguntas ${x.kind==='core'?'· Cuestionario original':''}</div>
+          ${created}${source}${pending}</div>
+          <span class="statusBadgeV13 ${q.enabled!==false?'on':'off'}">${q.enabled!==false?'ACTIVO':'INACTIVO'}</span></div>
+          <div class="quizActionsV12">
+            <button class="btn" data-v30-toggle="${x.kind}|${ident}">${q.enabled!==false?'⏸ Inactivar':'▶ Activar'}</button>
+            ${x.kind==='custom'&&q.sourceKey?`<button class="btn" data-v30-source="${x.idx}">👁️ Ver archivo</button>`:''}
+            ${q.enabled!==false&&count?`<button class="btn" data-v30-use="${x.kind}|${ident}">🎮 Usar</button>`:''}
+            ${x.kind==='custom'?`<button class="btn" data-v30-delete="${x.idx}">🗑️ Eliminar</button>`:''}
+          </div>
+        </div>`}).join(''):'<div class="homeEmptyV15">No hay cuestionarios en este estado.</div>'}
+      </div>
+    </div>`;
+
+   $('activeTabV15').onclick=()=>{managerViewV15='active';renderManagerV15()};
+   $('inactiveTabV15').onclick=()=>{managerViewV15='inactive';renderManagerV15()};
+
+   const fileInput=$('quizFileV30'), meta=$('quizFileMetaV30');
+   fileInput.onchange=()=>{
+     const f=fileInput.files&&fileInput.files[0];
+     meta.textContent=f?`${f.name} · ${fmtSizeV30(f.size)} · ${f.type||'archivo'}`:'Selecciona una imagen o un archivo PDF.';
+   };
+
+   $('saveQuizV30').onclick=async()=>{
+     const status=$('generatorStatusV30'), name=$('quizNameV30').value.trim(), subject=$('quizSubjectV30').value.trim();
+     const file=fileInput.files&&fileInput.files[0];
+     if(!name){status.textContent='❌ Escribe un nombre para el cuestionario.';return}
+     if(!file){status.textContent='❌ Selecciona una imagen o un PDF.';return}
+     const isAllowed=file.type==='application/pdf'||file.type.startsWith('image/')||/\.pdf$/i.test(file.name);
+     if(!isAllowed){status.textContent='❌ Solo se permiten imágenes o archivos PDF.';return}
+     const sourceKey='quiz-source-'+Date.now()+'-'+Math.random().toString(36).slice(2);
+     status.textContent='⏳ Guardando archivo...';
+     try{
+       await putFileV30(sourceKey,file);
+       quizzesV12.push({
+         title:name,
+         subject:subject||'General',
+         questions:[],
+         enabled:true,
+         createdAt:new Date().toISOString(),
+         sourceKey,
+         sourceName:file.name,
+         sourceType:file.type||'application/octet-stream',
+         sourceSize:file.size
+       });
+       saveQuizzesV12();managerViewV15='active';renderManagerV15();renderHomeSelectorV15();
+     }catch(e){status.textContent='❌ No se pudo guardar el archivo en este navegador.'}
+   };
+
+   document.querySelectorAll('[data-v30-toggle]').forEach(b=>b.onclick=()=>{
+     const [kind,id]=b.dataset.v30Toggle.split('|');
+     if(kind==='core'){coreQuizStateV16[id]=!(coreQuizStateV16[id]!==false);saveCoreStateV16();}
+     else{quizzesV12[+id].enabled=!(quizzesV12[+id].enabled!==false);saveQuizzesV12();}
+     renderManagerV15();renderHomeSelectorV15();
+   });
+   document.querySelectorAll('[data-v30-use]').forEach(b=>b.onclick=()=>{
+     const [kind,id]=b.dataset.v30Use.split('|');
+     if(kind==='core')openCoreQuizV16(id);else{renderQuizLibraryV12();openQuizV12(+id);}
+   });
+   document.querySelectorAll('[data-v30-source]').forEach(b=>b.onclick=async()=>{
+     const q=quizzesV12[+b.dataset.v30Source];if(!q?.sourceKey)return;
+     try{
+       const blob=await getFileV30(q.sourceKey);
+       if(!blob){alert('No se encontró el archivo guardado en este navegador.');return}
+       const url=URL.createObjectURL(blob);window.open(url,'_blank','noopener');
+       setTimeout(()=>URL.revokeObjectURL(url),60000);
+     }catch(e){alert('No se pudo abrir el archivo guardado.')}
+   });
+   document.querySelectorAll('[data-v30-delete]').forEach(b=>b.onclick=async()=>{
+     const idx=+b.dataset.v30Delete,q=quizzesV12[idx];
+     if(!confirm('¿Eliminar este cuestionario? Esta acción también quitará el archivo guardado.'))return;
+     if(q?.sourceKey){try{await deleteFileV30(q.sourceKey)}catch(e){}}
+     quizzesV12.splice(idx,1);saveQuizzesV12();renderManagerV15();renderHomeSelectorV15();
+   });
+ };
+
+ // Si el módulo está abierto, redibujarlo con la nueva versión.
+ if(document.getElementById('questionnairesPanelV11')?.classList.contains('show'))renderManagerV15();
+})();
+</script>
+
+	
+<style id="v31-next-pending">
+.v31PendingNote{margin:10px 0;padding:10px 13px;border-radius:13px;background:#fff7dc;color:#795900;font-size:13px;font-weight:800}
+</style>
+<script id="v31-next-pending-js">
+(()=>{
+  /*
+    V31:
+    En modo Aprender/Estudiar, al pulsar "Siguiente", la pregunta que se abandona
+    queda automáticamente en "A estudiar" si todavía no fue marcada como aprendida.
+    Así aparecerá en la sección 📘 A estudiar del cuestionario activo.
+  */
+  const nextBtn=document.getElementById('next');
+  if(!nextBtn)return;
+
+  // Reemplazamos el botón para retirar el onclick antiguo sin alterar el resto del sistema.
+  const fresh=nextBtn.cloneNode(true);
+  nextBtn.parentNode.replaceChild(fresh,nextBtn);
+
+  fresh.onclick=()=>{
+    if(view!=='study' || i>=data[mode].length-1)return;
+
+    const k=key();
+
+    // Solo queda pendiente de estudio si todavía NO está aprendida.
+    if(!learned[k]){
+      practicing[k]=true;
+      localStorage.setItem('practicando1',JSON.stringify(practicing));
+      localStorage.setItem('aprendo1',JSON.stringify(learned));
+    }
+
+    i++;
+    render();
+
+    // Actualiza todos los contadores/listados existentes.
+    if(typeof updateStateCountsV8==='function') updateStateCountsV8();
+    if(typeof refreshStateButtonsV26==='function') refreshStateButtonsV26();
+
+    scrollTo({top:0,behavior:'smooth'});
+  };
+
+  // Aclaración visual en el botón.
+  fresh.title='Al avanzar, una pregunta no aprendida quedará guardada en A estudiar';
+})();
+</script>
+
+
+<script id="v32-study-only-marked-js">
+(()=>{
+  /*
+    V32 — Sesión "A estudiar":
+    - Al entrar en 📘 A estudiar se crea una cola SOLO con preguntas marcadas practicing.
+    - Nunca incluye preguntas aprendidas.
+    - Siguiente/Anterior recorren únicamente esa cola.
+    - Si una pregunta pasa a aprendida, sale de la cola.
+  */
+  let queueV32=[];
+  let posV32=0;
+  let activeV32=false;
+
+  function currentModeV32(){
+    return (typeof mode!=='undefined' && (mode==='social'||mode==='natural')) ? mode : null;
+  }
+
+  function buildQueueV32(m){
+    if(!m || !data[m]) return [];
+    return data[m].map((_,n)=>n).filter(n=>{
+      const k=m+'-'+n;
+      return !!practicing[k] && !learned[k];
+    });
+  }
+
+  function syncQueueV32(){
+    const m=currentModeV32();
+    if(!m)return;
+    queueV32=buildQueueV32(m);
+    const found=queueV32.indexOf(i);
+    if(found>=0) posV32=found;
+    else if(queueV32.length){
+      posV32=Math.min(posV32,queueV32.length-1);
+      i=queueV32[posV32];
+    }
+  }
+
+  function enterStudyMarkedV32(){
+    const m=currentModeV32();
+    queueV32=buildQueueV32(m);
+    if(!queueV32.length){
+      activeV32=false;
+      if(typeof openStatePanelV24==='function') openStatePanelV24('practicing');
+      return;
+    }
+    activeV32=true;
+    posV32=0;
+    i=queueV32[0];
+    view='study';
+    if(typeof closeStatePanelV24==='function') closeStatePanelV24();
+    if(typeof hideStatePanelV8==='function') hideStatePanelV8();
+    render();
+    updateNavV32();
+    scrollTo({top:0,behavior:'smooth'});
+  }
+
+  function updateNavV32(){
+    if(!activeV32)return;
+    syncQueueV32();
+    const prev=document.getElementById('prev'), next=document.getElementById('next');
+    if(prev) prev.disabled=posV32<=0;
+    if(next) next.disabled=posV32>=queueV32.length-1;
+    const counter=document.getElementById('counter');
+    if(counter) counter.textContent=`A estudiar ${posV32+1} de ${queueV32.length}`;
+  }
+
+  // Botón superior "A estudiar": entra directamente a estudiar la cola marcada.
+  const studyNav=document.getElementById('practicingV24');
+  if(studyNav){
+    const clone=studyNav.cloneNode(true);
+    studyNav.parentNode.replaceChild(clone,studyNav);
+    clone.onclick=enterStudyMarkedV32;
+  }
+
+  // También el acceso heredado "A estudiar".
+  const legacy=document.getElementById('practiceListNavV8');
+  if(legacy){
+    const clone=legacy.cloneNode(true);
+    legacy.parentNode.replaceChild(clone,legacy);
+    clone.onclick=enterStudyMarkedV32;
+  }
+
+  // Navegación exclusiva dentro de la cola.
+  ['prev','next'].forEach(id=>{
+    const old=document.getElementById(id);
+    if(!old)return;
+    const fresh=old.cloneNode(true);
+    old.parentNode.replaceChild(fresh,old);
+    fresh.onclick=()=>{
+      if(activeV32){
+        syncQueueV32();
+        if(!queueV32.length){activeV32=false;render();return}
+        if(id==='next' && posV32<queueV32.length-1) posV32++;
+        if(id==='prev' && posV32>0) posV32--;
+        i=queueV32[posV32];
+        render();updateNavV32();
+        scrollTo({top:0,behavior:'smooth'});
+        return;
+      }
+      // Comportamiento normal fuera de A estudiar, conservando V31.
+      if(view!=='study')return;
+      if(id==='next'){
+        if(i>=data[mode].length-1)return;
+        const k=key();
+        if(!learned[k]){
+          practicing[k]=true;
+          localStorage.setItem('practicando1',JSON.stringify(practicing));
+          localStorage.setItem('aprendo1',JSON.stringify(learned));
+        }
+        i++;
+      }else{
+        if(i<=0)return;
+        i--;
+      }
+      render();
+      if(typeof updateStateCountsV8==='function')updateStateCountsV8();
+      if(typeof refreshStateButtonsV26==='function')refreshStateButtonsV26();
+      scrollTo({top:0,behavior:'smooth'});
+    };
+  });
+
+  // Si se marca como aprendida durante la sesión, debe desaparecer de A estudiar.
+  const learnedBtn=document.getElementById('learned');
+  if(learnedBtn){
+    learnedBtn.addEventListener('click',()=>{
+      if(!activeV32)return;
+      setTimeout(()=>{
+        const m=currentModeV32(), oldIndex=i;
+        queueV32=buildQueueV32(m);
+        if(!queueV32.length){
+          activeV32=false;
+          if(typeof refreshStateButtonsV26==='function')refreshStateButtonsV26();
+          render();
+          return;
+        }
+        let nextPos=queueV32.findIndex(n=>n>oldIndex);
+        if(nextPos<0)nextPos=queueV32.length-1;
+        posV32=nextPos;i=queueV32[posV32];
+        render();updateNavV32();
+      },0);
+    });
+  }
+
+  // Salir de la sesión al cambiar de cuestionario/modo.
+  ['changeQuizV21','pendingV24','learnedV24','studyMode','practiceMode'].forEach(id=>{
+    const b=document.getElementById(id);
+    if(b)b.addEventListener('click',()=>{activeV32=false});
+  });
+})();
+</script>
+
+
+<script id="v33-disable-random-pass-in-study-queue">
+(()=>{
+  /*
+    V33:
+    Cuando el usuario entra en 📘 A estudiar, se deshabilitan:
+    - 🎲 Pregunta al azar
+    - ⏭️ Paso
+    Al salir de esa sección vuelven a su comportamiento normal.
+  */
+  let markedStudyActiveV33=false;
+
+  const randomBtn=()=>document.getElementById('random');
+  const passBtn=()=>document.getElementById('passPracticeV19');
+
+  function setRestrictedV33(active){
+    markedStudyActiveV33=!!active;
+    const r=randomBtn(), p=passBtn();
+
+    if(r){
+      r.disabled=markedStudyActiveV33;
+      r.style.display=markedStudyActiveV33?'none':'';
+      r.setAttribute('aria-hidden',markedStudyActiveV33?'true':'false');
+    }
+    if(p){
+      p.disabled=markedStudyActiveV33;
+      p.style.display=markedStudyActiveV33?'none':'';
+      p.setAttribute('aria-hidden',markedStudyActiveV33?'true':'false');
+    }
+  }
+
+  // Los dos accesos que llevan a "A estudiar".
+  ['practicingV24','practiceListNavV8'].forEach(id=>{
+    const b=document.getElementById(id);
+    if(b)b.addEventListener('click',()=>setTimeout(()=>setRestrictedV33(true),0));
+  });
+
+  // Acciones que abandonan la sesión exclusiva "A estudiar".
+  ['changeQuizV21','pendingV24','learnedV24','studyMode','practiceMode',
+    'socialBtn','naturalBtn','pendingBtn','achievementsNavV11','questionnairesNavV11'
+  ].forEach(id=>{
+    const b=document.getElementById(id);
+    if(b)b.addEventListener('click',()=>setRestrictedV33(false));
+  });
+
+  // Si ya no quedan preguntas en A estudiar después de marcar una como aprendida,
+  // se restablecen los controles normales.
+  const learnedBtn=document.getElementById('learned');
+  if(learnedBtn){
+    learnedBtn.addEventListener('click',()=>{
+      setTimeout(()=>{
+        if(!markedStudyActiveV33)return;
+        const m=(typeof mode!=='undefined')?mode:null;
+        if(!m||!data[m])return;
+        const remaining=data[m].some((_,n)=>!!practicing[m+'-'+n]&&!learned[m+'-'+n]);
+        if(!remaining)setRestrictedV33(false);
+      },10);
+    });
+  }
+})();
+</script>
+
+
+<style id="v34-home-button">
+#homeNavV34{background:#eaf8ee;color:#19733c;border:1px solid #9bd7af}
+#homeNavV34:hover{background:#d9f2e2}
+</style>
+<script id="v34-home-button-js">
+(()=>{
+  const b=document.getElementById('homeNavV34');
+  if(!b)return;
+
+  b.onclick=()=>{
+    // Cierra módulos abiertos.
+    document.getElementById('achievementsPanelV11')?.classList.remove('show');
+    document.getElementById('questionnairesPanelV11')?.classList.remove('show');
+    document.getElementById('achievementsNavV11')?.classList.remove('active');
+    document.getElementById('questionnairesNavV11')?.classList.remove('active');
+
+    // Cierra paneles/listados de estados.
+    document.getElementById('statePanelV24')?.classList.remove('show');
+    document.getElementById('practiceListPanelV8')?.classList.remove('show');
+    document.getElementById('list')?.classList.remove('show');
+
+    // Sale del cuestionario actual y vuelve al selector inicial.
+    document.body.classList.remove('moduleOpenV17','quizFocusV21');
+    document.body.classList.add('awaitQuizV22');
+
+    const home=document.getElementById('homeSelectorV15');
+    if(home)home.style.removeProperty('display');
+
+    if(typeof renderHomeSelectorV15==='function')renderHomeSelectorV15();
+
+    // Restaura controles que pudieran estar restringidos en "A estudiar".
+    const random=document.getElementById('random');
+    const pass=document.getElementById('passPracticeV19');
+    if(random){random.disabled=false;random.style.display='';random.setAttribute('aria-hidden','false')}
+    if(pass){pass.disabled=false;pass.style.display='';pass.setAttribute('aria-hidden','false')}
+
+    window.scrollTo({top:0,behavior:'smooth'});
+  };
+})();
+</script>
+
+
+<style id="v35-practice-disabled-controls">
+/* En modo Prueba estos controles permanecen visibles, pero inactivos. */
+body.v35PracticeMode #random,
+body.v35PracticeMode #practice{
+  opacity:.42!important;
+  cursor:not-allowed!important;
+  pointer-events:none!important;
+  filter:grayscale(.25);
+}
+</style>
+<script id="v35-practice-disabled-controls-js">
+(()=>{
+  const study=document.getElementById('studyMode');
+  const test=document.getElementById('practiceMode');
+  const random=document.getElementById('random');
+  const toStudy=document.getElementById('practice');
+
+  function applyV35(){
+    const inPractice = typeof learningMode!=='undefined' && learningMode==='practice';
+    document.body.classList.toggle('v35PracticeMode',inPractice);
+
+    if(random){
+      random.disabled=inPractice;
+      random.setAttribute('aria-disabled',inPractice?'true':'false');
+    }
+    if(toStudy){
+      toStudy.disabled=inPractice;
+      toStudy.setAttribute('aria-disabled',inPractice?'true':'false');
+    }
+  }
+
+  // Ejecutar después del cambio de modo realizado por el código base.
+  if(test)test.addEventListener('click',()=>setTimeout(applyV35,0));
+  if(study)study.addEventListener('click',()=>setTimeout(applyV35,0));
+
+  // También se reaplica cuando se cambia/abre un cuestionario.
+  ['socialBtn','naturalBtn','changeQuizV21','homeNavV34'].forEach(id=>{
+    const b=document.getElementById(id);
+    if(b)b.addEventListener('click',()=>setTimeout(applyV35,0));
+  });
+
+  applyV35();
+})();
+</script>
+
+
+<style id="v36-disable-read-both">
+/* V36: en modo Prueba también se bloquea Leer pregunta y respuesta. */
+body.v35PracticeMode #speakAll{
+  opacity:.42!important;
+  cursor:not-allowed!important;
+  pointer-events:none!important;
+  filter:grayscale(.25);
+}
+</style>
+<script id="v36-disable-read-both-js">
+(()=>{
+  const speakAll=document.getElementById('speakAll');
+
+  function applyV36(){
+    const inPractice =
+      typeof learningMode!=='undefined' && learningMode==='practice';
+    if(speakAll){
+      speakAll.disabled=inPractice;
+      speakAll.setAttribute('aria-disabled',inPractice?'true':'false');
+    }
+  }
+
+  ['practiceMode','studyMode','socialBtn','naturalBtn',
+   'changeQuizV21','homeNavV34'].forEach(id=>{
+    const b=document.getElementById(id);
+    if(b)b.addEventListener('click',()=>setTimeout(applyV36,0));
+  });
+
+  applyV36();
+})();
+</script>
+
+
+<style id="v37-generator">
+.v37Process{background:#5b5bd6!important;color:#fff!important}
+.v37Editor{margin-top:14px;border:1px solid #dfe4f4;border-radius:16px;padding:14px;background:#fff}
+.v37Row{display:grid;grid-template-columns:1fr 1fr auto;gap:8px;margin:8px 0;align-items:start}
+.v37Row textarea{width:100%;min-height:72px;border:1px solid #ccd3e7;border-radius:10px;padding:9px;font:inherit}
+.v37Status{margin:10px 0;font-weight:800}
+.v37Status.ok{color:#19733c}.v37Status.warn{color:#946200}
+@media(max-width:700px){.v37Row{grid-template-columns:1fr}.v37Row .btn{width:100%}}
+</style>
+<script id="v37-generator-js">
+(()=>{
+ const DB='AprendoJugandoFilesV30', STORE='sources';
+ const esc=x=>String(x??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+ function db(){return new Promise((ok,no)=>{const r=indexedDB.open(DB,1);r.onupgradeneeded=()=>{if(!r.result.objectStoreNames.contains(STORE))r.result.createObjectStore(STORE)};r.onsuccess=()=>ok(r.result);r.onerror=()=>no(r.error)})}
+ async function blob(key){const d=await db();return new Promise((ok,no)=>{const r=d.transaction(STORE).objectStore(STORE).get(key);r.onsuccess=()=>ok(r.result);r.onerror=()=>no(r.error)})}
+ function splitQA(text){
+   text=(text||'').replace(/\r/g,'').replace(/[ \t]+/g,' ').replace(/\n{3,}/g,'\n\n').trim();
+   const lines=text.split('\n').map(x=>x.trim()).filter(Boolean);
+
+   // 1) Cuestionarios/encuestas numeradas: 1) ... 2) ... etc.
+   const numbered=[]; let current=null;
+   for(const line of lines){
+     const m=line.match(/^(\d{1,3})\s*[\)\.\-:]\s*(.+)$/);
+     if(m){
+       if(current) numbered.push(current);
+       current={n:+m[1], q:m[2].trim(), extra:[]};
+     }else if(current){
+       // Evita pies/citas/paginación evidentes.
+       if(!/^Please cite:/i.test(line) && !/^de Hoyos,/i.test(line) && !/^\d+$/.test(line))
+         current.extra.push(line);
+     }
+   }
+   if(current) numbered.push(current);
+
+   if(numbered.length>=2){
+     return numbered.map(o=>{
+       let q=o.q, extras=o.extra.slice();
+
+       // Algunas preguntas continúan en la línea siguiente antes de las opciones.
+       while(extras.length && !/^(?:[□☐✓]|sí\b|no\b|mujer\b|hombre\b|dos\b|tres\b|cuatro\b|cinco\b|seis\b|más\b|ninguna\b|una\b|las hago\b|me ayuda\b|chatear\b|jugar\b|buscar\b|editar\b|hacer tareas\b|otras\b|heladera\b|microondas\b|ventilador\b|aire acondicionado\b|televisor\b|lavarropas\b|computadora\b|sabe\b|fue\b|terminó\b|hay\b|no hay\b|muy bien\b|bien\b|regular\b|mal\b)/i.test(extras[0])){
+         const x=extras.shift();
+         if(x.length<180 && !q.endsWith('?')) q+=' '+x;
+         else { extras.unshift(x); break; }
+       }
+
+       const clean=extras.map(x=>x.replace(/^[□☐✓]\s*/,'').trim()).filter(Boolean);
+       const ans=clean.length
+         ? 'Respuesta personal. Opciones: '+clean.join(' · ')
+         : 'Respuesta personal.';
+       return [q,ans];
+     }).filter(x=>x[0]);
+   }
+
+   // 2) Formato tradicional pregunta/respuesta.
+   const out=[]; let q='',a='';
+   const flush=()=>{if(q&&a)out.push([q.replace(/^\s*(?:pregunta|p)\s*[:.-]?\s*/i,''),a.replace(/^\s*(?:respuesta|r)\s*[:.-]?\s*/i,'')]);q='';a=''};
+   for(const line of lines){
+     if(/^(?:pregunta|p)\s*[:.-]/i.test(line)||line.endsWith('?')){
+       if(q&&a)flush(); q=line;
+     }else if(q){ a+=(a?' ':'')+line; }
+   }
+   flush();
+   return out.filter(x=>x[0]&&x[1]);
+ }
+
+ async function pdfText(file){
+   let pdfjs;
+   try{pdfjs=await import('https://cdn.jsdelivr.net/npm/pdfjs-dist@4.10.38/build/pdf.min.mjs')}
+   catch(e){throw new Error('No se pudo cargar el lector PDF. Verifica la conexión a Internet.')}
+   pdfjs.GlobalWorkerOptions.workerSrc='https://cdn.jsdelivr.net/npm/pdfjs-dist@4.10.38/build/pdf.worker.min.mjs';
+   const doc=await pdfjs.getDocument({data:new Uint8Array(await file.arrayBuffer())}).promise;
+   let text='';
+   for(let p=1;p<=doc.numPages;p++){
+     const page=await doc.getPage(p), tc=await page.getTextContent();
+     // Reconstruye líneas usando la coordenada vertical del PDF.
+     const rows=[];
+     for(const it of tc.items){
+       const y=Math.round((it.transform?.[5]||0)*2)/2;
+       let row=rows.find(r=>Math.abs(r.y-y)<2);
+       if(!row){row={y,items:[]};rows.push(row)}
+       row.items.push({x:it.transform?.[4]||0,s:it.str||''});
+     }
+     rows.sort((a,b)=>b.y-a.y);
+     for(const row of rows){
+       row.items.sort((a,b)=>a.x-b.x);
+       const line=row.items.map(z=>z.s.trim()).filter(Boolean).join(' ').replace(/\s+/g,' ').trim();
+       if(line) text+=line+'\n';
+     }
+     text+='\n';
+   }
+   if(text.trim().length<30)throw new Error('El PDF parece escaneado y no contiene texto seleccionable. Usa OCR para imágenes.');
+   return text;
+ }
+ function editor(card,idx,qa){
+   let box=card.querySelector('.v37Editor');
+   if(!box){box=document.createElement('div');box.className='v37Editor';card.appendChild(box)}
+   box.innerHTML='<h4>✏️ Revisa las preguntas detectadas</h4><p class="hint">En encuestas sin respuestas correctas, el segundo campo conserva las opciones o indica “Respuesta personal”.</p><div class="v37Rows"></div><div class="tools"><button class="btn primary v37Save">💾 Guardar cuestionario</button><button class="btn v37Add">➕ Agregar pregunta</button></div>';
+   const rows=box.querySelector('.v37Rows');
+   const add=(q='',a='')=>{
+     const r=document.createElement('div');r.className='v37Row';
+     r.innerHTML=`<textarea class="v37Q" placeholder="Pregunta">${esc(q)}</textarea><textarea class="v37A" placeholder="Respuesta">${esc(a)}</textarea><button class="btn v37Del">🗑️</button>`;
+     r.querySelector('.v37Del').onclick=()=>r.remove(); rows.appendChild(r);
+   };
+   qa.forEach(x=>add(x[0],x[1])); box.querySelector('.v37Add').onclick=()=>add();
+   box.querySelector('.v37Save').onclick=()=>{
+     const final=[...rows.querySelectorAll('.v37Row')].map(r=>[r.querySelector('.v37Q').value.trim(),r.querySelector('.v37A').value.trim()]).filter(x=>x[0]&&x[1]);
+     if(!final.length){alert('Debe existir al menos una pregunta y respuesta.');return}
+     quizzesV12[idx].questions=final; quizzesV12[idx].survey=final.every(x=>/^Respuesta personal/i.test(x[1])); quizzesV12[idx].processedAt=new Date().toISOString(); quizzesV12[idx].enabled=true;
+     saveQuizzesV12(); renderManagerV15(); if(typeof renderHomeSelectorV15==='function')renderHomeSelectorV15();
+   };
+ }
+ function enhance(){
+   document.querySelectorAll('.managerCardV15').forEach(card=>{
+     const del=card.querySelector('[data-v30-delete]');
+     if(!del)return;
+     const idx=+del.dataset.v30Delete, q=quizzesV12[idx];
+     if(!q||q.questions?.length||!q.sourceKey||card.querySelector('.v37Process'))return;
+     const actions=del.parentElement, b=document.createElement('button');
+     b.className='btn v37Process'; b.textContent='⚙️ Generar cuestionario';
+     actions.insertBefore(b,actions.firstChild);
+     b.onclick=async()=>{
+       let st=card.querySelector('.v37Status');
+       if(!st){st=document.createElement('div');st.className='v37Status';actions.before(st)}
+       try{
+         b.disabled=true;st.className='v37Status warn';st.textContent='⏳ Procesando archivo…';
+         const f=await blob(q.sourceKey); if(!f)throw new Error('No se encontró el archivo guardado.');
+         let text='';
+         if((q.sourceType||f.type||'').includes('pdf')) text=await pdfText(f);
+         else if((q.sourceType||f.type||'').startsWith('image/')) text=await imageText(f,st);
+         else throw new Error('Formato no compatible. Usa PDF o imagen.');
+         const qa=splitQA(text);
+         if(!qa.length)throw new Error('Se extrajo texto, pero no pude identificar pares de pregunta y respuesta. Puedes usar un documento donde cada pregunta esté seguida de su respuesta.');
+         st.className='v37Status ok';st.textContent=`✅ ${qa.length} preguntas detectadas. Revisa y confirma antes de guardar.`;
+         editor(card,idx,qa);
+       }catch(e){st.className='v37Status warn';st.textContent='⚠️ '+e.message}
+       finally{b.disabled=false}
+     };
+   });
+ }
+ const old=renderManagerV15;
+ renderManagerV15=function(){old();setTimeout(enhance,0)};
+ const nav=document.getElementById('questionnairesNavV11');if(nav)nav.addEventListener('click',()=>setTimeout(enhance,20));
+ setTimeout(enhance,50);
+})();
+</script>
+
+
+<script id="v38-survey-player">
+(()=>{
+  const oldRender=renderQuizQuestionV12;
+  renderQuizQuestionV12=function(){
+    oldRender();
+    const q=quizzesV12[activeQuizV12];
+    if(!q||!q.survey)return;
+    const item=q.questions[activeQuestionV12];
+    const ans=document.getElementById('quizAnswerV12');
+    const show=document.getElementById('showAnswerV12');
+    if(ans) ans.textContent='📝 '+item[1];
+    if(show){
+      show.textContent='📋 Ver opciones / tipo de respuesta';
+      show.onclick=()=>ans?.classList.add('show');
+    }
+  };
+})();
+</script>
+
+
+<style id="v39-independent-custom">
+/* Un cuestionario cargado se ejecuta como una vista independiente. */
+body.v39CustomQuiz #homeSelectorV15,
+body.v39CustomQuiz #questionnairesPanelV11,
+body.v39CustomQuiz #achievementsPanelV11,
+body.v39CustomQuiz #statePanelV24,
+body.v39CustomQuiz #practiceListPanelV8,
+body.v39CustomQuiz #learn,
+body.v39CustomQuiz #learnNav,
+body.v39CustomQuiz #progress,
+body.v39CustomQuiz #stateNavV24{display:none!important}
+body.v39CustomQuiz #quizPlayerV12{display:block!important}
+.v39CustomHeader{display:none;margin:0 0 14px;padding:12px 14px;border:1px solid #dfe4f4;border-radius:14px;background:#fff}
+body.v39CustomQuiz .v39CustomHeader{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.v39CustomHeader strong{font-size:16px}
+</style>
+<script id="v39-independent-custom-js">
+(()=>{
+  let customActiveV39=false;
+
+  function ensureHeaderV39(){
+    const player=document.getElementById('quizPlayerV12');
+    if(!player||document.getElementById('customHeaderV39'))return;
+    const h=document.createElement('div');
+    h.id='customHeaderV39'; h.className='v39CustomHeader';
+    h.innerHTML='<strong id="customTitleV39">📚 Cuestionario</strong><button class="btn" id="customExitV39">← Volver a cuestionarios</button>';
+    player.parentNode.insertBefore(h,player);
+    h.querySelector('#customExitV39').onclick=exitCustomV39;
+  }
+
+  function enterCustomV39(idx){
+    customActiveV39=true;
+    document.body.classList.add('v39CustomQuiz');
+    ensureHeaderV39();
+    const q=quizzesV12[idx];
+    const t=document.getElementById('customTitleV39');
+    if(t&&q)t.textContent='📚 '+q.title;
+    // Cierra cualquier panel global heredado.
+    document.getElementById('questionnairesPanelV11')?.classList.remove('show');
+    document.getElementById('achievementsPanelV11')?.classList.remove('show');
+    document.getElementById('statePanelV24')?.classList.remove('show');
+    window.scrollTo({top:0,behavior:'smooth'});
+  }
+
+  function exitCustomV39(){
+    customActiveV39=false;
+    document.body.classList.remove('v39CustomQuiz');
+    const p=document.getElementById('quizPlayerV12');
+    if(p)p.style.display='none';
+    if(typeof openModuleV11==='function')openModuleV11('questionnaires');
+    if(typeof renderManagerV15==='function')renderManagerV15();
+    window.scrollTo({top:0,behavior:'smooth'});
+  }
+
+  ensureHeaderV39();
+
+  // Captura cualquier botón "Usar/Comenzar" de un cuestionario personalizado,
+  // sin modificar los cuestionarios base.
+  document.addEventListener('click',e=>{
+    const b=e.target.closest('[data-v18-use],[data-v15-use],[data-v30-use]');
+    if(!b)return;
+    const type=b.dataset.v18Use||b.dataset.v15Use||b.dataset.v30Use;
+    // Los botones personalizados usan índice numérico; los base usan social/natural.
+    if(type!==undefined && /^\d+$/.test(String(type))){
+      const idx=+type;
+      if(quizzesV12[idx] && quizzesV12[idx].questions?.length){
+        setTimeout(()=>enterCustomV39(idx),0);
+      }
+    }
+  },true);
+
+  // openQuizV12 también puede ser llamado desde otras partes del sistema.
+  const oldOpen=openQuizV12;
+  openQuizV12=function(idx){
+    oldOpen(idx);
+    enterCustomV39(idx);
+  };
+
+  // Inicio siempre abandona el cuestionario personalizado.
+  const home=document.getElementById('homeNavV34');
+  if(home)home.addEventListener('click',()=>{
+    customActiveV39=false;
+    document.body.classList.remove('v39CustomQuiz');
+    const p=document.getElementById('quizPlayerV12');if(p)p.style.display='none';
+  },true);
+})();
+</script>
+
+
+<style id="v40-custom-player-fix">
+/* V40: el reproductor del cuestionario personalizado debe permanecer visible
+   aunque el cuestionario principal esté en modo focus. */
+body.v39CustomQuiz #quizLibraryV12{display:block!important}
+body.v39CustomQuiz #quizPlayerV12{display:block!important}
+body.v39CustomQuiz #quizPlayerV12.hidden{display:block!important}
+body.v39CustomQuiz #quizPlayerV12[hidden]{display:block!important}
+body.v39CustomQuiz .v39CustomHeader{display:flex!important}
+body.v39CustomQuiz #quizPlayerV12 .quizQuestionV12,
+body.v39CustomQuiz #quizPlayerV12 .quizAnswerV12,
+body.v39CustomQuiz #quizPlayerV12 .quizActionsV12{visibility:visible!important}
+</style>
+<script id="v40-custom-player-fix-js">
+(()=>{
+  function forcePlayerV40(idx){
+    const q=quizzesV12[idx];
+    if(!q || !q.questions || !q.questions.length)return;
+
+    // Estado del reproductor personalizado.
+    activeQuizV12=idx;
+    if(typeof activeQuestionV12==='undefined') return;
+    if(activeQuestionV12<0 || activeQuestionV12>=q.questions.length) activeQuestionV12=0;
+
+    document.body.classList.add('v39CustomQuiz');
+    document.body.classList.remove('awaitQuizV22');
+
+    const lib=document.getElementById('quizLibraryV12');
+    const player=document.getElementById('quizPlayerV12');
+    if(lib)lib.style.display='block';
+    if(player){
+      player.hidden=false;
+      player.classList.remove('hidden');
+      player.style.setProperty('display','block','important');
+    }
+
+    // Oculta explícitamente la ficha principal que aparecía vacía en la captura.
+    const mainLearn=document.getElementById('learn');
+    if(mainLearn)mainLearn.style.display='none';
+
+    // Renderiza nuevamente después de establecer la vista.
+    renderQuizQuestionV12();
+
+    const title=document.getElementById('customTitleV39');
+    if(title)title.textContent='📚 '+q.title;
+  }
+
+  // Reemplaza la apertura personalizada con una secuencia estable.
+  const previousOpenV40=openQuizV12;
+  openQuizV12=function(idx){
+    activeQuizV12=idx;
+    activeQuestionV12=0;
+
+    // Conservamos cualquier preparación que haga la función original.
+    previousOpenV40(idx);
+
+    // Los wrappers anteriores podían volver a ocultar el player;
+    // lo forzamos al final del mismo ciclo.
+    setTimeout(()=>forcePlayerV40(idx),0);
+    setTimeout(()=>forcePlayerV40(idx),30);
+  };
+
+  // Los botones dinámicos del administrador pueden abrir el cuestionario
+  // sin depender de las capas de eventos antiguas.
+  document.addEventListener('click',e=>{
+    const b=e.target.closest('[data-v30-use],[data-v18-use],[data-v15-use]');
+    if(!b)return;
+    const raw=b.dataset.v30Use ?? b.dataset.v18Use ?? b.dataset.v15Use;
+    if(!/^\d+$/.test(String(raw)))return;
+    const idx=+raw;
+    if(!quizzesV12[idx]?.questions?.length)return;
+    e.preventDefault();
+    e.stopImmediatePropagation();
+    openQuizV12(idx);
+  },true);
+})();
+</script>
+
+
+<style id="v41-manual-builder">
+.v41Builder{margin:14px 0;padding:16px;border:1px solid #dfe4f4;border-radius:18px;background:#fff}
+.v41Grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.v41Field label{display:block;font-weight:800;margin-bottom:6px}
+.v41Field input,.v41Field textarea{width:100%;box-sizing:border-box;border:1px solid #ccd3e7;border-radius:11px;padding:10px;font:inherit}
+.v41Field textarea{min-height:90px;resize:vertical}
+.v41Question{border:1px solid #e1e5f2;border-radius:14px;padding:12px;margin:10px 0;background:#fafbff}
+.v41QuestionHead{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:8px}
+.v41Actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.v41Status{font-weight:800;margin-top:10px}
+@media(max-width:700px){.v41Grid{grid-template-columns:1fr}}
+</style>
+<script id="v41-manual-builder-js">
+(()=>{
+ let rowsV41=[];
+
+ function escV41(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+
+ function builderHTMLV41(){
+   return `<section class="v41Builder">
+     <h3>➕ Crear cuestionario</h3>
+     <p class="hint">Completa el nombre del cuestionario y carga manualmente cada pregunta con su respuesta correcta.</p>
+     <div class="v41Grid">
+       <div class="v41Field"><label for="v41Title">Nombre del cuestionario</label><input id="v41Title" maxlength="100" placeholder="Ej.: Ciencias - Unidad 1"></div>
+       <div class="v41Field"><label for="v41Subject">Materia / categoría</label><input id="v41Subject" maxlength="80" placeholder="Ej.: Ciencias Naturales"></div>
+     </div>
+     <div id="v41Rows"></div>
+     <div class="v41Actions">
+       <button class="btn" id="v41Add">➕ Agregar pregunta</button>
+       <button class="btn primary" id="v41Save">💾 Guardar cuestionario</button>
+       <button class="btn" id="v41Clear">🧹 Limpiar</button>
+     </div>
+     <div id="v41Status" class="v41Status" aria-live="polite"></div>
+   </section>`;
+ }
+
+ function drawRowsV41(){
+   const host=document.getElementById('v41Rows'); if(!host)return;
+   host.innerHTML='';
+   rowsV41.forEach((r,n)=>{
+     const d=document.createElement('div');d.className='v41Question';
+     d.innerHTML=`<div class="v41QuestionHead"><strong>Pregunta ${n+1}</strong>${rowsV41.length>1?`<button class="btn" data-v41-del="${n}">🗑️ Eliminar</button>`:''}</div>
+       <div class="v41Grid">
+        <div class="v41Field"><label>Pregunta</label><textarea data-v41-q="${n}" placeholder="Escribe la pregunta">${escV41(r.q)}</textarea></div>
+        <div class="v41Field"><label>Respuesta correcta</label><textarea data-v41-a="${n}" placeholder="Escribe la respuesta correcta">${escV41(r.a)}</textarea></div>
+       </div>`;
+     host.appendChild(d);
+   });
+   host.querySelectorAll('[data-v41-q]').forEach(x=>x.oninput=()=>rowsV41[+x.dataset.v41Q].q=x.value);
+   host.querySelectorAll('[data-v41-a]').forEach(x=>x.oninput=()=>rowsV41[+x.dataset.v41A].a=x.value);
+   host.querySelectorAll('[data-v41-del]').forEach(x=>x.onclick=()=>{rowsV41.splice(+x.dataset.v41Del,1);drawRowsV41()});
+ }
+
+ function installV41(){
+   const panel=document.getElementById('questionnairesPanelV11'); if(!panel)return;
+
+   // Oculta los generadores anteriores de PDF/imagen y su importación JSON.
+   panel.querySelectorAll('.generatorV30,.importV12,.quizImportV12').forEach(x=>x.style.display='none');
+
+   let old=panel.querySelector('.v41Builder');
+   if(old)old.remove();
+
+   const manager=panel.querySelector('#managerV15,.managerV15') || panel.lastElementChild;
+   const wrap=document.createElement('div');wrap.innerHTML=builderHTMLV41();
+   const node=wrap.firstElementChild;
+   if(manager)panel.insertBefore(node,manager);else panel.appendChild(node);
+
+   rowsV41=[{q:'',a:''}];drawRowsV41();
+
+   document.getElementById('v41Add').onclick=()=>{rowsV41.push({q:'',a:''});drawRowsV41();setTimeout(()=>document.querySelector(`[data-v41-q="${rowsV41.length-1}"]`)?.focus(),0)};
+   document.getElementById('v41Clear').onclick=()=>{
+     document.getElementById('v41Title').value='';document.getElementById('v41Subject').value='';
+     rowsV41=[{q:'',a:''}];drawRowsV41();document.getElementById('v41Status').textContent='';
+   };
+   document.getElementById('v41Save').onclick=()=>{
+     const title=document.getElementById('v41Title').value.trim();
+     const subject=document.getElementById('v41Subject').value.trim()||'General';
+     const questions=rowsV41.map(r=>[r.q.trim(),r.a.trim()]).filter(x=>x[0]&&x[1]);
+     const status=document.getElementById('v41Status');
+     if(!title){status.textContent='⚠️ Ingresa el nombre del cuestionario.';return}
+     if(!questions.length){status.textContent='⚠️ Debes completar al menos una pregunta y su respuesta correcta.';return}
+     if(questions.length!==rowsV41.length){status.textContent='⚠️ Completa la pregunta y la respuesta de todas las filas o elimina las filas vacías.';return}
+     quizzesV12.push({
+       title,subject,questions,enabled:true,
+       createdAt:new Date().toISOString(),
+       manual:true
+     });
+     saveQuizzesV12();
+     rowsV41=[{q:'',a:''}];
+     renderManagerV15();
+     if(typeof renderHomeSelectorV15==='function')renderHomeSelectorV15();
+   };
+ }
+
+ // El administrador se reconstruye dinámicamente; reinstala el formulario después.
+ const previousManagerV41=renderManagerV15;
+ renderManagerV15=function(){
+   previousManagerV41();
+   setTimeout(installV41,0);
+ };
+
+ const nav=document.getElementById('questionnairesNavV11');
+ if(nav)nav.addEventListener('click',()=>setTimeout(installV41,30));
+ setTimeout(installV41,80);
+})();
+</script>
+
+
+<style id="v42-custom-fix">
+.v42EditBox{margin-top:14px;padding:15px;border:1px solid #dfe4f4;border-radius:16px;background:#fff}
+.v42EditRow{display:grid;grid-template-columns:1fr 1fr auto;gap:9px;margin:10px 0}
+.v42EditRow textarea{width:100%;box-sizing:border-box;min-height:80px;border:1px solid #ccd3e7;border-radius:10px;padding:9px;font:inherit}
+.v42EditActions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+@media(max-width:700px){.v42EditRow{grid-template-columns:1fr}.v42EditRow .btn{width:100%}}
+</style>
+<script id="v42-custom-fix-js">
+(()=>{
+  function esc42(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+
+  function showCustom42(idx){
+    const q=quizzesV12[idx];
+    if(!q||!q.questions?.length)return;
+    activeQuizV12=idx;
+    activeQuestionV12=0;
+
+    document.body.classList.add('v39CustomQuiz');
+    document.body.classList.remove('awaitQuizV22','moduleOpenV17');
+
+    // Ocultar paneles globales y mostrar explícitamente el player personalizado.
+    ['questionnairesPanelV11','achievementsPanelV11','statePanelV24','practiceListPanelV8','homeSelectorV15','learn'].forEach(id=>{
+      const el=document.getElementById(id); if(el)el.style.display='none';
+    });
+    const player=document.getElementById('quizPlayerV12');
+    if(player){
+      player.hidden=false;
+      player.classList.remove('hidden');
+      player.style.setProperty('display','block','important');
+      player.style.setProperty('visibility','visible','important');
+    }
+    const lib=document.getElementById('quizLibraryV12');
+    if(lib)lib.style.setProperty('display','block','important');
+
+    const h=document.getElementById('customHeaderV39');
+    if(h)h.style.setProperty('display','flex','important');
+    const title=document.getElementById('customTitleV39');
+    if(title)title.textContent='📚 '+q.title;
+
+    renderQuizQuestionV12();
+    window.scrollTo({top:0,behavior:'smooth'});
+  }
+
+  // Interceptar de forma definitiva los botones de inicio de cuestionarios personalizados.
+  document.addEventListener('click',e=>{
+    const b=e.target.closest('[data-v30-use],[data-v18-use],[data-v15-use]');
+    if(!b)return;
+    const raw=b.dataset.v30Use ?? b.dataset.v18Use ?? b.dataset.v15Use;
+    if(!/^\d+$/.test(String(raw)))return;
+    e.preventDefault(); e.stopImmediatePropagation();
+    showCustom42(+raw);
+  },true);
+
+  // Editor completo del cuestionario.
+  function editQuiz42(idx,card){
+    const q=quizzesV12[idx]; if(!q)return;
+    card.querySelector('.v42EditBox')?.remove();
+    const box=document.createElement('div');box.className='v42EditBox';
+    box.innerHTML=`<h4>✏️ Modificar cuestionario</h4>
+      <div class="v41Grid">
+       <div class="v41Field"><label>Nombre</label><input class="v42Title" value="${esc42(q.title)}"></div>
+       <div class="v41Field"><label>Materia / categoría</label><input class="v42Subject" value="${esc42(q.subject||'General')}"></div>
+      </div>
+      <div class="v42Rows"></div>
+      <div class="v42EditActions">
+       <button class="btn" data-v42-add>➕ Agregar pregunta</button>
+       <button class="btn primary" data-v42-save>💾 Guardar cambios</button>
+       <button class="btn" data-v42-cancel>Cancelar</button>
+      </div>`;
+    card.appendChild(box);
+    const rows=box.querySelector('.v42Rows');
+    const add=(question='',answer='')=>{
+      const r=document.createElement('div');r.className='v42EditRow';
+      r.innerHTML=`<textarea class="v42Q" placeholder="Pregunta">${esc42(question)}</textarea>
+                   <textarea class="v42A" placeholder="Respuesta correcta">${esc42(answer)}</textarea>
+                   <button class="btn v42Del">🗑️</button>`;
+      r.querySelector('.v42Del').onclick=()=>r.remove();rows.appendChild(r);
+    };
+    q.questions.forEach(x=>add(x[0],x[1]));
+    box.querySelector('[data-v42-add]').onclick=()=>add();
+    box.querySelector('[data-v42-cancel]').onclick=()=>box.remove();
+    box.querySelector('[data-v42-save]').onclick=()=>{
+      const title=box.querySelector('.v42Title').value.trim();
+      const subject=box.querySelector('.v42Subject').value.trim()||'General';
+      const questions=[...rows.querySelectorAll('.v42EditRow')].map(r=>[
+        r.querySelector('.v42Q').value.trim(),r.querySelector('.v42A').value.trim()
+      ]).filter(x=>x[0]&&x[1]);
+      if(!title){alert('Ingresa el nombre del cuestionario.');return}
+      if(!questions.length){alert('Debe quedar al menos una pregunta con su respuesta.');return}
+      q.title=title;q.subject=subject;q.questions=questions;q.updatedAt=new Date().toISOString();
+      saveQuizzesV12();renderManagerV15();
+      if(typeof renderHomeSelectorV15==='function')renderHomeSelectorV15();
+    };
+  }
+
+  function addEditButtons42(){
+    document.querySelectorAll('.managerCardV15').forEach(card=>{
+      const del=card.querySelector('[data-v30-delete]');
+      if(!del||card.querySelector('[data-v42-edit]'))return;
+      const idx=+del.dataset.v30Delete;
+      if(!quizzesV12[idx])return;
+      const b=document.createElement('button');
+      b.className='btn';b.dataset.v42Edit=idx;b.textContent='✏️ Modificar preguntas';
+      del.parentElement.insertBefore(b,del);
+      b.onclick=()=>editQuiz42(idx,card);
+    });
+  }
+
+  const rm=renderManagerV15;
+  renderManagerV15=function(){rm();setTimeout(addEditButtons42,10)};
+  document.getElementById('questionnairesNavV11')?.addEventListener('click',()=>setTimeout(addEditButtons42,40));
+  setTimeout(addEditButtons42,100);
+})();
+</script>
+
+
+<style id="v43-normal-custom">
+/* Los cuestionarios creados usan exactamente el área normal de estudio. */
+body.v43CustomNormal #quizPlayerV12,
+body.v43CustomNormal #quizLibraryV12,
+body.v43CustomNormal .v39CustomHeader{display:none!important}
+</style>
+<script id="v43-normal-custom-js">
+(()=>{
+  let currentCustomV43=null;
+
+  function ensureIdsV43(){
+    let changed=false;
+    quizzesV12.forEach(q=>{
+      if(!q.id){
+        q.id='cq_'+Date.now().toString(36)+'_'+Math.random().toString(36).slice(2,8);
+        changed=true;
+      }
+    });
+    if(changed)saveQuizzesV12();
+  }
+  ensureIdsV43();
+
+  function modeKeyV43(q){return 'custom_'+q.id}
+
+  // Mantiene el título correcto después de cada render normal
+  // (Siguiente, Anterior, Aprender, Prueba, marcar aprendida, etc.).
+  const baseRenderV43=render;
+  render=function(){
+    baseRenderV43();
+    if(currentCustomV43 && mode===modeKeyV43(currentCustomV43)){
+      const subject=document.getElementById('subject');
+      if(subject)subject.textContent='📘 '+currentCustomV43.title;
+    }
+  };
+
+  function openNormalCustomV43(idx){
+    ensureIdsV43();
+    const q=quizzesV12[idx];
+    if(!q || q.enabled===false || !Array.isArray(q.questions) || !q.questions.length)return;
+
+    currentCustomV43=q;
+    const mk=modeKeyV43(q);
+
+    // Inserta las preguntas en el mismo motor que usan los cuestionarios originales.
+    data[mk]=q.questions.map(x=>[String(x[0]),String(x[1])]);
+
+    // Cierra administración/módulos y restaura el área normal.
+    document.body.classList.remove('v39CustomQuiz','moduleOpenV17','awaitQuizV22');
+    document.body.classList.add('v43CustomNormal','quizFocusV21');
+    closeModulesV11();
+
+    const learn=document.getElementById('learn');
+    if(learn)learn.style.removeProperty('display');
+    const card=document.querySelector('.card');
+    const nav=document.querySelector('.nav');
+    const toggle=document.querySelector('.modeToggle');
+    const progress=document.querySelector('.progressWrap');
+    if(card)card.style.removeProperty('display');
+    if(nav)nav.style.removeProperty('display');
+    if(toggle)toggle.style.removeProperty('display');
+    if(progress)progress.style.removeProperty('display');
+
+    document.getElementById('quizPlayerV12')?.classList.remove('show');
+
+    mode=mk;
+    i=0;
+    view='study';
+    learningMode='study';
+
+    // Botones de materia base no deben aparentar estar seleccionados.
+    document.getElementById('socialBtn')?.classList.remove('active');
+    document.getElementById('naturalBtn')?.classList.remove('active');
+    document.getElementById('pendingBtn')?.classList.remove('active');
+
+    render();
+    if(typeof updateSmartUI==='function')updateSmartUI();
+    window.scrollTo({top:0,behavior:'smooth'});
+  }
+
+  // Corrige la causa del fallo anterior: data-v30-use contiene "custom|0",
+  // no solamente "0". Se intercepta el formato real.
+  document.addEventListener('click',e=>{
+    const b=e.target.closest('[data-v30-use],[data-v18-use],[data-v16-use],[data-v15-use]');
+    if(!b)return;
+    const raw=b.dataset.v30Use ?? b.dataset.v18Use ?? b.dataset.v16Use ?? b.dataset.v15Use;
+    if(!raw)return;
+    const parts=String(raw).split('|');
+    if(parts[0]!=='custom')return;
+    const idx=Number(parts[1]);
+    if(!Number.isInteger(idx)||!quizzesV12[idx])return;
+    e.preventDefault();
+    e.stopImmediatePropagation();
+    openNormalCustomV43(idx);
+  },true);
+
+  // También corrige el botón antiguo "Comenzar" si llegara a mostrarse.
+  document.addEventListener('click',e=>{
+    const b=e.target.closest('[data-open-quiz-v12]');
+    if(!b)return;
+    const idx=Number(b.dataset.openQuizV12);
+    if(!Number.isInteger(idx)||!quizzesV12[idx])return;
+    e.preventDefault();e.stopImmediatePropagation();
+    openNormalCustomV43(idx);
+  },true);
+
+  // Al volver al inicio/cuestionarios sale del modo personalizado.
+  ['homeNavV34','questionnairesNavV11','changeQuizV21'].forEach(id=>{
+    document.getElementById(id)?.addEventListener('click',()=>{
+      currentCustomV43=null;
+      document.body.classList.remove('v43CustomNormal');
+    },true);
+  });
+
+  // Si se edita el cuestionario actualmente abierto, la próxima apertura
+  // usa inmediatamente las preguntas actualizadas.
+})();
+</script>
+
+</body></html>
