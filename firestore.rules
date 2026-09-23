@@ -28,9 +28,9 @@ service cloud.firestore {
       allow delete: if false;
     }
     function valid(d) {
-      return d.keys().hasAll(['title','questions','support','steps','hours','good','bad','published','keywords','updatedAt'])
+      return d.keys().hasAll(['category','title','questions','support','steps','hours','good','bad','published','keywords','updatedAt'])
         && d.keys().hasOnly(['category','title','questions','support','steps','hours','good','bad','published','keywords','updatedAt','revisionId'])
-        && (!('category' in d) || (d.category is string && d.category.size() > 0 && d.category.size() <= 100))
+        && d.category is string && d.category in ['Administración de clientes','Planes de negocio','Créditos','Sistema FOGAPY','Cobranzas CAC','Desembolsos','Cobranza','Rendición documental','Equifax','Otros procedimientos']
         && d.revisionId is string && d.revisionId.size() == 36
         && d.title is string && d.title.size() > 0 && d.title.size() <= 200
         && d.steps is string && d.steps.size() > 0 && d.steps.size() <= 10000

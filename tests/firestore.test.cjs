@@ -11,7 +11,7 @@ const {execute,field}=require('firebase/firestore/pipelines');
  const unverified=env.authenticatedContext('unverified',{email:'person@example.com',email_verified:false}).firestore();
  const anonymous=env.unauthenticatedContext().firestore();
  const member=(active=true)=>({email:'person@example.com',active,updatedAt:serverTimestamp(),updatedBy:'admin'});
- const procedure={title:'Prueba',questions:'prueba',support:'',steps:'Paso de prueba',hours:'',good:'',bad:'',published:true,keywords:['prueba'],updatedAt:serverTimestamp()};
+ const procedure={category:'Créditos',title:'Prueba',questions:'prueba',support:'',steps:'Paso de prueba',hours:'',good:'',bad:'',published:true,keywords:['prueba'],updatedAt:serverTimestamp()};
  async function save(id,data,overrides={}){
   const ref=doc(admin,'procedimientos',id),old=await getDocFromServer(ref),revisionId=randomUUID();
   const after={...data,revisionId},history={procedureId:id,before:old.exists()?old.data():null,after,changedAt:serverTimestamp(),changedBy:'admin',changedEmail:'javier.odahir@gmail.com',...overrides};
@@ -52,6 +52,7 @@ const {execute,field}=require('firebase/firestore/pipelines');
  await no(setDoc(doc(admin,'authorized_users/person@example.com'),{...member(),active:'true'}));
  await no(setDoc(doc(admin,'authorized_users/person@example.com'),{...member(),email:'other@example.com'}));
  await no(setDoc(doc(admin,'procedimientos/public'),{...procedure,unexpected:true}));
+ await no(save('sin-categoria',(({category,...rest})=>rest)(procedure)));
  await no(deleteDoc(doc(admin,'procedimientos/public')));
  await ok(setDoc(doc(admin,'authorized_users/person@example.com'),member(false)));
  await no(getDoc(doc(reader,'procedimientos/public')));
