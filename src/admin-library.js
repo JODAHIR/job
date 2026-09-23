@@ -4,7 +4,7 @@ const $=id=>document.getElementById(id);
 let historyVersion=0;
 export function clearHistory(){historyVersion++;$('history-list').replaceChildren();$('history-status').textContent='Seleccioná un procedimiento para consultar sus modificaciones.'}
 export function renderLibrary(items,selected,onSelect){
- const query=$('procedure-search').value,visible=filterProcedures(items,query),list=$('list');
+ const query=$('procedure-search').value,category=$('category-filter').value,visible=filterProcedures(items,query,category),list=$('list');
  const opened=new Set([...list.querySelectorAll('details[open]')].map(d=>d.dataset.state)),first=!list.children.length;
  list.replaceChildren();$('search-status').textContent=`${visible.length} de ${items.length} procedimientos`;
  if(!visible.length){list.textContent=items.length?'No hay coincidencias. Probá con otro término.':'Todavía no hay procedimientos.';return}
@@ -12,7 +12,7 @@ export function renderLibrary(items,selected,onSelect){
   const group=visible.filter(item=>item.published===published),details=document.createElement('details');details.className='procedure-group';details.dataset.state=key;details.open=first||opened.has(key)||!!query;
   const summary=document.createElement('summary');summary.textContent=label;const count=document.createElement('span');count.className='group-count';count.textContent=group.length;summary.append(count);details.append(summary);
   const body=document.createElement('div');body.className='group-body';
-  for(const item of group){const button=document.createElement('button');button.type='button';button.textContent=item.title;button.className='procedure-item';button.setAttribute('aria-pressed',String(item.id===selected));button.onclick=()=>onSelect(item);body.append(button)}
+  for(const item of group){const button=document.createElement('button'),name=document.createElement('span'),tag=document.createElement('small');button.type='button';name.textContent=item.title;tag.textContent=item.category||'Sin categoría';button.className='procedure-item';button.setAttribute('aria-pressed',String(item.id===selected));button.onclick=()=>onSelect(item);button.append(name,tag);body.append(button)}
   if(!group.length){const p=document.createElement('p');p.className='empty-state';p.textContent='Sin procedimientos en este estado.';body.append(p)}details.append(body);list.append(details);
  }
 }
