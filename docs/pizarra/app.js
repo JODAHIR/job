@@ -3,7 +3,7 @@ import {getAuth,onAuthStateChanged,signInWithEmailAndPassword,createUserWithEmai
 import {getFirestore,doc,collection,onSnapshot,getDocs,getDoc,query,where} from 'https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore.js';
 import {getStorage,ref,uploadBytes,getBlob} from 'https://www.gstatic.com/firebasejs/12.19.0/firebase-storage.js';
 import {getFunctions,httpsCallable} from 'https://www.gstatic.com/firebasejs/12.19.0/firebase-functions.js';
-import {firebaseConfig,functionsRegion} from './firebase-config.js';
+import {firebaseConfig,functionsRegion} from './firebase-config.js?v=20260923-real';
 const $=id=>document.getElementById(id);
 const board=$('board'),emptyState=$('emptyState'),searchInput=$('searchInput'),fileInput=$('fileInput');
 const editNoteTitle=$('editNoteTitle'),editNoteText=$('editNoteText'),editNoteColor=$('editNoteColor'),editNoteAttachment=$('editNoteAttachment'),editAttachmentInfo=$('editAttachmentInfo'),removeNoteAttachment=$('removeNoteAttachment');
