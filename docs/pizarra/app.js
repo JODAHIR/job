@@ -16,9 +16,17 @@ const urls=new Set(),imageCache=new Map();
 const escapeHtml=(v='')=>String(v).replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
 const admin=()=>profile?.role==='admin'&&profile?.status==='authorized';
 const status=t=>$('statusLine').textContent=t;
-const error=e=>{const message=e?.message||String(e);status('Error: '+message);$('authError').textContent=message;};
+function friendlyError(e){
+ const code=String(e?.code||'').replace('functions/','');
+ if(code==='internal'||code==='not-found'||/internal\s*\[0\]/i.test(String(e?.message||'')))return 'El servicio de la pizarra no está disponible. La administración debe publicar las funciones de Firebase.';
+ if(code==='permission-denied')return 'No tenés permiso para realizar esta acción.';
+ if(code==='unauthenticated')return 'Tu sesión venció. Ingresá nuevamente.';
+ return e?.message||String(e);
+}
+const error=e=>{const message=friendlyError(e);status('Error: '+message);$('authError').textContent=message;};
 async function run(fn){if(busy){status('Esperá a que termine la operación en curso.');return;}busy=true;try{await fn();status('Cambios guardados.');}catch(e){error(e);}finally{busy=false;}}
-async function mutate(action,data={}){if(!user||profile?.status!=='authorized')throw Error('Tu cuenta no está autorizada.');const result=await call({action,ownerUid,...data});return result.data;}
+async function invoke(data){try{return await call(data);}catch(e){throw Error(friendlyError(e));}}
+async function mutate(action,data={}){if(!user||profile?.status!=='authorized')throw Error('Tu cuenta no está autorizada.');const result=await invoke({action,ownerUid,...data});return result.data;}
 function clearView(){viewGeneration++;stopBoard();stopBoard=()=>{};items=[];allItems=[];board.querySelectorAll('.board-item').forEach(e=>e.remove());closeImageLightbox();document.querySelectorAll('.modal.show').forEach(e=>bootstrap.Modal.getInstance(e)?.hide());urls.forEach(u=>URL.revokeObjectURL(u));urls.clear();imageCache.clear();$('adminPanel').replaceChildren();$('adminPanel').hidden=true;syncEmptyState();}
 function syncEmptyState(){emptyState.style.display=items.length?'none':'grid';}
 function filter(){const q=searchInput.value.trim().toLowerCase();board.querySelectorAll('.board-item').forEach(el=>{const item=items.find(i=>i.id===el.dataset.id);el.classList.toggle('hidden-by-search',!!q&&!`${item?.title} ${item?.text} ${(item?.comments||[]).map(c=>c.text).join(' ')} ${item?.attachment?.name||''}`.toLowerCase().includes(q));});}
@@ -344,14 +352,20 @@ async function init(){
   stopProfile();stopUsers();clearView();user=current;profile=null;users=[];$('adminBtn').hidden=true;$('gate').hidden=false;$('loginForm').hidden=!!current;$('gateLogout').hidden=!current;$('password').value='';$('authError').textContent='';$('accountLabel').textContent='';
   if(!current){$('gateMessage').textContent='Ingresá o creá una cuenta. El administrador debe autorizar las cuentas nuevas.';return;}
   $('gateMessage').textContent='Verificando autorización…';
-  try{await call({action:'ensureProfile'});if(user?.uid!==current.uid)return;
-   stopProfile=onSnapshot(doc(db,'users',current.uid),snap=>{
+  try{
+   // Existing users are verified directly in Firestore. A missing Functions
+   // deployment must never lock an already authorized account out of its board.
+   const profileRef=doc(db,'users',current.uid),existing=await getDoc(profileRef);
+   if(user?.uid!==current.uid)return;
+   if(!existing.exists())await invoke({action:'ensureProfile'});
+   if(user?.uid!==current.uid)return;
+   stopProfile=onSnapshot(profileRef,snap=>{
     const previous=profile;profile=snap.data();$('accountLabel').textContent=`${current.email} · ${profile?.status||'pending'}`;
     const allowed=profile?.status==='authorized';$('gate').hidden=allowed;$('adminBtn').hidden=!admin();
     if(!allowed){stopUsers();clearView();$('gateMessage').textContent=profile?.status==='blocked'?'Tu acceso fue bloqueado. Contactá al administrador.':'Tu cuenta está pendiente de autorización.';return;}
     if(!previous||previous.status!=='authorized'||previous.role!==profile.role){stopUsers();selectBoard(current.uid);if(admin())stopUsers=onSnapshot(collection(db,'users'),s=>{users=s.docs.map(x=>({...x.data(),id:x.id}));if(!$('adminPanel').hidden&&!showTrash)renderUsers();},error);}
    },e=>{clearView();$('gate').hidden=false;error(e);});
-  }catch(e){error(e);$('gateMessage').textContent='No se pudo verificar tu cuenta. Revisá el despliegue de las funciones.';}
+  }catch(e){error(e);$('gateMessage').textContent=friendlyError(e);}
  });
 }
 init().catch(error);
