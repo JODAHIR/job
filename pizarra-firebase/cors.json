@@ -1,0 +1,14 @@
+[
+  {
+    "origin": [
+      "https://jodahir.github.io",
+      "https://pizarradig-10acf.web.app",
+      "https://pizarradig-10acf.firebaseapp.com",
+      "http://localhost:5000"
+    ],
+    "method": [
+      "GET"
+    ],
+    "maxAgeSeconds": 3600
+  }
+]

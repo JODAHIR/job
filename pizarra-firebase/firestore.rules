@@ -1,0 +1,31 @@
+rules_version = '2';
+service cloud.firestore {
+ match /databases/{database}/documents {
+  // users/{uid}: ownerUid, email, role(user/admin), status(pending/authorized/blocked), timestamps.
+  // boards/{uid}/items/{id}: ownerUid immutable, content, comments, position, file references,
+  // state(active/deleted/purging), revision and server-generated audit metadata.
+  // uploads subcollection: ownerUid, itemId, immutable Storage path, name/type/size, state.
+  // audit: immutable events written by Cloud Functions; readable only by authorized admins.
+  // All writes use the callable function, which validates fields and live profile in transactions.
+  function signedIn() { return request.auth != null; }
+  function profile() { return get(/databases/$(database)/documents/users/$(request.auth.uid)).data; }
+  function authorized() { return signedIn() && profile().status == 'authorized'; }
+  function admin() { return authorized() && profile().role == 'admin'; }
+  function owns(uid) { return authorized() && request.auth.uid == uid; }
+  match /users/{uid} {
+   allow get: if signedIn() && (request.auth.uid == uid || admin());
+   allow list: if admin();
+   allow write: if false;
+  }
+  match /boards/{uid}/items/{itemId} {
+   allow read: if admin() || (owns(uid) && resource.data.ownerUid == uid);
+   allow write: if false;
+   match /uploads/{fileId} {
+    allow read: if admin() || (owns(uid) && resource.data.ownerUid == uid);
+    allow write: if false;
+   }
+  }
+  match /audit/{event} { allow read: if admin(); allow write: if false; }
+  match /{document=**} { allow read, write: if false; }
+ }
+}

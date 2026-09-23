@@ -1,0 +1,28 @@
+rules_version = '2';
+service firebase.storage {
+ match /b/{bucket}/o {
+  function signedIn() { return request.auth != null; }
+  function profile() { return firestore.get(/databases/(default)/documents/users/$(request.auth.uid)).data; }
+  function authorized() { return signedIn() && profile().status == 'authorized'; }
+  function canAccess(uid) { return authorized() && (request.auth.uid == uid || profile().role == 'admin'); }
+  match /boards/{uid}/{itemId}/{fileId} {
+   function upload() { return firestore.get(/databases/(default)/documents/boards/$(uid)/items/$(itemId)/uploads/$(fileId)).data; }
+   function validUpload() {
+    return request.resource.size <= 25 * 1024 * 1024
+     && request.resource.size == upload().size
+     && request.resource.contentType == upload().type
+     && request.resource.metadata.ownerUid == uid
+     && request.resource.metadata.itemId == itemId
+     && upload().ownerUid == uid;
+   }
+   // Byte reads use authenticated getBlob; the application never generates public download URLs.
+   allow get: if canAccess(uid)
+    && upload().state in ['active','trash'] && upload().ownerUid == uid;
+   allow create: if resource == null && canAccess(uid)
+    && upload().state == 'pending' && validUpload();
+   // Immutable objects. Deletion only through the audited admin function.
+   allow update, delete, list: if false;
+  }
+  match /{allPaths=**} { allow read, write: if false; }
+ }
+}

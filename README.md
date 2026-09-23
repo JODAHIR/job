@@ -103,3 +103,17 @@ Cada guardado crea una revisión inmutable en `procedure_history` dentro de la m
 IMPORTANTE: publicar las reglas actualizadas de Firestore junto con la nueva versión del panel. Las reglas exigen una revisión para cada escritura; la versión anterior del editor deberá recargarse después del despliegue.
 
 Pruebas adicionales: `node tests/procedure-view.test.mjs`.
+
+
+## Mi Pizarra Digital
+
+La pizarra se encuentra en **[Mi Pizarra Digital](https://jodahir.github.io/job/pizarra/)** y se accede también desde la portada del asistente.
+
+- Interfaz para GitHub Pages: `docs/pizarra/`.
+- Proyecto Firebase independiente: **pizarradig-10acf**.
+- Completar `docs/pizarra/firebase-config.js` con los datos reales de ese proyecto.
+- Autorizar `jodahir.github.io` en Firebase Authentication y aplicar el CORS incluido.
+- Desplegar funciones y reglas desde `pizarra-firebase/`, con `--project pizarradig-10acf` explícito. GitHub Pages no despliega el servidor.
+- Instrucciones completas: [Configuración de la pizarra](pizarra-firebase/LEEME.md).
+
+La pizarra requiere su propia cuenta autorizada. El proyecto y las reglas del asistente operativo permanecen independientes. Mientras no se complete la configuración, la pizarra muestra una pantalla informativa.
