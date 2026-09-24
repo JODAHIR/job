@@ -9,7 +9,7 @@ const editNoteModalEl=$('editNoteModal'),commentNoteModalEl=$('commentNoteModal'
 const imageLightbox=$('imageLightbox'),imageLightboxImg=$('imageLightboxImg'),imageLightboxTitle=$('imageLightboxTitle');
 let activeEditNoteId=null,activeCommentNoteId=null,activeImageItem=null,editRevision=0;
 let auth,db,user=null,profile=null,ownerUid=null,items=[],allItems=[],users=[],zCounter=10;
-let stopProfile=()=>{},stopBoard=()=>{},stopUsers=()=>{},showTrash=false,viewGeneration=0,busy=false;
+let stopProfile=()=>{},stopBoard=()=>{},stopUsers=()=>{},showTrash=false,viewGeneration=0,busy=false,menuHideTimer=0,currentWorkspaceView='board';
 const urls=new Set(),imageCache=new Map();
 const escapeHtml=(v='')=>String(v).replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
 const admin=()=>profile?.role==='admin'&&profile?.status==='authorized';
@@ -32,13 +32,19 @@ async function localGet(id){const d=await localDb();return new Promise((ok,no)=>
 async function localDelete(id){const d=await localDb();return new Promise((ok,no)=>{const t=d.transaction('files','readwrite');t.objectStore('files').delete(`${user.uid}:${id}`);t.oncomplete=ok;t.onerror=()=>no(t.error);});}
 function setWorkspaceView(view='board'){
  const panelMode=view!=='board',panel=$('adminPanel');
+ currentWorkspaceView=view;
+ clearTimeout(menuHideTimer);
  $('appShell').classList.toggle('panel-mode',panelMode);
+ $('appShell').classList.remove('board-menu-hidden');
  panel.classList.toggle('panel-view',panelMode);
  panel.hidden=!panelMode;
  $('ownBoardBtn').classList.toggle('view-active',view==='board');
  $('adminBtn').classList.toggle('view-active',view==='admin');
  $('trashBtn').classList.toggle('view-active',view==='trash');
+ if(!panelMode)scheduleMenuHide();
 }
+function showBoardMenu(){if(currentWorkspaceView!=='board')return;clearTimeout(menuHideTimer);$('appShell').classList.remove('board-menu-hidden');scheduleMenuHide();}
+function scheduleMenuHide(){clearTimeout(menuHideTimer);if(currentWorkspaceView!=='board'||!user||$('gate').hidden===false)return;menuHideTimer=setTimeout(()=>$('appShell').classList.add('board-menu-hidden'),2800);}
 function clearView(){viewGeneration++;stopBoard();stopBoard=()=>{};items=[];allItems=[];board.querySelectorAll('.board-item').forEach(e=>e.remove());closeImageLightbox();document.querySelectorAll('.modal.show').forEach(e=>bootstrap.Modal.getInstance(e)?.hide());urls.forEach(u=>URL.revokeObjectURL(u));urls.clear();imageCache.clear();$('adminPanel').replaceChildren();setWorkspaceView('board');syncEmptyState();}
 function syncEmptyState(){emptyState.style.display=items.length?'none':'grid';}
 function filter(){const q=searchInput.value.trim().toLowerCase();board.querySelectorAll('.board-item').forEach(el=>{const item=items.find(i=>i.id===el.dataset.id);el.classList.toggle('hidden-by-search',!!q&&!`${item?.title} ${item?.text} ${(item?.comments||[]).map(c=>c.text).join(' ')} ${item?.attachment?.name||''}`.toLowerCase().includes(q));});}
@@ -322,6 +328,12 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape')closeImageLightbox()
 $('ownBoardBtn').onclick=()=>{if(!busy&&user)selectBoard(user.uid);};
 $('adminBtn').onclick=()=>{if(admin())renderUsers();};
 $('trashBtn').onclick=renderTrash;
+$('menuPeekBtn').onclick=showBoardMenu;
+$('accountBar').addEventListener('pointerenter',()=>clearTimeout(menuHideTimer));
+$('accountBar').addEventListener('pointerleave',scheduleMenuHide);
+$('accountBar').addEventListener('focusin',()=>clearTimeout(menuHideTimer));
+$('accountBar').addEventListener('focusout',scheduleMenuHide);
+document.addEventListener('pointermove',e=>{if(e.clientY<=12&&currentWorkspaceView==='board')showBoardMenu();});
 for(const name of ['logoutBtn','gateLogout'])$(name).onclick=()=>run(()=>signOut(auth));
 $('loginForm').onsubmit=e=>{e.preventDefault();run(()=>signInWithEmailAndPassword(auth,$('email').value.trim(),$('password').value));};
 $('registerBtn').onclick=()=>run(async()=>{if(!$('loginForm').reportValidity())return;await createUserWithEmailAndPassword(auth,$('email').value.trim(),$('password').value);});
