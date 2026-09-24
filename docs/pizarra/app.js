@@ -24,7 +24,7 @@ function friendlyError(e){
 const error=e=>{const message=friendlyError(e);status('Error: '+message);$('authError').textContent=message;if(currentWorkspaceView!=='board'){const notice=document.createElement('div');notice.className='alert alert-danger mb-3';notice.setAttribute('role','alert');notice.textContent=message;$('adminPanel').prepend(notice);}};
 async function run(fn){if(busy){status('Esperá a que termine la operación en curso.');return;}busy=true;try{await fn();status('Cambios guardados.');}catch(e){error(e);}finally{busy=false;}}
 const itemRef=id=>doc(db,'boards',ownerUid,'items',id);
-async function mutate(action,data={}){if(!user||profile?.status!=='authorized')throw Error('Tu cuenta no está autorizada.');const now=serverTimestamp(),ref=data.id?itemRef(data.id):null;if(action==='create'){const i=data.item;return setDoc(ref,{ownerUid,type:i.type,title:String(i.title||'').slice(0,200),text:String(i.text||'').slice(0,20000),color:i.color||'note-yellow',x:Number(i.x)||0,y:Number(i.y)||0,comments:[],file:null,attachment:null,state:'active',createdAt:now,updatedAt:now,revision:1});}if(action==='move')return updateDoc(ref,{x:data.x,y:data.y,updatedAt:now,revision:(allItems.find(i=>i.id===data.id)?.revision||0)+1});if(action==='edit')return updateDoc(ref,{title:String(data.title||'').slice(0,200),text:String(data.text||'').slice(0,20000),color:data.color,updatedAt:now,revision:(data.revision||0)+1});if(action==='comment'){const i=allItems.find(x=>x.id===data.id);return updateDoc(ref,{comments:[...(i?.comments||[]),{id:crypto.randomUUID(),text:String(data.text||'').slice(0,2000),createdAt:new Date().toISOString(),authorUid:user.uid}],updatedAt:now,revision:(i?.revision||0)+1});}if(action==='trash'||action==='restore')return updateDoc(ref,{state:action==='trash'?'deleted':'active',updatedAt:now,[action==='trash'?'deletedAt':'restoredAt']:now,[action==='trash'?'deletedBy':'restoredBy']:user.uid});if(action==='purge')return deleteDoc(ref);if(action==='removeAttachment'){const i=allItems.find(x=>x.id===data.id);if(i?.attachment?.localId)await localDelete(i.attachment.localId);return updateDoc(ref,{attachment:null,updatedAt:now});}if(action==='attachLocal')return updateDoc(ref,{[data.target]:data.meta,updatedAt:now});if(action==='setStatus'&&admin()){const target=users.find(x=>x.id===data.uid);if(!target||target.role==='admin')throw Error('No se puede modificar este perfil.');return setDoc(doc(db,'users',data.uid),{ownerUid:data.uid,email:target.email||'',role:'user',status:data.status,updatedAt:now},{merge:true});}throw Error('Acción no disponible.');}
+async function mutate(action,data={}){if(!user||profile?.status!=='authorized')throw Error('Tu cuenta no está autorizada.');const now=serverTimestamp(),ref=data.id?itemRef(data.id):null;if(action==='create'){const i=data.item;return setDoc(ref,{ownerUid,type:i.type,title:String(i.title||'').slice(0,200),text:String(i.text||'').slice(0,20000),color:i.color||'note-yellow',x:Number(i.x)||0,y:Number(i.y)||0,comments:Array.isArray(i.comments)?i.comments.slice(0,500):[],file:null,attachment:null,state:'active',createdAt:now,updatedAt:now,legacyCreatedAt:String(i.legacyCreatedAt||''),legacyUpdatedAt:String(i.legacyUpdatedAt||''),revision:1});}if(action==='move')return updateDoc(ref,{x:data.x,y:data.y,updatedAt:now,revision:(allItems.find(i=>i.id===data.id)?.revision||0)+1});if(action==='edit')return updateDoc(ref,{title:String(data.title||'').slice(0,200),text:String(data.text||'').slice(0,20000),color:data.color,updatedAt:now,revision:(data.revision||0)+1});if(action==='comment'){const i=allItems.find(x=>x.id===data.id);return updateDoc(ref,{comments:[...(i?.comments||[]),{id:crypto.randomUUID(),text:String(data.text||'').slice(0,2000),createdAt:new Date().toISOString(),authorUid:user.uid}],updatedAt:now,revision:(i?.revision||0)+1});}if(action==='trash'||action==='restore')return updateDoc(ref,{state:action==='trash'?'deleted':'active',updatedAt:now,[action==='trash'?'deletedAt':'restoredAt']:now,[action==='trash'?'deletedBy':'restoredBy']:user.uid});if(action==='purge')return deleteDoc(ref);if(action==='removeAttachment'){const i=allItems.find(x=>x.id===data.id);if(i?.attachment?.localId)await localDelete(i.attachment.localId);return updateDoc(ref,{attachment:null,updatedAt:now});}if(action==='attachLocal')return updateDoc(ref,{[data.target]:data.meta,updatedAt:now});if(action==='setStatus'&&admin()){const target=users.find(x=>x.id===data.uid);if(!target||target.role==='admin')throw Error('No se puede modificar este perfil.');return setDoc(doc(db,'users',data.uid),{ownerUid:data.uid,email:target.email||'',role:'user',status:data.status,updatedAt:now},{merge:true});}throw Error('Acción no disponible.');}
 
 const localDb=()=>new Promise((ok,no)=>{const r=indexedDB.open('mi-pizarra-adjuntos',1);r.onupgradeneeded=()=>r.result.createObjectStore('files');r.onsuccess=()=>ok(r.result);r.onerror=()=>no(r.error);});
 async function localPut(id,blob){const d=await localDb();return new Promise((ok,no)=>{const t=d.transaction('files','readwrite');t.objectStore('files').put(blob,`${user.uid}:${id}`);t.oncomplete=ok;t.onerror=()=>no(t.error);});}
@@ -367,7 +367,8 @@ async function importLegacy(){
  let raw=localStorage.getItem('pizarra-digital-v1');
  if(!raw){const input=document.createElement('input');input.type='file';input.accept='.json,application/json';raw=await new Promise(resolve=>{input.onchange=async()=>resolve(input.files[0]?await input.files[0].text():null);input.oncancel=()=>resolve(null);input.click();});}
  if(!raw)return;
- const data=JSON.parse(raw);if(!Array.isArray(data))throw Error('El respaldo debe contener un arreglo de elementos de c2.html.');
+ const parsed=JSON.parse(raw),data=Array.isArray(parsed)?parsed:parsed?.items;if(!Array.isArray(data))throw Error('El archivo no es un respaldo válido de Mi Pizarra Digital.');
+ if(!Array.isArray(parsed)&&parsed.missingLocalFiles?.length)throw Error(`Este respaldo no contiene ${parsed.missingLocalFiles.length} adjunto(s) locales. Exportalo nuevamente desde el dispositivo original.`);
  if(!confirm(`¿Importar ${data.length} elementos a ${user.email}? Los datos locales se conservarán.`))return;
  const selected=ownerUid;let count=0;
  for(const old of data){
@@ -388,6 +389,29 @@ async function importLegacy(){
  alert(`Importación completada: ${count} elementos. Se conservó el original local.`);
 }
 $('importBtn').onclick=()=>run(importLegacy);
+
+
+function asIso(value){try{return value?.toDate?.().toISOString()||value||'';}catch{return '';}}
+function blobAsDataUrl(blob){return new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(reader.result);reader.onerror=()=>reject(reader.error||Error('No se pudo leer el adjunto.'));reader.readAsDataURL(blob);});}
+async function exportBoard(){
+ if(ownerUid!==user.uid)throw Error('Solo podés exportar tu propia pizarra porque los adjuntos pertenecen al almacenamiento local de cada usuario.');
+ const exported=[],missing=[];
+ for(let n=0;n<allItems.length;n++){
+  const item=allItems[n],out={type:item.type,title:item.title||'',text:item.text||'',color:item.color||'note-yellow',x:Number(item.x)||0,y:Number(item.y)||0,comments:item.comments||[],state:item.state||'active',createdAt:asIso(item.createdAt),updatedAt:asIso(item.updatedAt)};
+  const meta=item.type==='note'?item.attachment:item.file;
+  if(meta?.localId){
+   try{const dataUrl=await blobAsDataUrl(await localGet(meta.localId));if(item.type==='note')out.attachment={name:meta.name,type:meta.type,size:meta.size,dataUrl};else Object.assign(out,{name:meta.name||item.title,mimeType:meta.type,size:meta.size,dataUrl});}
+   catch{missing.push(meta.name||item.title||item.id);out.missingLocalFile=true;}
+  }
+  exported.push(out);status(`Preparando respaldo ${n+1}/${allItems.length}…`);
+ }
+ const payload={format:'mi-pizarra-digital',version:2,exportedAt:new Date().toISOString(),ownerEmail:user.email||'',items:exported,missingLocalFiles:missing};
+ const blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json'}),url=URL.createObjectURL(blob),a=document.createElement('a');
+ a.href=url;a.download=`mi-pizarra-${new Date().toISOString().slice(0,10)}.json`;document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),30000);
+ if(missing.length)alert(`Respaldo creado. ${missing.length} adjunto(s) no estaban disponibles en este dispositivo y quedaron señalados en el archivo.`);
+}
+$('exportBtn').onclick=()=>run(exportBoard);
+
 
 async function init(){
  if(firebaseConfig.projectId!=='pizarradig-10acf'||['apiKey','authDomain','storageBucket','appId','messagingSenderId'].some(k=>!firebaseConfig[k])){
