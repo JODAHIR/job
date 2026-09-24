@@ -6,7 +6,6 @@ service cloud.firestore {
   // state(active/deleted/purging), revision and server-generated audit metadata.
   // uploads subcollection: ownerUid, itemId, immutable Storage path, name/type/size, state.
   // audit: immutable events written by Cloud Functions; readable only by authorized admins.
-  // All writes use the callable function, which validates fields and live profile in transactions.
   function signedIn() { return request.auth != null; }
   function profile() { return get(/databases/$(database)/documents/users/$(request.auth.uid)).data; }
   function authorized() { return signedIn() && profile().status == 'authorized'; }
@@ -15,11 +14,24 @@ service cloud.firestore {
   match /users/{uid} {
    allow get: if signedIn() && (request.auth.uid == uid || admin());
    allow list: if admin();
-   allow write: if false;
+   allow create: if signedIn() && request.auth.uid == uid && request.resource.data.ownerUid == uid && request.resource.data.email == request.auth.token.email && request.resource.data.role == 'user' && request.resource.data.status == 'pending';
+   // Admins may normalize legacy user profiles while changing status. Only the
+   // missing ownerUid/role fields can be added; email and admin profiles remain immutable.
+   allow update: if admin()
+    && (!resource.data.keys().hasAll(['role']) || resource.data.role != 'admin')
+    && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status','updatedAt','ownerUid','role'])
+    && request.resource.data.ownerUid == uid
+    && request.resource.data.email == resource.data.email
+    && ((resource.data.keys().hasAll(['role']) && request.resource.data.role == resource.data.role)
+     || (!resource.data.keys().hasAll(['role']) && request.resource.data.role == 'user'))
+    && request.resource.data.status in ['pending','authorized','blocked'];
+   allow delete: if false;
   }
   match /boards/{uid}/items/{itemId} {
    allow read: if admin() || (owns(uid) && resource.data.ownerUid == uid);
-   allow write: if false;
+   allow create: if owns(uid) && request.resource.data.ownerUid == uid && request.resource.data.type in ['note','image','file'] && request.resource.data.title is string && request.resource.data.title.size() <= 200 && request.resource.data.text is string && request.resource.data.text.size() <= 20000 && request.resource.data.comments is list && request.resource.data.comments.size() <= 500 && request.resource.data.state == 'active';
+   allow update: if (admin() || owns(uid)) && request.resource.data.ownerUid == resource.data.ownerUid && request.resource.data.ownerUid == uid && request.resource.data.createdAt == resource.data.createdAt && request.resource.data.title is string && request.resource.data.title.size() <= 200 && request.resource.data.text is string && request.resource.data.text.size() <= 20000 && request.resource.data.comments is list && request.resource.data.comments.size() <= 500 && request.resource.data.state in ['active','deleted'];
+   allow delete: if admin() && resource.data.state == 'deleted';
    match /uploads/{fileId} {
     allow read: if admin() || (owns(uid) && resource.data.ownerUid == uid);
     allow write: if false;
