@@ -6,7 +6,7 @@ let authVersion=0,previousUid=null;
 let pendingOptions=[];
 const adminLink=document.getElementById('admin-link');
 watchAuth(async user=>{
- if(previousUid!==user?.uid){const chat=document.getElementById('chat');while(chat.children.length>1)chat.lastElementChild.remove()}previousUid=user?.uid;
+ previousUid=user?.uid;
  const version=++authVersion;button.textContent=user?'Salir':'Ingresar con Google';adminLink.hidden=!isOwner(user);
  status.textContent=user?'Verificando autorización…':'Ingresá con Google. El administrador debe autorizar tu correo para consultar.';
  try{const access=user?await accessFor(user):'denied';if(version!==authVersion)return;
