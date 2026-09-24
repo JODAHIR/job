@@ -52,7 +52,30 @@ function redraw(){const opened=new Set([...board.querySelectorAll('.note-comment
 function selectBoard(uid){clearView();ownerUid=uid;showTrash=false;status('Cargando pizarra…');const generation=viewGeneration;stopBoard=onSnapshot(query(collection(db,'boards',uid,'items'),where('ownerUid','==',uid)),snap=>{if(generation!==viewGeneration)return;allItems=snap.docs.map(s=>{const d=s.data();return {...d,id:s.id,size:d.file?.size||0,comments:(d.comments||[]).map(c=>({...c,dateLabel:c.legacyDateLabel||new Date(c.createdAt).toLocaleString('es')}))};});redraw();status(`${uid===user.uid?'Mi pizarra':'Pizarra de '+(users.find(u=>u.id===uid)?.email||uid)} · ${items.length} elementos`);},e=>{clearView();error(e);});}
 function button(label,fn,danger=false){const b=document.createElement('button');b.className='btn btn-sm '+(danger?'btn-outline-danger':'btn-outline-light');b.textContent=label;b.onclick=()=>run(fn);return b;}
 function row(label){const r=document.createElement('div');r.className='admin-row';const t=document.createElement('div');t.className='label';t.textContent=label;r.append(t);return r;}
-function renderUsers(){const panel=$('adminPanel');showTrash=false;setWorkspaceView('admin');panel.replaceChildren();const h=document.createElement('h2');h.className='h4 mb-4';h.textContent='Administración de usuarios y pizarras';panel.append(h);for(const u of users){const r=row(`${u.email||u.id} · ${u.status} · ${u.role}`);r.append(button('Ver pizarra',async()=>selectBoard(u.id)));if(u.role!=='admin'){r.append(button('Autorizar',()=>mutate('setStatus',{uid:u.id,status:'authorized'})),button('Bloquear',()=>mutate('setStatus',{uid:u.id,status:'blocked'}),true));}panel.append(r);}}
+function renderUsers(){
+ const panel=$('adminPanel');showTrash=false;setWorkspaceView('admin');panel.replaceChildren();
+ const h=document.createElement('h2');h.className='h4 mb-4';h.textContent='Administración de usuarios y pizarras';panel.append(h);
+ const roleOrder={admin:0,user:1},statusOrder={pending:0,authorized:1,blocked:2};
+ const labels={admin:'Administradores',user:'Usuarios',pending:'Pendientes',authorized:'Autorizados',blocked:'Bloqueados'};
+ const grouped=new Map();
+ for(const u of users){const role=u.role||'user',state=u.status||'pending',key=`${role}:${state}`;if(!grouped.has(key))grouped.set(key,{role,state,list:[]});grouped.get(key).list.push(u);}
+ const groups=[...grouped.values()].sort((a,b)=>(roleOrder[a.role]??9)-(roleOrder[b.role]??9)||(statusOrder[a.state]??9)-(statusOrder[b.state]??9));
+ for(const group of groups){
+  const section=document.createElement('section');section.className='user-group mb-4';
+  const title=document.createElement('h3');title.className='user-group-title';title.textContent=`${labels[group.role]||group.role} · ${labels[group.state]||group.state} (${group.list.length})`;section.append(title);
+  for(const u of group.list.sort((a,b)=>String(a.email||a.id).localeCompare(String(b.email||b.id)))){
+   const r=row(u.email||u.id);r.append(button('Ver pizarra',async()=>selectBoard(u.id)));
+   if((u.role||'user')!=='admin'){
+    const authorize=button(u.status==='authorized'?'Autorizado':'Autorizar',()=>mutate('setStatus',{uid:u.id,status:'authorized'}));authorize.disabled=u.status==='authorized';
+    const block=button(u.status==='blocked'?'Bloqueado':'Bloquear',()=>mutate('setStatus',{uid:u.id,status:'blocked'}),true);block.disabled=u.status==='blocked';
+    r.append(authorize,block);
+   }
+   section.append(r);
+  }
+  panel.append(section);
+ }
+ if(!groups.length){const empty=document.createElement('p');empty.className='text-white-50';empty.textContent='No hay usuarios registrados.';panel.append(empty);}
+}
 function renderTrash(){const panel=$('adminPanel');showTrash=true;setWorkspaceView('trash');panel.replaceChildren();const h=document.createElement('h2');h.className='h4 mb-4';h.textContent='Papelera de esta pizarra';panel.append(h);const deleted=allItems.filter(i=>i.state!=='active');for(const i of deleted){const r=row(`${i.title} · ${i.state} · ${i.deletedAt?.toDate?.().toLocaleString('es')||''} · Eliminado por: ${i.deletedBy||'—'}`);if(admin()){if(i.state==='deleted')r.append(button('Restaurar',()=>mutate('restore',{id:i.id})));r.append(button(i.state==='purging'?'Reintentar eliminación':'Eliminar definitivamente',async()=>{if(confirm('Esta eliminación es irreversible e incluye todos los archivos de este elemento. ¿Continuar?'))await mutate('purge',{id:i.id});},true));}panel.append(r);}if(!deleted.length){const p=document.createElement('p');p.className='text-white-50';p.textContent='La papelera está vacía.';panel.append(p);}if(admin())panel.append(button('Adjuntos retirados / cargas pendientes',showUploads));else{const p=document.createElement('p');p.textContent='El administrador puede restaurar los elementos.';panel.append(p);}}
 async function showUploads(){const selected=ownerUid,generation=viewGeneration,panel=$('adminPanel');const listing=[];for(const i of allItems){const docs=await getDocs(collection(db,'boards',selected,'items',i.id,'uploads'));for(const s of docs.docs){const u=s.data();if(u.state!=='active')listing.push({i,u});}}if(generation!==viewGeneration)return;panel.replaceChildren();for(const {i,u} of listing){const r=row(`${i.title} · ${u.name} · ${formatBytes(u.size)} · ${u.state}`);if(u.state==='trash'&&i.state==='active')r.append(button('Restaurar archivo',async()=>{await mutate('restoreUpload',{id:i.id,fileId:u.id});await showUploads();}));r.append(button('Eliminar archivo definitivamente',async()=>{if(confirm('¿Eliminar este archivo definitivamente?')){await mutate('purgeUpload',{id:i.id,fileId:u.id});await showUploads();}},true));panel.append(r);}if(!listing.length)panel.textContent='No hay adjuntos retirados ni cargas pendientes.';panel.append(button('Volver a papelera',async()=>renderTrash()));}
 async function fileBlob(file){if(!file?.localId)throw Error('Este adjunto no está disponible en este dispositivo.');return localGet(file.localId);}

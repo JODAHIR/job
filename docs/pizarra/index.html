@@ -765,6 +765,10 @@
 .account-bar .view-active{background:#6ea8fe;color:#07111e;border-color:#8fbdff}
 .admin-row{display:flex;align-items:center;flex-wrap:wrap;gap:8px;padding:14px 10px;border-bottom:1px solid #ffffff22}
 .admin-row .label{flex:1;min-width:180px;overflow-wrap:anywhere}
+.user-group{border:1px solid #ffffff18;border-radius:16px;overflow:hidden;background:#ffffff05}
+.user-group-title{margin:0;padding:12px 14px;font-size:.95rem;font-weight:700;background:#142338;border-bottom:1px solid #ffffff18}
+.user-group .admin-row:last-child{border-bottom:0}
+.admin-row .btn:disabled{opacity:.55;cursor:not-allowed}
 .board-item{touch-action:auto}
 .item-header{touch-action:none}
 #statusLine{padding:6px max(12px,env(safe-area-inset-right)) 6px max(12px,env(safe-area-inset-left));font-size:.85rem;background:#142338;overflow-wrap:anywhere}
@@ -992,6 +996,6 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js" integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI" crossorigin="anonymous"></script>
-<script type="module" src="./app.js?v=20260924-authorize2"></script>
+<script type="module" src="./app.js?v=20260924-usergroups"></script>
 </body>
 </html>
