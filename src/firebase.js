@@ -51,11 +51,22 @@ export async function setUserAccess(email,active){
 }
 export async function saveChatMessage(message){
  const user=auth.currentUser;if(!user||await accessFor(user)==='denied')return;
- const data={uid:user.uid,kind:message.kind,text:String(message.text||'').slice(0,12000),templates:(message.templates||[]).map(value=>String(value).slice(0,3000)).slice(0,2),source:String(message.source||'').slice(0,500),createdAt:serverTimestamp()};
+ const data={uid:user.uid,email:normalizeEmail(user.email),kind:message.kind,text:String(message.text||'').slice(0,12000),templates:(message.templates||[]).map(value=>String(value).slice(0,3000)).slice(0,2),source:String(message.source||'').slice(0,500),createdAt:serverTimestamp()};
  await setDoc(doc(db,'chat_history',user.uid,'messages',crypto.randomUUID()),data);
 }
 export async function loadChatHistory(){
  const user=auth.currentUser;if(!user||await accessFor(user)==='denied')return [];
  const result=await execute(db.pipeline().collection('chat_history/'+user.uid+'/messages').sort(field('createdAt').ascending()).limit(100));
  return result.results.map(item=>item.data());
+}
+export async function usageSummary(){
+ if(!isOwner(auth.currentUser))throw new Error('Solo el administrador puede ver la actividad.');
+ const result=await execute(db.pipeline().collectionGroup('messages').sort(field('createdAt').descending()).limit(1000));
+ const byUser=new Map();
+ for(const item of result.results.map(entry=>entry.data()).filter(entry=>entry.kind==='user')){
+  const key=item.uid,previous=byUser.get(key)||{email:item.email||'Usuario anterior',count:0,lastActivity:item.createdAt};
+  previous.count++;if(!previous.lastActivity||item.createdAt?.toMillis?.()>previous.lastActivity?.toMillis?.())previous.lastActivity=item.createdAt;
+  byUser.set(key,previous);
+ }
+ return [...byUser.values()].sort((a,b)=>b.count-a.count);
 }
