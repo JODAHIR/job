@@ -68,5 +68,19 @@ service cloud.firestore {
           || request.resource.data.before == get(/databases/$(database)/documents/procedimientos/$(request.resource.data.procedureId)).data);
       allow update, delete: if false;
     }
+    // Each approved user can store and read only their own chat messages.
+    match /chat_history/{uid}/messages/{message} {
+      allow get, list: if owner() || (approved() && request.auth.uid == uid);
+      allow create: if approved() && request.auth.uid == uid
+        && request.resource.data.keys().hasAll(['uid','kind','text','templates','source','createdAt'])
+        && request.resource.data.keys().hasOnly(['uid','kind','text','templates','source','createdAt'])
+        && request.resource.data.uid == uid
+        && request.resource.data.kind in ['user','bot']
+        && request.resource.data.text is string && request.resource.data.text.size() > 0 && request.resource.data.text.size() <= 12000
+        && request.resource.data.templates is list && request.resource.data.templates.size() <= 2
+        && request.resource.data.source is string && request.resource.data.source.size() <= 500
+        && request.resource.data.createdAt == request.time;
+      allow update, delete: if false;
+    }
   }
 }

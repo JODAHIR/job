@@ -49,3 +49,13 @@ export async function setUserAccess(email,active){
   email=validateEmail(email);
   await setDoc(doc(db,'authorized_users',email),{email,active,updatedAt:serverTimestamp(),updatedBy:auth.currentUser.uid});
 }
+export async function saveChatMessage(message){
+ const user=auth.currentUser;if(!user||await accessFor(user)==='denied')return;
+ const data={uid:user.uid,kind:message.kind,text:String(message.text||'').slice(0,12000),templates:(message.templates||[]).map(value=>String(value).slice(0,3000)).slice(0,2),source:String(message.source||'').slice(0,500),createdAt:serverTimestamp()};
+ await setDoc(doc(db,'chat_history',user.uid,'messages',crypto.randomUUID()),data);
+}
+export async function loadChatHistory(){
+ const user=auth.currentUser;if(!user||await accessFor(user)==='denied')return [];
+ const result=await execute(db.pipeline().collection('chat_history/'+user.uid+'/messages').sort(field('createdAt').ascending()).limit(100));
+ return result.results.map(item=>item.data());
+}

@@ -1,16 +1,16 @@
-import {auth,login,logout,watchAuth,isOwner,accessFor,searchProcedures,errorMessage} from './firebase.js';
+import {auth,login,logout,watchAuth,isOwner,accessFor,searchProcedures,errorMessage,saveChatMessage,loadChatHistory} from './firebase.js';
 import {selectPendingProcedure,optionsMessage} from './chat-selection.js';
 const button=document.getElementById('cloud-login'),status=document.getElementById('cloud-status');
 button.onclick=async()=>{try{if(auth.currentUser)await logout();else await login()}catch(e){status.textContent=errorMessage(e)}};
-let authVersion=0,previousUid=null;
-let pendingOptions=[];
+let authVersion=0,pendingOptions=[];
 const adminLink=document.getElementById('admin-link');
+window.firebaseSaveMessage=saveChatMessage;
+window.firebaseLoadMessages=loadChatHistory;
 watchAuth(async user=>{
- previousUid=user?.uid;
  const version=++authVersion;button.textContent=user?'Salir':'Ingresar con Google';adminLink.hidden=!isOwner(user);
  status.textContent=user?'Verificando autorización…':'Ingresá con Google. El administrador debe autorizar tu correo para consultar.';
  try{const access=user?await accessFor(user):'denied';if(version!==authVersion)return;
- if(user)status.textContent=access==='denied'?'Tu correo no está autorizado. Solicitá acceso al administrador.':access==='admin'?'Cuenta administradora conectada.':'Acceso autorizado · '+user.email;
+ if(user){status.textContent=access==='denied'?'Tu correo no está autorizado. Solicitá acceso al administrador.':access==='admin'?'Cuenta administradora conectada.':'Acceso autorizado · '+user.email;if(access!=='denied')window.restoreChatHistory?.()}
  }catch(e){if(version===authVersion)status.textContent=errorMessage(e)}
 });
 function procedureAnswer(p,question){return {text:p.title+'\n\nSoporte: '+(p.support||'No especificado')+'\n\n'+p.steps+(p.hours?'\n\nHorarios: '+p.hours:'')+'\n\nLas plantillas son textos para usar después de verificar el resultado de la gestión.',templates:(/incorrect|aclarac|falta/i.test(question)?[p.bad]:/correct|procesado/i.test(question)?[p.good]:[p.good&&'Caso correcto: '+p.good,p.bad&&'Caso incorrecto: '+p.bad]).filter(Boolean),source:p.title+' · Base de conocimientos de Firebase'}}
