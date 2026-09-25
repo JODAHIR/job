@@ -1,4 +1,5 @@
 import {normalizeEmail,validateEmail} from './access.js';
+import {relatedProcedures} from './procedure-search.js';
 import {initializeApp} from 'firebase/app';
 import {getAuth,GoogleAuthProvider,signInWithPopup,onAuthStateChanged,signOut} from 'firebase/auth';
 import {getFirestore,doc,setDoc,getDocFromServer,serverTimestamp,runTransaction} from 'firebase/firestore';
@@ -11,7 +12,7 @@ export const watchAuth=fn=>onAuthStateChanged(auth,fn);
 export const isOwner=u=>!!u&&u.emailVerified&&u.email==='javier.odahir@gmail.com';
 export function words(s){return [...new Set(s.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().match(/[a-z0-9]+/g)||[])].filter(w=>w.length>2&&!['para','como','que','los','las','del','una','con','por','sobre','cual','debo','puedo','tengo','quiero','hacer','cliente','clientes'].includes(w)).slice(0,100)}
 export async function listProcedures(){const result=await execute(db.pipeline().collection('procedimientos').sort(field('title').ascending()).limit(100));return result.results.map(d=>({id:d.id,...d.data()}))}
-export async function searchProcedures(question){const tokens=words(question);if(!tokens.length)return [];const result=await execute(db.pipeline().collection('procedimientos').where(field('published').equal(true)).where(field('keywords').arrayContainsAny(tokens)).limit(6));return result.results.map(d=>({id:d.id,...d.data()}))}
+export async function searchProcedures(question){const tokens=words(question);if(!tokens.length)return [];const result=await execute(db.pipeline().collection('procedimientos').where(field('published').equal(true)).sort(field('title').ascending()).limit(100));return relatedProcedures(result.results.map(d=>({id:d.id,...d.data()})),tokens,question)}
 export async function saveProcedure(id,data,expectedUpdatedAt){
  const user=auth.currentUser;
  if(!isOwner(user))throw new Error('Acceso no autorizado.');

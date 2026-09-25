@@ -15,6 +15,6 @@ export function selectPendingProcedure(question, options=[]){
 }
 
 export function optionsMessage(options){
-  return 'Encontré varios procedimientos. Respondé con el número o el título de la opción que necesitás:\n\n'
+  return 'Encontré procedimientos relacionados en la biblioteca. Respondé con el número o el título de la opción que necesitás:\n\n'
     +options.map((option,index)=>`${index+1}. ${option.title}`).join('\n');
 }
