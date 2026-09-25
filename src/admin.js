@@ -1,6 +1,6 @@
 import {renderLibrary,clearHistory,showHistory} from './admin-library.js';
 import {CATEGORIES,categoryForTitle} from './procedure-view.js';
-import {auth,login,logout,watchAuth,isOwner,listProcedures,saveProcedure,listUsers,setUserAccess,errorMessage} from './firebase.js';
+import {auth,login,logout,watchAuth,isOwner,listProcedures,saveProcedure,listUsers,setUserAccess,usageSummary,errorMessage} from './firebase.js';
 const $=id=>document.getElementById(id);let selected='',items=[],expectedUpdatedAt=null;const fields=['category','title','questions','support','steps','hours','good','bad'];
 function status(text){$('status').textContent=text}
 function reset(){selected='';expectedUpdatedAt=null;clearHistory();$('editor').reset();$('category').value='';$('published').checked=false;$('edit-title').textContent='Nuevo procedimiento'}
@@ -25,6 +25,11 @@ async function refreshUsers(){
  }
  if(!users.length)$('users-status').textContent='Todavía no hay personas autorizadas. La cuenta administradora conserva su acceso.';
 }
+async function refreshActivity(){
+ const body=$('activity-list');body.replaceChildren();$('activity-status').textContent='Actualizando el registro interno…';
+ try{const rows=await usageSummary(),format=new Intl.DateTimeFormat('es-PY',{dateStyle:'medium',timeStyle:'short'});for(const item of rows){const row=document.createElement('tr');for(const value of [item.email,item.count,format.format(item.lastActivity?.toDate?.()||new Date())]){const cell=document.createElement('td');cell.textContent=String(value);row.append(cell)}body.append(row)}$('activity-status').textContent=rows.length?`${rows.length} usuario(s) con actividad registrada.`:'Todavía no hay consultas registradas.'}catch(e){$('activity-status').textContent=e.code?errorMessage(e):e.message}
+}
+$('refresh-activity').onclick=refreshActivity;
 $('authorize-form').onsubmit=async event=>{
  event.preventDefault();$('authorize').disabled=true;
  try{await setUserAccess($('user-email').value,true);$('authorize-form').reset();await refreshUsers();$('users-status').textContent='Correo autorizado. La persona puede ingresar con Google y consultar el chatbot.'}
