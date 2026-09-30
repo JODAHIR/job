@@ -1,0 +1,25 @@
+// Synthetic fixture only. Run: node tests/cierre-datos-parser.cjs
+const fs=require('node:fs'),vm=require('node:vm'),assert=require('node:assert/strict'),path=require('node:path');
+const html=fs.readFileSync(path.join(__dirname,'../docs/cierre-diario/index.html'),'utf8');
+const source=html.slice(html.indexOf('const REPORT_TABLES='),html.indexOf('let datosReport='));
+const ctx=vm.createContext({validDate:s=>/^\d{4}-\d{2}-\d{2}$/.test(s)&&new Date(s+'T12:00:00Z').toISOString().slice(0,10)===s});vm.runInContext(source,ctx);
+let y=790;const pages=[[],[]];let page=pages[0];
+const row=(...cells)=>{for(const [x,str] of cells)page.push({x,y,str});y-=16};
+const heading=s=>row([20,s]);
+heading('Informe de saldos de la cartera de préstamos');heading('Información referida al : 01/01/2026');
+heading('Saldos de la cartera de préstamos');row([140,'1 - VIGENTE'],[240,'1.200'],[330,'0'],[420,'30']);
+heading('Saldo de intereses devengados');row([129,'1-VIGENTE'],[425,'10']);
+heading('Resumen de desembolsos total por tipo');row([130,'Total General'],[359,'0'],[433,'1.000']);
+heading('Saldo intereses devengadso desafectados');row([167,'02'],[229,'FONDO DEMO'],[389,'2'],[450,'100']);row([238,'(DEMO)']);
+heading('Recuperaciones por estado de cartera/tipo');row([23,'1-VIGENTE']);row([96,'CANC. DE CUENTAS <= 20.000'],[381,'40'],[484,'0'],[566,'5']);
+heading('Recuperaciones por estado de cartera');row([87,'1-VIGENTE'],[348,'100'],[439,'0'],[521,'20']);
+page=pages[1];y=735;row([195,'Tipo'],[349,'Exigible'],[415,'Cap No Exigible'],[505,'Interes Total']);row([87,'2-VENCIDO'],[360,'200'],[484,'0'],[526,'30']);
+heading('Recuperaciones por estado de cartera');row([236,'3.000'],[379,'400']);
+heading('Recuperaciones Cartera Desafectada');row([22,'TOTAL'],[131,'100'],[215,'10'],[302,'0'],[368,'20'],[447,'30'],[526,'130']);
+row([49,'Tipo'],[121,'Capital'],[183,'Interes Normal']);row([23,'1-EFECTIVO'],[136,'100'],[222,'10'],[329,'0'],[373,'20'],[452,'30'],[526,'130']);row([22,'TOTAL'],[131,'100'],[447,'30'],[526,'130']);
+heading('Cartera Desafectada');row([168,'Total General']);
+const r=ctx.parseCarteraReport(pages);assert.equal(r.date,'2026-01-01');assert.equal(Object.keys(r.tables).length,10);assert.equal(r.tables.saldos[0].cells[1],1200);assert.equal(r.tables.recuperacionesEstado.length,2);assert.equal(r.tables.recuperacionesResumen[0].cells[0],3000);assert.equal(r.tables.interesesDesafectados[0].cells[0],'02');assert.equal(r.tables.interesesDesafectados[0].cells[1],'FONDO DEMO (DEMO)');assert.equal(r.tables.recuperacionesTipo[0].cells[0],'CANC. DE CUENTAS <= 20.000');assert.equal(r.tables.recuperacionesTipo[0].group,'1-VIGENTE');assert.equal(r.tables.desafectadaDetalle[1].cells[2],null);assert.equal(r.tables.carteraDesafectada[0].cells[7],null);assert.equal(ctx.cleanReport(r).date,r.date);
+assert.throws(()=>ctx.parseCarteraReport([pages[0]]));assert.throws(()=>ctx.parseCarteraReport([]));
+const broken=JSON.parse(JSON.stringify(pages));broken[0].find(i=>i.str==='1.200').str='1,200';assert.throws(()=>ctx.parseCarteraReport(broken));
+const invalid=JSON.parse(JSON.stringify(r));invalid.tables.saldos[0].cells[1]='not a number';assert.throws(()=>ctx.cleanReport(invalid));
+console.log('PASS: report tables, page continuation, duplicate headings, groups, zeros, blank cells, validation.');
