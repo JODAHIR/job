@@ -34,9 +34,9 @@ body{background:var(--paper);font-size:14px;letter-spacing:-.015em}.container-fl
   <button class="nav-link btn w-100" data-page="caja" title="Caja"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M3 14h18 M8 8h8 M10 17h4"/></svg><span class="nav-label">Caja</span></button>
   <button class="nav-link btn w-100" data-page="movimientos" title="Movimientos"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true"><path d="M3 7h17l-4-4 M21 17H4l4 4"/></svg><span class="nav-label">Movimientos</span></button>
   <button class="nav-link btn w-100" data-page="datos" title="Datos y sincronización"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true"><path d="M5 4h14v16H5z M8 4v6h8V4 M8 20v-6h8v6"/></svg><span class="nav-label">Datos y sincronización</span></button>
- </nav><div class="side-bottom"><b>Todo conectado.</b><br>Inventario, ventas y finanzas<br>StockPro 7 · Firebase</div>
+ <button class="nav-link btn w-100" data-page="usuarios"><span aria-hidden="true">♙</span><span class="nav-label">Usuarios y roles</span></button></nav><div class="side-bottom"><b>Todo conectado.</b><br>Inventario, ventas y finanzas<br>StockPro 8 · Firebase</div>
 </aside><div class="mobile-overlay" onclick="toggleSidebar()"></div>
-<main class="col-lg-10 p-3 p-md-4"><header class="topbar"><div class="top-left"><button class="icon-btn" onclick="toggleSidebar()" aria-label="Abrir o contraer menú">☰</button><span id="pageCrumb" class="top-crumb">Panel general</span></div><div class="top-right"><span id="todayLabel" class="top-date"></span><button id="syncPill" class="sync-pill" data-state="local" onclick="goPage('datos')" aria-live="polite">Modo local</button><span class="user-circle">D</span></div></header><div class="sync-note"><span id="syncSummary">Preparando almacenamiento…</span><button class="btn btn-sm btn-outline-primary" onclick="goPage('datos')">Ver detalles</button></div>
+<main class="col-lg-10 p-3 p-md-4"><header class="topbar"><div class="top-left"><button class="icon-btn" onclick="toggleSidebar()" aria-label="Abrir o contraer menú">☰</button><span id="pageCrumb" class="top-crumb">Panel general</span></div><div class="top-right"><span id="todayLabel" class="top-date"></span><button id="syncPill" class="sync-pill" data-state="local" onclick="goPage('datos')" aria-live="polite">Modo local</button><span id="roleLabel" class="badge text-bg-secondary">Sin sesión</span></div></header><div class="sync-note"><span id="syncSummary">Preparando almacenamiento…</span><button class="btn btn-sm btn-outline-primary" onclick="goPage('datos')">Ver detalles</button></div>
 
 <section id="dashboard" class="page active"><div class="welcome-banner"><div><div class="eyebrow" id="welcomeDate">TU NEGOCIO, EN ORDEN</div><h2>Una mirada a tu despensa</h2><p>Lo que vendés. Lo que tenés. Lo que viene.</p></div><div class="welcome-art" aria-hidden="true">▥</div></div>
  <div class="d-flex justify-content-between align-items-center mobile-stack"><div><h2>Panel general</h2><div class="text-secondary">Indicadores comerciales, financieros y de inventario.</div></div><button class="btn btn-outline-primary" onclick="renderDashboard()">Actualizar</button></div>
@@ -109,7 +109,7 @@ body{background:var(--paper);font-size:14px;letter-spacing:-.015em}.container-fl
 <section id="caja" class="page">
  <div class="d-flex justify-content-between align-items-center mobile-stack"><div><h2>Caja</h2><div class="text-secondary">Apertura, ingresos, egresos, arqueo y cierre.</div></div><span id="cashStatus" class="badge text-bg-secondary fs-6">Cerrada</span></div>
  <div class="row g-3 mt-1"><div class="col-xl-4"><div class="card p-3"><label class="form-label">Monto inicial</label><input id="cashOpening" type="number" min="0" class="form-control mb-2"><button id="cashOpenBtn" class="btn btn-primary w-100 mb-2" onclick="openCash()">Abrir caja</button><label class="form-label mt-2">Efectivo declarado al cierre</label><input id="cashDeclared" type="number" min="0" class="form-control mb-2"><button id="cashCloseBtn" class="btn btn-danger w-100" onclick="closeCash()">Cerrar caja</button><div id="cashMsg" class="mt-3"></div></div></div><div class="col-xl-8"><div id="cashKpis" class="row g-3"></div><div class="card p-3 mt-3"><h5>Ingreso / egreso manual</h5><div class="row g-2"><div class="col-md-3"><select id="cashMoveType" class="form-select"><option>INGRESO</option><option>EGRESO</option></select></div><div class="col-md-3"><input id="cashMoveAmount" type="number" min="1" class="form-control" placeholder="Importe"></div><div class="col-md-4"><input id="cashMoveDetail" class="form-control" placeholder="Concepto"></div><div class="col-md-2"><button class="btn btn-outline-primary w-100" onclick="addCashMove()">Registrar</button></div></div><div id="cashMoves" class="mt-3"></div></div></div></div>
- <div class="card p-3 mt-3"><h5>Historial de cierres</h5><div class="table-responsive"><table class="table"><thead><tr><th>Fecha</th><th>Apertura</th><th>Cierre</th><th>Inicial</th><th>Esperado</th><th>Declarado</th><th>Diferencia</th></tr></thead><tbody id="cashHistory"></tbody></table></div></div>
+ <div class="card p-3 mt-3"><h5>Supervisión de turnos</h5><div id="cashOverview" class="mb-3"></div><h5>Historial de cierres</h5><div class="table-responsive"><table class="table"><thead><tr><th>Fecha</th><th>Apertura</th><th>Cierre</th><th>Inicial</th><th>Esperado</th><th>Declarado</th><th>Diferencia</th></tr></thead><tbody id="cashHistory"></tbody></table></div></div>
 </section>
 
 <section id="movimientos" class="page">
@@ -117,8 +117,9 @@ body{background:var(--paper);font-size:14px;letter-spacing:-.015em}.container-fl
  <div class="card p-3 mt-3"><div class="table-responsive"><table class="table"><thead><tr><th>Fecha/hora</th><th>Producto</th><th>Tipo</th><th>Cantidad</th><th>Detalle</th></tr></thead><tbody id="movesTable"></tbody></table></div></div>
 </section>
 
-<section id="datos" class="page"><h2>Datos y sincronización</h2><p class="text-secondary">Tu información en Firebase, con una copia de contingencia en este navegador.</p><div class="sync-card-grid mt-3"><div class="card p-4"><h5>Conectar con tu despensa</h5><p class="text-secondary">Proyecto despensa-5dd6d · iniciá sesión con una cuenta creada en Firebase Authentication.</p><form id="loginForm" onsubmit="loginCloud(event)"><label for="loginEmail" class="form-label">Correo electrónico</label><input id="loginEmail" type="email" class="form-control mb-3" autocomplete="username" required><label for="loginPassword" class="form-label">Contraseña</label><input id="loginPassword" type="password" class="form-control mb-3" autocomplete="current-password" required><button class="btn btn-primary" type="submit">Iniciar sesión</button></form><p id="accountLabel" class="mt-3 mb-2"></p><button id="logoutButton" class="btn btn-outline-secondary" onclick="logoutCloud()" hidden>Cerrar sesión</button></div><div class="card p-4"><h5>Estado de los datos</h5><div id="syncDetail" class="status-detail" role="status"></div><p id="revisionLabel" class="text-secondary mt-3"></p><div class="d-flex gap-2 flex-wrap"><button class="btn btn-primary" onclick="retrySync()">Sincronizar ahora</button><button id="resolveConflict" class="btn btn-outline-danger" onclick="useRemoteVersion()" hidden>Guardar copia y cargar Firebase</button></div><p class="text-secondary mt-3 mb-0">Una factura solo se confirma con conexión. Si hay cambios simultáneos se conserva tu copia local y se detiene la sincronización para revisarlos.</p></div></div><div class="card p-4 mt-3"><h5>Backup y recuperación</h5><p class="text-secondary">Los backups incluyen todos los módulos y los cambios pendientes. Guardalos antes de cambiar de navegador o borrar sus datos.</p><div class="d-flex gap-2 flex-wrap"><button class="btn btn-primary" onclick="exportBackup()">↓ Descargar backup JSON</button><label class="btn btn-outline-primary mb-0">Restaurar backup<input type="file" accept=".json,application/json" hidden onchange="importBackup(this)"></label><button class="btn btn-outline-primary" onclick="migrateV6()">Importar V6 de este navegador</button><button class="btn btn-outline-secondary" onclick="resetDemo()">Cargar demo local</button></div><p class="text-secondary mt-3 mb-0">La demo y el modo local están separados de tu cuenta. Para migrar datos reales: descargá su backup, iniciá sesión y restauralo. Se mantiene intacta la clave original stockpro-v6.</p></div></section>
-</main></div></div>
+<section id="datos" class="page"><h2>Datos y sincronización</h2><p class="text-secondary">Despensa compartida, permisos por usuario y copia de contingencia.</p><div class="sync-card-grid mt-3"><div class="card p-4"><h5>Conectar con tu despensa</h5><p class="text-secondary">Proyecto despensa-5dd6d · iniciá sesión con una cuenta creada en Firebase Authentication.</p><form id="loginForm" onsubmit="loginCloud(event)"><label for="loginEmail" class="form-label">Correo electrónico</label><input id="loginEmail" type="email" class="form-control mb-3" autocomplete="username" required><label for="loginPassword" class="form-label">Contraseña</label><input id="loginPassword" type="password" class="form-control mb-3" autocomplete="current-password" required><button class="btn btn-primary" type="submit">Iniciar sesión</button> <button class="btn btn-outline-primary" type="button" onclick="resetOwnPassword()">Establecer / recuperar contraseña</button></form><p id="accountLabel" class="mt-3 mb-2"></p><button id="logoutButton" class="btn btn-outline-secondary" onclick="logoutCloud()" hidden>Cerrar sesión</button></div><div class="card p-4"><h5>Estado de los datos</h5><div id="syncDetail" class="status-detail" role="status"></div><p id="revisionLabel" class="text-secondary mt-3"></p><div class="d-flex gap-2 flex-wrap"><button class="btn btn-primary" onclick="retrySync()">Sincronizar ahora</button><button id="resolveConflict" class="btn btn-outline-danger" onclick="useRemoteVersion()" hidden>Guardar copia y cargar Firebase</button></div><p class="text-secondary mt-3 mb-0">Una factura solo se confirma con conexión. Si hay cambios simultáneos se conserva tu copia local y se detiene la sincronización para revisarlos.</p></div></div><div class="card p-4 mt-3"><h5>Backup y recuperación</h5><button class="btn btn-outline-secondary mb-3" onclick="exportPendingCommands()">Descargar mis operaciones pendientes</button><p class="text-secondary">Los backups incluyen todos los módulos y los cambios pendientes. Guardalos antes de cambiar de navegador o borrar sus datos.</p><div class="d-flex gap-2 flex-wrap"><button class="btn btn-primary" onclick="exportBackup()">↓ Descargar backup JSON</button><label class="btn btn-outline-primary mb-0">Restaurar backup<input type="file" accept=".json,application/json" hidden onchange="importBackup(this)"></label><button class="btn btn-outline-primary" onclick="migrateV6()">Importar V6 de este navegador</button><button class="btn btn-outline-secondary" onclick="resetDemo()">Cargar demo local</button></div><p class="text-secondary mt-3 mb-0">La demo y el modo local están separados de tu cuenta. Para migrar datos reales: descargá su backup, iniciá sesión y restauralo. Se mantiene intacta la clave original stockpro-v6.</p></div></section>
+<section id="usuarios" class="page"><div class="d-flex justify-content-between align-items-center mobile-stack"><div><h2>Usuarios y roles</h2><p class="text-secondary">Cada persona accede con su propia cuenta.</p></div><button class="btn btn-primary" onclick="editUser(null)">＋ Nuevo usuario</button></div><div class="card p-3 mt-3"><div class="table-responsive"><table class="table"><thead><tr><th>Nombre</th><th>Correo</th><th>Rol</th><th>Estado</th><th></th></tr></thead><tbody id="usersBody"></tbody></table></div></div><p class="text-secondary mt-3">El encargado administra usuarios operativos. Solo un administrador gestiona otras cuentas de administrador.</p></section></main></div></div>
+<div class="modal fade" id="userModal"><div class="modal-dialog"><div class="modal-content"><div class="modal-header"><h5>Acceso de usuario</h5><button class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button></div><div class="modal-body"><input id="userUid" type="hidden"><label for="userName" class="form-label">Nombre</label><input id="userName" class="form-control mb-3" maxlength="200"><label for="userEmail" class="form-label">Correo</label><input id="userEmail" type="email" class="form-control mb-3" maxlength="254"><label for="userRole" class="form-label">Rol</label><select id="userRole" class="form-select mb-3"><option value="CAJERO">Cajero</option><option value="ENCARGADO">Encargado</option><option value="ADMIN">Administrador (superusuario)</option></select><label><input id="userActive" type="checkbox" checked> Acceso activo</label><p class="text-secondary mt-3">La persona establece su contraseña desde la pantalla de ingreso. Desactivar revoca el acceso a StockPro.</p></div><div class="modal-footer"><button id="saveUserButton" class="btn btn-primary" onclick="saveUser()">Guardar acceso</button></div></div></div></div>
 
 <!-- PRODUCT -->
 <div class="modal fade" id="productModal"><div class="modal-dialog modal-lg"><div class="modal-content"><div class="modal-header"><h5 id="productTitle">Producto</h5><button class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><input id="productId" type="hidden"><div class="row g-3"><div class="col-md-4"><label class="form-label">SKU *</label><input id="pSku" class="form-control"></div><div class="col-md-8"><label class="form-label">Descripción *</label><input id="pName" class="form-control"></div><div class="col-md-6"><label class="form-label">Categoría *</label><input id="pCategory" class="form-control"></div><div class="col-md-3"><label class="form-label">Costo</label><input id="pCost" type="number" min="0" class="form-control"></div><div class="col-md-3"><label class="form-label">Precio *</label><input id="pPrice" type="number" min="0" class="form-control"></div><div class="col-md-4"><label class="form-label">IVA</label><select id="pVat" class="form-select"><option value="10">10%</option><option value="5">5%</option><option value="0">Exento</option></select></div><div class="col-md-4"><label class="form-label">Stock inicial</label><input id="pStock" type="number" min="0" class="form-control"></div><div class="col-md-4"><label class="form-label">Stock mínimo</label><input id="pMin" type="number" min="0" class="form-control"></div><div class="col-md-4"><label class="form-label">Venta promedio/día</label><input id="pAvg" type="number" min="0" step=".1" class="form-control"></div></div><div id="productMsg" class="mt-3"></div></div><div class="modal-footer"><button class="btn btn-primary" onclick="saveProduct()">Guardar</button></div></div></div></div>
@@ -186,7 +187,7 @@ This typically indicates that your device does not have a healthy Internet conne
 </script>
 <script>
 'use strict';
-const KEY='stockpro-v7';
+const KEY='stockpro-v8';
 let cart=[];
 
 function today(){const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')}
@@ -670,7 +671,146 @@ document.getElementById('welcomeDate').textContent='Tu negocio, en orden · '+ne
 saleClient.addEventListener('change',()=>{if(saleInvoice.checked)toggleInvoice()});
 salePay.addEventListener('change',()=>{invCondition.value=salePay.value==='Crédito'?'CRÉDITO':'CONTADO'});
 invCondition.disabled=true;
-renderAll();startCloud();
+/* Initialization follows the role layer. */
 
 </script>
+
+
+<!-- STOCKPRO_ROLES_START --><script>
+/* StockPro 8: account roles and durable command outbox. This file is embedded
+   into index.html by stockpro-firebase/build-client.py for standalone offline use. */
+let effectiveRole='LOCAL',commandContext=null,roleBlocked=false;
+const ROLE_NAMES={ADMIN:'Administrador · superusuario',CAJERO:'Cajero',ENCARGADO:'Encargado',LOCAL:'Demo local',BLOCKED:'Sin acceso'};
+const ROLE_ACTIONS={ADMIN:['saveProduct','deleteProduct','saveStockMove','saveSupplier','deleteSupplier','savePurchase','finishSale','saveClient','deleteClient','saveCredit','saveStamp','deleteStamp','openCash','closeCash','addCashMove','saveCreditPayment','restore'],CAJERO:['finishSale','saveClient','openCash','closeCash','addCashMove','saveCreditPayment'],ENCARGADO:['saveProduct','deleteProduct','saveStockMove','saveSupplier','deleteSupplier','savePurchase']};
+const ROLE_PAGES={ADMIN:['dashboard','productos','ventas','clientes','proveedores','compras','creditos','facturacion','caja','movimientos','datos','usuarios'],CAJERO:['ventas','clientes','creditos','caja','datos'],ENCARGADO:['dashboard','productos','proveedores','compras','movimientos','datos','usuarios'],LOCAL:['dashboard','productos','ventas','clientes','proveedores','compras','creditos','facturacion','caja','movimientos','datos'],BLOCKED:['datos']};
+function allowed(action){return activeOwner==='local'||!roleBlocked&&ROLE_ACTIONS[effectiveRole]?.includes(action)}
+function roleUI(){
+ const pages=ROLE_PAGES[effectiveRole]||['datos'];
+ document.querySelectorAll('[data-page]').forEach(el=>el.hidden=!pages.includes(el.dataset.page));
+ document.querySelectorAll('.page').forEach(el=>{if(!pages.includes(el.id))el.classList.remove('active')});
+ if(!document.querySelector('.page.active')){document.getElementById(pages[0]).classList.add('active');document.querySelector('[data-page="'+pages[0]+'"]').classList.add('active')}
+ document.getElementById('roleLabel').textContent=ROLE_NAMES[effectiveRole]||'Sin acceso';
+ const protectedActions=['openCredit','deleteClient','openStamp','deleteStamp','exportBackup','importBackup','migrateV6','resetDemo'];
+ document.querySelectorAll('button[onclick]').forEach(el=>{const f=el.getAttribute('onclick').split('(')[0];if(protectedActions.includes(f))el.hidden=activeOwner!=='local'&&effectiveRole!=='ADMIN'});
+ document.querySelectorAll('label').forEach(el=>{if(el.querySelector('input[type=file]'))el.hidden=activeOwner!=='local'&&effectiveRole!=='ADMIN'});
+ document.getElementById('cLimit').disabled=activeOwner!=='local'&&effectiveRole!=='ADMIN';
+ document.getElementById('userRole').querySelector('option[value=ADMIN]').hidden=effectiveRole!=='ADMIN';
+ if(effectiveRole==='ENCARGADO'){
+ document.getElementById('dashKpis').innerHTML='<div class="col-md-6"><div class="card p-3"><span>Stock valorizado</span><div class="kpi">'+money(db.products.reduce((n,p)=>n+p.cost*p.stock,0))+'</div></div></div>';
+ document.querySelector('.chart-card').hidden=true;
+ }else document.querySelector('.chart-card').hidden=false;
+}
+const renderedBeforeRoles=renderAll;renderAll=function(){renderedBeforeRoles();roleUI()};
+const canMutateBeforeRoles=canMutate;canMutate=function(){if(roleBlocked){toast('Tu acceso cambió. Iniciá sesión nuevamente.');return false}return canMutateBeforeRoles()};
+const roleValue=id=>document.getElementById(id).value;
+const roleNumber=id=>Number(roleValue(id));
+function captureCommand(action,args){
+ switch(action){
+ case 'saveProduct':return {id:roleNumber('productId'),sku:roleValue('pSku').trim(),name:roleValue('pName').trim(),category:roleValue('pCategory').trim(),cost:roleNumber('pCost'),price:roleNumber('pPrice'),stock:roleNumber('pStock'),min:roleNumber('pMin'),avg:roleNumber('pAvg'),vat:roleNumber('pVat')};
+ case 'deleteProduct':case 'deleteClient':case 'deleteSupplier':case 'deleteStamp':return {id:args[0]};
+ case 'saveStockMove':return {id:roleNumber('stockProductId'),type:roleValue('stockType'),qty:roleNumber('stockQty'),detail:roleValue('stockDetail')};
+ case 'saveClient':return {id:roleNumber('clientId'),name:roleValue('cName'),doc:roleValue('cDoc'),phone:roleValue('cPhone'),address:roleValue('cAddress'),limit:roleNumber('cLimit')};
+ case 'saveSupplier':return {id:roleNumber('supplierId'),name:roleValue('sName'),ruc:roleValue('sRuc'),phone:roleValue('sPhone'),contact:roleValue('sContact')};
+ case 'savePurchase':return {date:roleValue('buyDate'),supplierId:roleNumber('buySupplier'),productId:roleNumber('buyProduct'),qty:roleNumber('buyQty'),cost:roleNumber('buyCost'),invoice:roleValue('buyInvoice')};
+ case 'finishSale':return {items:clone(cart),clientId:roleNumber('saleClient')||null,pay:roleValue('salePay'),dueDate:roleValue('saleDue'),invoice:saleInvoice.checked?{stampId:roleNumber('invStampSelect'),doc:roleValue('invDoc'),name:roleValue('invName')}:null};
+ case 'saveCredit':return {id:roleNumber('creditId'),clientId:roleNumber('crClient'),date:roleValue('crDate'),dueDate:roleValue('crDue'),amount:roleNumber('crAmount'),note:roleValue('crNote')};
+ case 'saveCreditPayment':return {id:roleNumber('paymentCreditId'),date:roleValue('payDate'),amount:roleNumber('payAmount'),method:roleValue('payMethod'),detail:roleValue('payDetail')};
+ case 'saveStamp':return {id:roleNumber('stampId'),number:roleValue('stNumber'),establishment:pad3(roleValue('stEst')),point:pad3(roleValue('stPoint')),validFrom:roleValue('stFrom'),validTo:roleValue('stTo'),start:roleNumber('stStart'),end:roleNumber('stEnd'),next:roleNumber('stNext'),enabled:roleValue('stEnabled')==='true',note:roleValue('stNote')};
+ case 'openCash':return {amount:roleNumber('cashOpening')};
+ case 'closeCash':return {declared:roleNumber('cashDeclared')};
+ case 'addCashMove':return {type:roleValue('cashMoveType'),amount:roleNumber('cashMoveAmount'),detail:roleValue('cashMoveDetail')};
+ }
+}
+for(const action of ROLE_ACTIONS.ADMIN.filter(x=>x!=='restore')){
+ const original=window[action];window[action]=function(...args){
+ if(!allowed(action))return toast('Tu rol no permite esta operación.');
+ if(action==='finishSale'&&effectiveRole==='CAJERO'&&salePay.value==='Crédito'){
+ const customer=db.clients.find(c=>c.id===Number(saleClient.value));if(!customer||debt(customer.id)+taxBreakdown(cart).total>customer.limit)return toast('La venta supera el límite de crédito autorizado.');
+ }
+ if(action==='saveClient'&&effectiveRole==='CAJERO')cLimit.value=db.clients.find(c=>c.id===Number(clientId.value))?.limit||0;
+ const prior=commandContext;commandContext={action,payload:captureCommand(action,args)};
+ try{return original(...args)}finally{commandContext=prior}
+ };
+}
+const localSave=save;
+save=function(){
+ if(activeOwner==='local')return localSave();
+ const command=commandContext||{action:'restore',payload:{data:clone(db)}};
+ if(!allowed(command.action)){db=clone(envelope.data);renderAll();throw Error('Tu rol no permite guardar esta operación.')}
+ const prior=clone(envelope.data);
+ try{const data=validateDB(db),queue=[...(envelope.queue||[]),{...clone(command),opid:randomId()}];persist({...envelope,schema:8,data,pending:true,queue,txid:null,role:effectiveRole})}
+ catch(e){db=prior;renderAll();alert('La operación no pudo guardarse: '+e.message);throw e}
+ setSync('pending','Operación guardada localmente; pendiente de validación por el servidor.');queueMicrotask(flushCloud);
+};
+async function callRoles(name,data={}){
+ if(!auth?.currentUser)throw Error('Iniciá sesión.');
+ const token=await auth.currentUser.getIdToken(),controller=new AbortController(),timeout=setTimeout(()=>controller.abort(),30000);
+ try{const prefix=window.STOCKPRO_EMULATOR==='localhost'&&['localhost','127.0.0.1'].includes(location.hostname)?'http://127.0.0.1:5008/demo-stockpro/us-central1/':'https://us-central1-despensa-5dd6d.cloudfunctions.net/';
+ const response=await fetch(prefix+name,{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+token},body:JSON.stringify({data}),signal:controller.signal});const body=await response.json();
+ if(body.error){const error=Error(body.error.message);error.code=body.error.status;throw error}if(!response.ok)throw Error('Servidor no disponible.');return body.result;
+ }finally{clearTimeout(timeout)}
+}
+const failureBeforeRoles=cloudFailure;cloudFailure=function(e){if(e.code==='ABORTED'||e.message==='CONFLICT')e=Error('CONFLICT');if(e.code==='PERMISSION_DENIED'){roleBlocked=true;effectiveRole='BLOCKED';db=emptyDB();renderAll()}failureBeforeRoles(e)};
+function acceptSnapshot(result){effectiveRole=result.role;roleBlocked=false;serverVerified=true;db=validateDB(result.data);persist({...envelope,schema:8,role:result.role,data:clone(db),base:clone(db),revision:result.revision,pending:false,queue:[],txid:null});renderAll();
+ const box=document.getElementById('cashOverview');box.innerHTML=effectiveRole==='ADMIN'?(result.cashOverview||[]).map(t=>'<div class="border-bottom py-2">'+esc(t.uid)+' · '+(t.isOpen?'Abierta':'Cerrada')+' · '+money(t.expected)+'</div>').join(''):'';
+}
+flushCloud=async function(){
+ if(activeOwner==='local'||syncing||reading||conflict||roleBlocked||!auth?.currentUser)return false;
+ if(!navigator.onLine){setSync('offline','Sin conexión. Las operaciones pendientes se validarán al reconectar.');return false}
+ if(!envelope.pending)return refreshCloud();
+ if(!envelope.queue?.length){cloudFailure(Error('La caché antigua debe migrarse con un backup por el administrador.'));return false}
+ const generation=authGeneration;syncing=true;setSync('syncing','Validando permisos y operaciones…');
+ try{
+ while(envelope.queue.length){const command=envelope.queue[0],result=await callRoles('stockproOperate',{...command,revision:envelope.revision});if(generation!==authGeneration)return false;
+ const remaining=envelope.queue.slice(1);effectiveRole=result.role;persist({...envelope,base:validateDB(result.data),revision:result.revision,queue:remaining,pending:remaining.length>0,role:result.role});
+ if(remaining.length&&result.opRevision!==result.revision)throw Error('CONFLICT');
+ if(!remaining.length)acceptSnapshot(result);
+ }
+ setSync('connected','Operaciones confirmadas por Firebase. '+ROLE_NAMES[effectiveRole]);return true;
+ }catch(e){if(generation===authGeneration)cloudFailure(e);return false}finally{if(generation===authGeneration)syncing=false}
+};
+refreshCloud=async function(){
+ if(activeOwner==='local'||syncing||reading||conflict||roleBlocked||!auth?.currentUser)return false;if(envelope.pending)return flushCloud();
+ if(!navigator.onLine){setSync('offline','Sin conexión. Usando la caché de esta cuenta.');return false}
+ if(cart.length||document.querySelector('.modal.show'))return false;
+ const generation=authGeneration;reading=true;
+ try{const result=await callRoles('stockproSnapshot');if(generation!==authGeneration)return false;acceptSnapshot(result);setSync('connected','Firebase conectado · '+ROLE_NAMES[effectiveRole]);return true}
+ catch(e){if(generation===authGeneration)cloudFailure(e);return false}finally{if(generation===authGeneration)reading=false}
+};
+startCloud=async function(){
+ if(storageBroken){setSync('error',lastCloudError);return}
+ try{firebase.initializeApp(firebaseConfig);auth=firebase.auth();cloud=firebase.firestore();
+ if(window.STOCKPRO_EMULATOR==='localhost'&&['localhost','127.0.0.1'].includes(location.hostname)){auth.useEmulator('http://127.0.0.1:9099',{disableWarnings:true});cloud.useEmulator('127.0.0.1',8088)}
+ auth.onAuthStateChanged(async user=>{
+ const generation=++authGeneration;if(stopWatch)stopWatch();syncing=false;reading=false;conflict=false;roleBlocked=false;storageBroken=false;serverVerified=false;activeOwner=user?user.uid:'local';db=load();cart=[];
+ effectiveRole=user?(envelope.role||'BLOCKED'):'LOCAL';renderAll();
+ if(storageBroken){setSync('error',lastCloudError);return}
+ if(!user){setSync('local','Modo demo local. Iniciá sesión con tu cuenta individual para operar la despensa.');return}
+ await retrySync();if(generation!==authGeneration)return;
+ stopWatch=cloud.doc('stockproMembers/'+user.uid).onSnapshot(snap=>{if(snap.metadata.fromCache||snap.metadata.hasPendingWrites)return;const member=snap.data();if(!member?.active||member.role!==effectiveRole){roleBlocked=true;effectiveRole='BLOCKED';db=emptyDB();cart=[];renderAll();setSync('error','Tu acceso cambió o está desactivado. Volvé a iniciar sesión. Los pendientes siguen conservados en esta cuenta.')}},cloudFailure);
+ },cloudFailure);
+ }catch(e){cloudFailure(e)}
+};
+const backupBeforeRoles=exportBackup;exportBackup=function(){if(activeOwner!=='local'&&effectiveRole!=='ADMIN')return toast('Solo el administrador puede exportar un backup completo.');backupBeforeRoles()};
+const importBeforeRoles=importBackup;importBackup=async function(input){if(!allowed('restore'))return toast('Solo el administrador puede restaurar datos.');return importBeforeRoles(input)};
+const migrationBeforeRoles=migrateV6;migrateV6=function(){if(!allowed('restore'))return toast('Solo el administrador puede migrar datos.');migrationBeforeRoles()};
+function exportPendingCommands(){if(!envelope?.queue?.length)return toast('No hay operaciones pendientes.');downloadText(JSON.stringify({uid:activeOwner,revision:envelope.revision,commands:envelope.queue},null,2),'stockpro_pendientes_'+today()+'.json','application/json')}
+useRemoteVersion=async function(){if(!conflict||!navigator.onLine||syncing||reading)return;if(!confirm('Se descargará el detalle de operaciones pendientes y luego se cargará Firebase. Revisá antes de volver a registrarlas.'))return;
+ exportPendingCommands();try{localStorage.setItem(KEY+':recovery:'+activeOwner+':'+Date.now(),JSON.stringify(envelope));conflict=false;persistedRaw=localStorage.getItem(cacheKey());persist({...envelope,queue:[],pending:false});await refreshCloud()}catch(e){conflict=true;cloudFailure(e)}
+};
+let managedUsers=[];
+async function loadUsers(){
+ if(!['ADMIN','ENCARGADO'].includes(effectiveRole))return;
+ try{const result=await callRoles('stockproUsers',{action:'list'});managedUsers=result.users;document.getElementById('usersBody').innerHTML=result.users.map((u,i)=>'<tr><td>'+esc(u.name)+'</td><td>'+esc(u.email)+'</td><td>'+esc(ROLE_NAMES[u.role])+'</td><td>'+(u.active?'Activo':'Inactivo')+'</td><td><button class="btn btn-sm btn-outline-primary" onclick="editUser('+i+')">Editar</button></td></tr>').join('')}catch(e){toast(e.message)}
+}
+function editUser(index){const u=index==null?null:managedUsers[index];userUid.value=u?.uid||'';userName.value=u?.name||'';userEmail.value=u?.email||'';userEmail.disabled=!!u;userRole.value=u?.role||'CAJERO';userActive.checked=u?.active??true;modal('userModal').show()}
+async function saveUser(){const button=document.getElementById('saveUserButton');button.disabled=true;
+ try{await callRoles('stockproUsers',{action:userUid.value?'update':'create',uid:userUid.value||null,name:userName.value.trim(),email:userEmail.value.trim(),role:userRole.value,active:userActive.checked});modal('userModal').hide();await loadUsers();toast('Acceso actualizado. El usuario puede establecer su contraseña desde la pantalla de ingreso.')}
+ catch(e){toast(e.message)}finally{button.disabled=false}
+}
+async function resetOwnPassword(){if(!auth)return;const email=loginEmail.value.trim();if(!email)return toast('Ingresá tu correo electrónico.');try{await auth.sendPasswordResetEmail(email);toast('Si la cuenta existe, Firebase enviará las instrucciones a ese correo.')}catch(e){toast('No se pudo enviar el correo. Revisá la configuración de Authentication.')}}
+document.querySelector('[data-page="usuarios"]').addEventListener('click',loadUsers);
+
+renderAll();startCloud();
+</script><!-- STOCKPRO_ROLES_END -->
 </body></html>
