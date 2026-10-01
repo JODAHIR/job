@@ -1,0 +1,12 @@
+{
+  "score": 8,
+  "scale": 10,
+  "summary": "Reglas de denegación por defecto y autorización por operación en backend. Verificado en emuladores; pendiente despliegue y verificación en producción.",
+  "findings": [
+    {"severity":"info","title":"Admin SDK omite reglas", "detail":"La seguridad de negocio depende de identity/authorize/manageAllowed y proyecciones en Cloud Functions. Las reglas niegan escrituras directas y lectura de datos comerciales."},
+    {"severity":"medium","title":"Dependencia transitiva opcional", "detail":"npm audit informa dos avisos moderados en uuid/gaxios de @google-cloud/storage transitivo de firebase-admin 14.5.0. StockPro no usa Storage. Revisar actualizaciones compatibles; sin override forzado."},
+    {"severity":"low","title":"Escalabilidad y abuso", "detail":"Lecturas completas por operación. maxInstances=10, validación de tamaño y máximo 450 cambios. App Check/cuotas y paginación son mejoras futuras; usuarios autenticados pueden consumir lecturas."},
+    {"severity":"info","title":"Revocación offline", "detail":"Se deniega toda operación de cuentas inactivas al reconectar. Una copia offline ya descargada no puede revocarse remotamente."},
+    {"severity":"info","title":"Backup de caja", "detail":"El backup del HTML incluye caja propia. Para todas las cajas y auditorías usar exportación administrativa Firestore."}
+  ]
+}
