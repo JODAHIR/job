@@ -1,0 +1,61 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Each account owns its complete business workspace. No public access.
+    // These are owner/admin rules, not a cashier/employee role system.
+    match /stockproUsers/{owner} {
+      function owns() { return request.auth != null && request.auth.uid == owner; }
+      function metaPath() { return /databases/$(database)/documents/stockproUsers/$(owner)/meta/state; }
+      function atomicRevision() {
+        return getAfter(metaPath()).data.schema == 7
+          && getAfter(metaPath()).data.revision == (exists(metaPath()) ? get(metaPath()).data.revision + 1 : 1);
+      }
+      function numberAtLeastZero(v) { return v is number && v >= 0; }
+      function named(d) { return d.name is string && d.name.size() > 0 && d.name.size() <= 300; }
+      function valid(kind,d) {
+        return (kind == 'products' && d.id is number && named(d) && d.sku is string
+            && numberAtLeastZero(d.stock) && numberAtLeastZero(d.cost)
+            && numberAtLeastZero(d.price) && numberAtLeastZero(d.min)
+            && numberAtLeastZero(d.avg) && d.vat in [0,5,10])
+          || (kind == 'clients' && d.id is number && named(d) && numberAtLeastZero(d.limit))
+          || (kind == 'suppliers' && d.id is number && named(d))
+          || (kind == 'sales' && d.id is number && d.items is list && d.items.size() > 0
+            && numberAtLeastZero(d.total) && d.date is string && d.pay is string)
+          || (kind == 'purchases' && d.id is number && d.productId is number
+            && d.supplierId is number && d.qty is number && d.qty > 0
+            && numberAtLeastZero(d.cost) && numberAtLeastZero(d.total))
+          || (kind == 'credits' && d.id is number && d.clientId is number
+            && numberAtLeastZero(d.amount) && numberAtLeastZero(d.balance) && d.balance <= d.amount)
+          || (kind == 'payments' && d.creditId is number && d.position is int
+            && numberAtLeastZero(d.amount) && d.date is string && d.method is string)
+          || (kind == 'stamps' && d.id is number && d.number is string && d.enabled is bool
+            && d.start is int && d.end is int && d.next is int && d.start > 0
+            && d.end >= d.start && d.end <= 9999999 && d.next >= d.start && d.next <= d.end + 1
+            && d.validFrom is string && d.validTo is string)
+          || (kind == 'moves' && d.id is number && d.productId is number && d.qty is number && d.type in ['ENTRADA','SALIDA','AJUSTE'])
+          || (kind == 'cash' && d.isOpen is bool && numberAtLeastZero(d.openingAmount))
+          || (kind == 'cashMoves' && d.amount is number && d.amount > 0 && d.type in ['INGRESO','EGRESO'])
+          || (kind == 'cashClosings' && numberAtLeastZero(d.openingAmount) && numberAtLeastZero(d.declared) && d.expected is number && d.difference is number);
+      }
+      match /meta/state {
+        allow read: if owns();
+        allow create: if owns() && request.resource.data.keys().hasOnly(['schema','revision','txid','updatedAt'])
+          && request.resource.data.schema == 7 && request.resource.data.revision == 1
+          && request.resource.data.txid is string && request.resource.data.updatedAt == request.time;
+        allow update: if owns() && request.resource.data.keys().hasOnly(['schema','revision','txid','updatedAt'])
+          && request.resource.data.schema == 7 && request.resource.data.revision == resource.data.revision + 1
+          && request.resource.data.txid is string && request.resource.data.updatedAt == request.time;
+        allow delete: if false;
+      }
+      match /{kind}/{id} {
+        allow read: if owns() && kind in ['products','clients','suppliers','sales','purchases','credits','payments','stamps','moves','cash','cashMoves','cashClosings'];
+        allow create: if owns() && valid(kind,request.resource.data) && atomicRevision();
+        allow update: if owns() && valid(kind,request.resource.data) && atomicRevision()
+          && (kind != 'stamps' || request.resource.data.next >= resource.data.next);
+        allow delete: if owns() && kind in ['products','clients','suppliers','sales','purchases','credits','payments','stamps','moves','cash','cashMoves','cashClosings'] && atomicRevision();
+      }
+    }
+    // Any other project path is denied by this standalone ruleset.
+    match /{document=**} { allow read, write: if false; }
+  }
+}
