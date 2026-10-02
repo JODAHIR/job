@@ -1,59 +1,58 @@
-# StockPro 8 · usuarios y roles
+# StockPro 8.1 · Plan gratuito
 
-HTML completo y adaptable en `index.html`, con Firebase del proyecto `despensa-5dd6d`. Conserva productos, POS, clientes, cuenta corriente, proveedores, compras, créditos/pagos, caja, movimientos, IVA 10/5/exento, facturación opcional, timbrados, backup y previsión de faltantes de V6.3/V7.
+Página: https://jodahir.github.io/job/stockpro/
+Proyecto Firebase: `despensa-5dd6d`. Firestore Standard `(default)` en `us-central1`, plan Spark. No requiere Cloud Functions ni activar facturación. El HTML incluye estilos y SDK para uso local; Firebase necesita conexión para confirmar las operaciones.
 
-## Permisos
+## Primer ingreso
 
-| Función | Administrador | Cajero | Encargado |
-|---|---|---|---|
-| Ventas, clientes y cobros | Sí | Sí | No |
-| Abrir, operar y cerrar su caja | Sí | Sí | No |
-| Supervisar las cajas | Sí | No | No |
-| Productos, proveedores, compras y ajustes | Sí | No | Sí |
-| Gestionar cajeros y encargados | Sí | No | Sí |
-| Gestionar otros administradores | Sí | No | No |
-| Timbrados, límites de crédito y restauración | Sí | No | No |
+1. Abrir la página y entrar en **Datos y sincronización**.
+2. Escribir el correo autorizado y una contraseña propia de al menos 8 caracteres. Pulsar **Crear mi cuenta**.
+3. Revisar el correo (también spam), abrir el enlace de verificación y regresar a **Iniciar sesión**.
+4. Para una cuenta existente usar **Iniciar sesión** o **Recuperar contraseña**.
 
-El superusuario inicial queda protegido. Nadie puede cambiar su propio rol desde la aplicación. El cajero consulta sus ventas y su caja; puede registrar clientes pero no aumentar sus límites de crédito. Las ventas a crédito del cajero respetan el límite autorizado. El encargado no recibe información de clientes, ventas ni créditos. Cada persona usa su propia cuenta.
+Crear una cuenta no concede acceso. Su correo verificado debe estar autorizado en `stockproAccess`. Los administradores y encargados agregan correos desde **Usuarios y roles**. No se crean contraseñas de otras personas ni se comparten credenciales.
 
-## Activación (requiere acceso administrativo a Firebase)
+## Roles
 
-El HTML y el backend se activan juntos. **No reemplazar el HTML publicado antes de desplegar las funciones y reglas.** Este repositorio no contiene credenciales privadas ni activa cuentas por sí solo.
+- **Administrador:** todos los módulos, gestión de usuarios y administradores, timbrados, límites de crédito, backup/restauración y supervisión de cajas.
+- **Cajero:** ventas, clientes, cobros y su propio turno de caja. Consulta sus ventas y no recibe costos de productos, proveedores ni compras. No modifica límites de crédito.
+- **Encargado:** productos, proveedores, compras, ajustes y gestión de cajeros/encargados. No administra cuentas de administrador.
 
-1. Exportar backup de V7 y sincronizar todas las operaciones pendientes en cada dispositivo. La caché V7 se conserva, pero no se migra automáticamente a la cola V8.
-2. En Firebase Authentication, habilitar correo/contraseña. Crear o identificar la cuenta del administrador inicial. Si ya hay datos V7, debe ser la misma cuenta propietaria de esos datos.
-3. El proyecto necesita Cloud Firestore `(default)` y un plan que permita Cloud Functions (Blaze). Revisar facturación antes de desplegar. No usar la configuración Firebase de la raíz del repositorio: corresponde a otra aplicación.
-4. Desde `stockpro-firebase/functions`, ejecutar `npm ci`. Con una sesión administrativa autorizada de Google Cloud, configurar credenciales predeterminadas mediante `gcloud auth application-default login` y ejecutar `node bootstrap.js CORREO_DEL_ADMINISTRADOR`. No descargar ni guardar claves de cuenta de servicio. El script obtiene el UID existente y preserva `stockproUsers/{UID}`.
-5. Desde `stockpro-firebase`, con Firebase CLI autenticado: `firebase deploy --project despensa-5dd6d --only functions:stockpro,firestore:rules`. Si otras aplicaciones comparten esta base, integrar sus reglas antes: el archivo entregado deniega todas las rutas ajenas.
-6. Publicar `docs/stockpro/index.html` por HTTPS (GitHub Pages `main:/docs`, ruta `/job/stockpro/`) o probar en localhost. Añadir el dominio a los autorizados de Authentication cuando corresponda.
-7. Ingresar como administrador. En **Usuarios y roles**, crear los accesos. Cada persona usa **Establecer / recuperar contraseña** desde la pantalla de ingreso y recibe el enlace de Firebase en su correo. No se comparten contraseñas.
+Nadie cambia su propio rol. El administrador inicial está protegido por una configuración que el cliente no puede modificar. Desactivar el correo bloquea las operaciones en Firebase; las copias ya descargadas sin conexión no se pueden borrar remotamente.
 
-Desplegar estas reglas bloquea el acceso directo de los clientes V7. Planificar el cambio con las cajas cerradas. Para revertir, mantener una copia de HTML, reglas y datos previos; no restaurar reglas antiguas sin considerar que permiten el modelo de propietario de V7.
+## Operación y contingencia
 
-## Contingencia y límites
+Se mantienen los módulos de V6.3/V7: stock, POS y búsqueda, clientes/cuenta corriente, proveedores, compras, créditos y pagos, caja, movimientos, IVA 10/5/exento, facturación opcional, ABM de timbrados y numeración, backup/restore y previsión de faltantes.
 
-Las operaciones se guardan primero en el navegador y luego se envían como órdenes al servidor. Una revisión compartida evita sobrescribir cambios de otro usuario. El identificador de operación impide duplicar una venta si se pierde la respuesta. Firebase vuelve a comprobar el rol y el estado de la cuenta en cada operación.
+Abrir caja antes de vender. Los cobros en efectivo aumentan la caja del operador. Las facturas se imprimen después de confirmar venta, stock y numeración. Los comprobantes son administrativos internos: no hay integración fiscal electrónica.
 
-Sin conexión se conserva la cola. Al reconectar, una cuenta desactivada no puede enviar sus operaciones. El navegador no puede borrar remotamente una copia que permanece offline; cerrar sesión en equipos compartidos. No borrar almacenamiento local ni usar modo privado para operar. La página alojada necesita red para descargarse nuevamente; el HTML descargado contiene los SDK y estilos, y no requiere red para la demo local.
+En esta implementación sin servidor, cada venta admite **hasta 10 productos distintos** para mantenerse dentro de los límites de validación de Firestore. Dividir carritos mayores en tickets separados. La previsión usa el promedio diario configurado y un horizonte de 14 días.
 
-Los estados visibles distinguen conectado, pendiente, sin conexión, error y conflicto. Ante conflicto, descargar **Mis operaciones pendientes** y usar **Guardar copia y cargar Firebase**; revisar y registrar únicamente operaciones que falten. Nunca se fusionan stock ni facturas automáticamente. Una factura pendiente no debe entregarse como emitida. Se conserva la restricción de impresión hasta confirmar la sincronización.
+Cada orden se conserva primero en el navegador. Ante una desconexión, las ventas sin factura quedan pendientes y se reintentan cuando vuelve la red. Las altas de registros y créditos deben sincronizarse antes de usarlos en otra operación. No borrar el almacenamiento del navegador ni utilizar modo privado para operar.
 
-Solo el administrador restaura backups. Se rechazan cambios en ventas existentes y retrocesos de numeración. El backup de la interfaz contiene la caja propia del administrador; para un respaldo integral de todos los turnos y auditorías usar la exportación administrativa de Firestore. Máximo 450 documentos modificados por operación. El backend lee el conjunto completo para aplicar operaciones consistentes; para grandes volúmenes se debe paginar y separar agregados. La previsión usa el promedio diario configurado y un horizonte de 14 días.
+Una revisión compartida impide sobrescribir cambios de otra persona. Ante conflicto, descargar **Mis operaciones pendientes** y elegir **Guardar copia y cargar Firebase**. Revisar y volver a registrar únicamente las operaciones que falten. No se fusiona stock ni numeración automáticamente. Las operaciones rechazadas permanecen en la copia local.
 
-Los comprobantes siguen siendo administrativos internos; no hay integración fiscal electrónica.
+Solo el administrador restaura backups; no puede alterar ventas ya guardadas ni retroceder numeración. El backup de la interfaz contiene su propia caja. Para respaldar otros turnos y auditorías se necesita una exportación administrativa por lotes; las exportaciones administradas y backups programados de Firebase pueden requerir facturación. Lotes grandes pueden superar límites de reglas o escrituras: no se aplican parcialmente y se conserva la copia para dividir la migración.
 
-## Estructura y seguridad
+La caché 8.1 está separada de V7/V8. Antes de cambiar de versión, exportar cualquier dato local pendiente de la anterior y restaurarlo con el administrador. La página alojada no tiene service worker: una nueva descarga del HTML requiere conexión. El archivo descargado permite usar la demo local sin red.
 
-- `stockproConfig/main`: UID del propietario original, establecido solo con acceso administrativo.
-- `stockproMembers/{uid}`: rol y acceso activo. El navegador solo puede leer su propia membresía; ninguna escritura directa.
-- `stockproUsers/{ownerUid}`: catálogos `products/clients/suppliers`, `sales`, `purchases`, `credits/payments`, `stamps`, `moves`, `cash/cashMoves/cashClosings`, revisión `meta/state` y auditorías `operations/accessAudit`.
-- La caja original conserva `cash/current`; las demás usan `cash/{uid}`. Ventas y movimientos nuevos registran operador y turno.
-- `stockproSnapshot`, `stockproOperate` y `stockproUsers`: funciones autenticadas que filtran lecturas y validan permisos/valores antes de escribir transaccionalmente. Modificar el HTML no concede permisos.
+## Estructura y mantenimiento
 
-El archivo fuente de la capa de roles es `roles-client.js`; queda integrado en el HTML con `python3 stockpro-firebase/build-client.py`. No editar solamente la copia incrustada.
+- `stockproAccess/{correo}`: invitaciones con `email`, `name`, `role`, `active`, `updatedBy`, `updatedAt`. Lectura propia y de los gestores según jerarquía. Autoridad basada en correo verificado de Firebase Auth.
+- `stockproConfig/main`: `ownerEmail`, creado administrativamente; sin escritura desde el cliente.
+- `stockproStores/despensa`: `products`, `productCosts` privados, `clients`, `suppliers`, `sales`, `purchases`, `credits`, `payments`, `stamps`, `moves`, `cash/{uid}`, `cashMoves`, `cashClosings`, `meta/state`, `operations`, `saleChecks`.
+- Las ventas/pagos/cierres y comprobantes de operación son inmutables. Las reglas verifican identidad, rol, revisión, vínculos de venta/stock/crédito/pago/caja y avance de timbrado. No se confía en el rol de la caché ni en los botones ocultos.
+- `roles-client.js` controla interfaz/cola; `spark-client.js` usa el SDK de Firestore directamente. `stockpro-spark/build.py` integra ambos y el dominio compartido en el HTML autónomo.
+- `stockpro-firebase/` conserva la implementación previa de Cloud Functions como referencia; **no se despliega para esta versión Spark**.
 
-## Verificación
+Para reconstruir: `python3 stockpro-spark/build.py`. Para publicar reglas desde una sesión Firebase autorizada: `npx -y firebase-tools@latest deploy --project despensa-5dd6d --config stockpro-spark/firebase.json --only firestore:rules`. No usar la configuración Firebase de la raíz: pertenece a otro sistema. Integrar otras rutas si en el futuro esta base se comparte con otra aplicación.
 
-`cd stockpro-firebase/functions && npm test` ejecuta las pruebas de dominio. Se verificó además con emuladores aislados y Chrome: tres roles, cuenta no habilitada, alta de cajero por encargado, rechazo de ascenso a administrador, ventas/caja propia, supervisión, lectura directa denegada, cambio de rol directo denegado, cola offline, ajustes y revocación inmediata con conexión.
+El plan Spark tiene cuotas. Al agotarse, la aplicación conserva pendientes y muestra error; no promete sincronización ilimitada. Las lecturas completas se hacen al entrar/sincronizar, con revisión para consistencia. Para grandes volúmenes se debe incorporar paginación y revisar el modelo.
 
-Estas pruebas no acreditan despliegue ni configuración del proyecto real. El informe `stockpro-firebase/security-audit.json` documenta alcance y límites. Referencias: [funciones callable](https://firebase.google.com/docs/functions/callable), [reglas y bibliotecas de servidor](https://firebase.google.com/docs/firestore/security/rules-conditions).
+## Validación
+
+Pruebas de reglas en emulador: anónimo, correo no verificado, no invitado, desactivado, lectura de costos/caja/ventas ajenas, autoascenso, edición del superusuario, invitación de cajero, filtros de gestores, escritura directa y rol falsificado dentro de una transacción completa.
+
+Pruebas en Chrome con emuladores aislados: tres roles, stock, venta, caja propia/supervisión, cola sin conexión, factura a crédito con 10 productos, cobro en efectivo, cierre, revocación y vista móvil de 390 px. El informe de pruebas no sustituye la verificación del despliegue real.
+
+Reglas diseñadas como prototipo revisable: denegación por defecto, invitaciones verificadas y validación de operaciones acopladas. Revisar antes de ampliar el acceso a muchos usuarios. Los SDK y las pruebas no constituyen una auditoría independiente.

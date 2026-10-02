@@ -1,3 +1,3 @@
-# Roles implementados
+# Roles activos en StockPro 8.1
 
-La matriz y activación vigentes están en [README.md](README.md). Administrador: acceso completo y gestión de usuarios; cajero: ventas, clientes, cobros y caja propia; encargado: productos, proveedores, compras, ajustes y usuarios operativos. Solo administradores gestionan administradores. El superusuario inicial está protegido.
+Ver la matriz, primer ingreso y condiciones de uso en [README.md](README.md). El acceso es exclusivamente por correo y contraseña, con verificación del correo e invitación previa. Esta versión se diseñó para el plan gratuito Spark.
