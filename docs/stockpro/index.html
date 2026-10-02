@@ -34,9 +34,9 @@ body{background:var(--paper);font-size:14px;letter-spacing:-.015em}.container-fl
   <button class="nav-link btn w-100" data-page="caja" title="Caja"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M3 14h18 M8 8h8 M10 17h4"/></svg><span class="nav-label">Caja</span></button>
   <button class="nav-link btn w-100" data-page="movimientos" title="Movimientos"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true"><path d="M3 7h17l-4-4 M21 17H4l4 4"/></svg><span class="nav-label">Movimientos</span></button>
   <button class="nav-link btn w-100" data-page="datos" title="Datos y sincronización"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true"><path d="M5 4h14v16H5z M8 4v6h8V4 M8 20v-6h8v6"/></svg><span class="nav-label">Datos y sincronización</span></button>
- </nav><div class="side-bottom"><b>Todo conectado.</b><br>Inventario, ventas y finanzas<br>StockPro 7 · Firebase</div>
+ <button class="nav-link btn w-100" data-page="usuarios"><span aria-hidden="true">♙</span><span class="nav-label">Usuarios y roles</span></button></nav><div class="side-bottom"><b>Todo conectado.</b><br>Inventario, ventas y finanzas<br>StockPro 8 · Plan gratuito</div>
 </aside><div class="mobile-overlay" onclick="toggleSidebar()"></div>
-<main class="col-lg-10 p-3 p-md-4"><header class="topbar"><div class="top-left"><button class="icon-btn" onclick="toggleSidebar()" aria-label="Abrir o contraer menú">☰</button><span id="pageCrumb" class="top-crumb">Panel general</span></div><div class="top-right"><span id="todayLabel" class="top-date"></span><button id="syncPill" class="sync-pill" data-state="local" onclick="goPage('datos')" aria-live="polite">Modo local</button><span class="user-circle">D</span></div></header><div class="sync-note"><span id="syncSummary">Preparando almacenamiento…</span><button class="btn btn-sm btn-outline-primary" onclick="goPage('datos')">Ver detalles</button></div>
+<main class="col-lg-10 p-3 p-md-4"><header class="topbar"><div class="top-left"><button class="icon-btn" onclick="toggleSidebar()" aria-label="Abrir o contraer menú">☰</button><span id="pageCrumb" class="top-crumb">Panel general</span></div><div class="top-right"><span id="todayLabel" class="top-date"></span><button id="syncPill" class="sync-pill" data-state="local" onclick="goPage('datos')" aria-live="polite">Modo local</button><span id="roleLabel" class="badge text-bg-secondary">Sin sesión</span></div></header><div class="sync-note"><span id="syncSummary">Preparando almacenamiento…</span><button class="btn btn-sm btn-outline-primary" onclick="goPage('datos')">Ver detalles</button></div>
 
 <section id="dashboard" class="page active"><div class="welcome-banner"><div><div class="eyebrow" id="welcomeDate">TU NEGOCIO, EN ORDEN</div><h2>Una mirada a tu despensa</h2><p>Lo que vendés. Lo que tenés. Lo que viene.</p></div><div class="welcome-art" aria-hidden="true">▥</div></div>
  <div class="d-flex justify-content-between align-items-center mobile-stack"><div><h2>Panel general</h2><div class="text-secondary">Indicadores comerciales, financieros y de inventario.</div></div><button class="btn btn-outline-primary" onclick="renderDashboard()">Actualizar</button></div>
@@ -109,7 +109,7 @@ body{background:var(--paper);font-size:14px;letter-spacing:-.015em}.container-fl
 <section id="caja" class="page">
  <div class="d-flex justify-content-between align-items-center mobile-stack"><div><h2>Caja</h2><div class="text-secondary">Apertura, ingresos, egresos, arqueo y cierre.</div></div><span id="cashStatus" class="badge text-bg-secondary fs-6">Cerrada</span></div>
  <div class="row g-3 mt-1"><div class="col-xl-4"><div class="card p-3"><label class="form-label">Monto inicial</label><input id="cashOpening" type="number" min="0" class="form-control mb-2"><button id="cashOpenBtn" class="btn btn-primary w-100 mb-2" onclick="openCash()">Abrir caja</button><label class="form-label mt-2">Efectivo declarado al cierre</label><input id="cashDeclared" type="number" min="0" class="form-control mb-2"><button id="cashCloseBtn" class="btn btn-danger w-100" onclick="closeCash()">Cerrar caja</button><div id="cashMsg" class="mt-3"></div></div></div><div class="col-xl-8"><div id="cashKpis" class="row g-3"></div><div class="card p-3 mt-3"><h5>Ingreso / egreso manual</h5><div class="row g-2"><div class="col-md-3"><select id="cashMoveType" class="form-select"><option>INGRESO</option><option>EGRESO</option></select></div><div class="col-md-3"><input id="cashMoveAmount" type="number" min="1" class="form-control" placeholder="Importe"></div><div class="col-md-4"><input id="cashMoveDetail" class="form-control" placeholder="Concepto"></div><div class="col-md-2"><button class="btn btn-outline-primary w-100" onclick="addCashMove()">Registrar</button></div></div><div id="cashMoves" class="mt-3"></div></div></div></div>
- <div class="card p-3 mt-3"><h5>Historial de cierres</h5><div class="table-responsive"><table class="table"><thead><tr><th>Fecha</th><th>Apertura</th><th>Cierre</th><th>Inicial</th><th>Esperado</th><th>Declarado</th><th>Diferencia</th></tr></thead><tbody id="cashHistory"></tbody></table></div></div>
+ <div class="card p-3 mt-3"><h5>Supervisión de turnos</h5><div id="cashOverview" class="mb-3"></div><h5>Historial de cierres</h5><div class="table-responsive"><table class="table"><thead><tr><th>Fecha</th><th>Apertura</th><th>Cierre</th><th>Inicial</th><th>Esperado</th><th>Declarado</th><th>Diferencia</th></tr></thead><tbody id="cashHistory"></tbody></table></div></div>
 </section>
 
 <section id="movimientos" class="page">
@@ -117,8 +117,9 @@ body{background:var(--paper);font-size:14px;letter-spacing:-.015em}.container-fl
  <div class="card p-3 mt-3"><div class="table-responsive"><table class="table"><thead><tr><th>Fecha/hora</th><th>Producto</th><th>Tipo</th><th>Cantidad</th><th>Detalle</th></tr></thead><tbody id="movesTable"></tbody></table></div></div>
 </section>
 
-<section id="datos" class="page"><h2>Datos y sincronización</h2><p class="text-secondary">Tu información en Firebase, con una copia de contingencia en este navegador.</p><div class="sync-card-grid mt-3"><div class="card p-4"><h5>Conectar con tu despensa</h5><p class="text-secondary">Proyecto despensa-5dd6d · iniciá sesión con una cuenta creada en Firebase Authentication.</p><form id="loginForm" onsubmit="loginCloud(event)"><label for="loginEmail" class="form-label">Correo electrónico</label><input id="loginEmail" type="email" class="form-control mb-3" autocomplete="username" required><label for="loginPassword" class="form-label">Contraseña</label><input id="loginPassword" type="password" class="form-control mb-3" autocomplete="current-password" required><button class="btn btn-primary" type="submit">Iniciar sesión</button></form><p id="accountLabel" class="mt-3 mb-2"></p><button id="logoutButton" class="btn btn-outline-secondary" onclick="logoutCloud()" hidden>Cerrar sesión</button></div><div class="card p-4"><h5>Estado de los datos</h5><div id="syncDetail" class="status-detail" role="status"></div><p id="revisionLabel" class="text-secondary mt-3"></p><div class="d-flex gap-2 flex-wrap"><button class="btn btn-primary" onclick="retrySync()">Sincronizar ahora</button><button id="resolveConflict" class="btn btn-outline-danger" onclick="useRemoteVersion()" hidden>Guardar copia y cargar Firebase</button></div><p class="text-secondary mt-3 mb-0">Una factura solo se confirma con conexión. Si hay cambios simultáneos se conserva tu copia local y se detiene la sincronización para revisarlos.</p></div></div><div class="card p-4 mt-3"><h5>Backup y recuperación</h5><p class="text-secondary">Los backups incluyen todos los módulos y los cambios pendientes. Guardalos antes de cambiar de navegador o borrar sus datos.</p><div class="d-flex gap-2 flex-wrap"><button class="btn btn-primary" onclick="exportBackup()">↓ Descargar backup JSON</button><label class="btn btn-outline-primary mb-0">Restaurar backup<input type="file" accept=".json,application/json" hidden onchange="importBackup(this)"></label><button class="btn btn-outline-primary" onclick="migrateV6()">Importar V6 de este navegador</button><button class="btn btn-outline-secondary" onclick="resetDemo()">Cargar demo local</button></div><p class="text-secondary mt-3 mb-0">La demo y el modo local están separados de tu cuenta. Para migrar datos reales: descargá su backup, iniciá sesión y restauralo. Se mantiene intacta la clave original stockpro-v6.</p></div></section>
-</main></div></div>
+<section id="datos" class="page"><h2>Datos y sincronización</h2><p class="text-secondary">Despensa compartida, permisos por usuario y copia de contingencia.</p><div class="sync-card-grid mt-3"><div class="card p-4"><h5>Conectar con tu despensa</h5><p class="text-secondary">Proyecto despensa-5dd6d · iniciá sesión con una cuenta creada en Firebase Authentication.</p><form id="loginForm" onsubmit="loginCloud(event)"><label for="loginEmail" class="form-label">Correo electrónico</label><input id="loginEmail" type="email" class="form-control mb-3" autocomplete="username" required><label for="loginPassword" class="form-label">Contraseña</label><input id="loginPassword" type="password" class="form-control mb-3" autocomplete="current-password" required><button class="btn btn-primary" type="submit">Iniciar sesión</button> <button class="btn btn-outline-primary" type="button" onclick="resetOwnPassword()">Recuperar contraseña</button> <button class="btn btn-outline-primary" type="button" onclick="registerOwnAccount()">Crear mi cuenta</button></form><p id="accountLabel" class="mt-3 mb-2"></p><button id="logoutButton" class="btn btn-outline-secondary" onclick="logoutCloud()" hidden>Cerrar sesión</button></div><div class="card p-4"><h5>Estado de los datos</h5><div id="syncDetail" class="status-detail" role="status"></div><p id="revisionLabel" class="text-secondary mt-3"></p><div class="d-flex gap-2 flex-wrap"><button class="btn btn-primary" onclick="retrySync()">Sincronizar ahora</button><button id="resolveConflict" class="btn btn-outline-danger" onclick="useRemoteVersion()" hidden>Guardar copia y cargar Firebase</button></div><p class="text-secondary mt-3 mb-0">Una factura solo se confirma con conexión. Si hay cambios simultáneos se conserva tu copia local y se detiene la sincronización para revisarlos.</p></div></div><div class="card p-4 mt-3"><div class="alert alert-info">Acceso por correo y contraseña. Si es tu primer ingreso, creá tu cuenta y verificá el enlace que recibirás por correo. Tu correo debe estar autorizado por un administrador o encargado.</div><h5>Backup y recuperación</h5><button class="btn btn-outline-secondary mb-3" onclick="exportPendingCommands()">Descargar mis operaciones pendientes</button><p class="text-secondary">Los backups incluyen todos los módulos y los cambios pendientes. Guardalos antes de cambiar de navegador o borrar sus datos.</p><div class="d-flex gap-2 flex-wrap"><button class="btn btn-primary" onclick="exportBackup()">↓ Descargar backup JSON</button><label class="btn btn-outline-primary mb-0">Restaurar backup<input type="file" accept=".json,application/json" hidden onchange="importBackup(this)"></label><button class="btn btn-outline-primary" onclick="migrateV6()">Importar V6 de este navegador</button><button class="btn btn-outline-secondary" onclick="resetDemo()">Cargar demo local</button></div><p class="text-secondary mt-3 mb-0">La demo y el modo local están separados de tu cuenta. Para migrar datos reales: descargá su backup, iniciá sesión y restauralo. Se mantiene intacta la clave original stockpro-v6.</p></div></section>
+<section id="usuarios" class="page"><div class="d-flex justify-content-between align-items-center mobile-stack"><div><h2>Usuarios y roles</h2><p class="text-secondary">Cada persona accede con su propia cuenta.</p></div><button class="btn btn-primary" onclick="editUser(null)">＋ Nuevo usuario</button></div><div class="card p-3 mt-3"><div class="table-responsive"><table class="table"><thead><tr><th>Nombre</th><th>Correo</th><th>Rol</th><th>Estado</th><th></th></tr></thead><tbody id="usersBody"></tbody></table></div></div><p class="text-secondary mt-3">El encargado administra usuarios operativos. Solo un administrador gestiona otras cuentas de administrador.</p></section></main></div></div>
+<div class="modal fade" id="userModal"><div class="modal-dialog"><div class="modal-content"><div class="modal-header"><h5>Acceso de usuario</h5><button class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button></div><div class="modal-body"><input id="userUid" type="hidden"><label for="userName" class="form-label">Nombre</label><input id="userName" class="form-control mb-3" maxlength="200"><label for="userEmail" class="form-label">Correo</label><input id="userEmail" type="email" class="form-control mb-3" maxlength="254"><label for="userRole" class="form-label">Rol</label><select id="userRole" class="form-select mb-3"><option value="CAJERO">Cajero</option><option value="ENCARGADO">Encargado</option><option value="ADMIN">Administrador (superusuario)</option></select><label><input id="userActive" type="checkbox" checked> Acceso activo</label><p class="text-secondary mt-3">La persona crea su cuenta y verifica su correo desde la pantalla de ingreso. Desactivar revoca el acceso a StockPro.</p></div><div class="modal-footer"><button id="saveUserButton" class="btn btn-primary" onclick="saveUser()">Guardar acceso</button></div></div></div></div>
 
 <!-- PRODUCT -->
 <div class="modal fade" id="productModal"><div class="modal-dialog modal-lg"><div class="modal-content"><div class="modal-header"><h5 id="productTitle">Producto</h5><button class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body"><input id="productId" type="hidden"><div class="row g-3"><div class="col-md-4"><label class="form-label">SKU *</label><input id="pSku" class="form-control"></div><div class="col-md-8"><label class="form-label">Descripción *</label><input id="pName" class="form-control"></div><div class="col-md-6"><label class="form-label">Categoría *</label><input id="pCategory" class="form-control"></div><div class="col-md-3"><label class="form-label">Costo</label><input id="pCost" type="number" min="0" class="form-control"></div><div class="col-md-3"><label class="form-label">Precio *</label><input id="pPrice" type="number" min="0" class="form-control"></div><div class="col-md-4"><label class="form-label">IVA</label><select id="pVat" class="form-select"><option value="10">10%</option><option value="5">5%</option><option value="0">Exento</option></select></div><div class="col-md-4"><label class="form-label">Stock inicial</label><input id="pStock" type="number" min="0" class="form-control"></div><div class="col-md-4"><label class="form-label">Stock mínimo</label><input id="pMin" type="number" min="0" class="form-control"></div><div class="col-md-4"><label class="form-label">Venta promedio/día</label><input id="pAvg" type="number" min="0" step=".1" class="form-control"></div></div><div id="productMsg" class="mt-3"></div></div><div class="modal-footer"><button class="btn btn-primary" onclick="saveProduct()">Guardar</button></div></div></div></div>
@@ -186,7 +187,7 @@ This typically indicates that your device does not have a healthy Internet conne
 </script>
 <script>
 'use strict';
-const KEY='stockpro-v7';
+const KEY='stockpro-v8-spark';
 let cart=[];
 
 function today(){const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')}
@@ -670,7 +671,353 @@ document.getElementById('welcomeDate').textContent='Tu negocio, en orden · '+ne
 saleClient.addEventListener('change',()=>{if(saleInvoice.checked)toggleInvoice()});
 salePay.addEventListener('change',()=>{invCondition.value=salePay.value==='Crédito'?'CRÉDITO':'CONTADO'});
 invCondition.disabled=true;
-renderAll();startCloud();
+/* Initialization follows the role layer. */
 
 </script>
+
+
+
+
+
+
+
+
+
+
+
+
+<!-- STOCKPRO_SPARK_START --><script>
+const StockDomain=(()=>{const module={exports:{}};
+'use strict';
+const isDeepStrictEqual=(a,b)=>JSON.stringify(a)===JSON.stringify(b);
+const ROLES=['ADMIN','CAJERO','ENCARGADO'];
+const catalog=['saveProduct','deleteProduct','saveStockMove','saveSupplier','deleteSupplier','savePurchase'];
+const till=['finishSale','saveClient','openCash','closeCash','addCashMove','saveCreditPayment'];
+const onlyAdmin=['deleteClient','saveCredit','saveStamp','deleteStamp','restore'];
+function fail(message,code='invalid-argument'){const e=Error(message);e.code=code;throw e}
+function authorize(role,action){if(!ROLES.includes(role)||!(role==='ADMIN'&&[...catalog,...till,...onlyAdmin].includes(action)||role==='CAJERO'&&till.includes(action)||role==='ENCARGADO'&&catalog.includes(action)))fail('Tu rol no permite esta operación.','permission-denied')}
+function manageAllowed(actor,target,role,uid,ownerUid){
+ if(!actor.active||!['ADMIN','ENCARGADO'].includes(actor.role))fail('No podés gestionar usuarios.','permission-denied');
+ if(!ROLES.includes(role))fail('Rol inválido.');
+ if(actor.uid===uid)fail('No podés modificar tu propio acceso.','permission-denied');
+ if(uid===ownerUid)fail('El superusuario inicial está protegido.','permission-denied');
+ if(actor.role==='ENCARGADO'&&(role==='ADMIN'||target?.role==='ADMIN'))fail('Solo un administrador puede gestionar administradores.','permission-denied');
+}
+const clone=x=>JSON.parse(JSON.stringify(x));
+const arrays=['products','clients','suppliers','sales','purchases','credits','stamps','moves'];
+function empty(){return Object.assign(Object.fromEntries(arrays.map(k=>[k,[]])),{cash:{isOpen:false,openedAt:null,openingAmount:0,sessionId:null,moves:[],history:[]}})}
+function num(v,min=0,max=1e12){if(typeof v!=='number'||!Number.isFinite(v)||v<min||v>max)fail('Importe o cantidad fuera de rango.');return v}
+function str(v,max=300,required=false){if(typeof v!=='string'||v.length>max||(required&&!v.trim()))fail('Texto inválido.');return v.trim()}
+function date(v){if(typeof v!=='string'||!/^\d{4}-\d{2}-\d{2}$/.test(v)||(!Number.isFinite(Date.parse(v+'T12:00:00Z'))||new Date(v+'T12:00:00Z').toISOString().slice(0,10)!==v))fail('Fecha inválida.');return v}
+function find(list,id){const row=list.find(r=>r.id===id);if(!row)fail('Registro no encontrado.','not-found');return row}
+let sparkSequence=0;function next(list){return Math.max(Date.now()*100+(++sparkSequence%100),Math.max(0,...list.map(r=>r.id))+1)}
+function tax(items){const t={base10:0,iva10:0,base5:0,iva5:0,exempt:0,total:0};for(const i of items){const v=i.qty*i.price;t.total+=v;if(i.vat===10){t.iva10+=v/11;t.base10+=v-v/11}else if(i.vat===5){t.iva5+=v/21;t.base5+=v-v/21}else t.exempt+=v}return t}
+function expected(s,uid){const cash=s.cash,session=cash.sessionId;
+ const sales=s.sales.filter(v=>session?v.cashSessionId===session&&(!v.operatorUid||v.operatorUid===uid):v.date===new Date().toLocaleDateString('en-CA',{timeZone:'America/Asuncion'}));
+ const moves=cash.moves.filter(m=>session?m.cashSessionId===session:true);
+ return cash.openingAmount+sales.filter(v=>v.pay==='Efectivo').reduce((n,v)=>n+v.total,0)+moves.reduce((n,m)=>n+(m.type==='INGRESO'?m.amount:-m.amount),0);
+}
+function project(s,actor){const d=clone(s);
+ if(actor.role==='CAJERO'){d.products.forEach(p=>p.cost=0);d.suppliers=[];d.purchases=[];d.moves=[];d.sales=d.sales.filter(v=>v.operatorUid===actor.uid);}
+ if(actor.role==='ENCARGADO'){d.clients=[];d.sales=[];d.credits=[];d.stamps=[];d.cash=empty().cash;}
+ return d;
+}
+function apply(state,action,p,actor,ctx){
+ authorize(actor.role,action);const s=clone(state),now=ctx.now||new Date().toISOString(),day=ctx.day||new Date(now).toLocaleDateString('en-CA',{timeZone:'America/Asuncion'});let serial=0;
+ const move=(product,type,qty,detail)=>s.moves.unshift({id:next(s.moves),date:day,datetime:now,productId:product.id,product:product.name,type,qty,detail,operatorUid:actor.uid});
+ const cashMove=(amount,type,detail)=>s.cash.moves.unshift({id:next(s.cash.moves),date:day,datetime:now,amount,type,detail,cashSessionId:s.cash.sessionId,operatorUid:actor.uid});
+ const requireCash=()=>{if(!s.cash.isOpen)fail('Abrí tu caja antes de operar.','failed-precondition')};
+ switch(action){
+ case 'saveProduct':{
+ const q={sku:str(p.sku,100,true),name:str(p.name,300,true),category:str(p.category,100,true),cost:num(p.cost),price:num(p.price,0.01),min:num(p.min),avg:num(p.avg),vat:p.vat};if(![0,5,10].includes(q.vat))fail('IVA inválido.');
+ if(s.products.some(x=>x.id!==p.id&&x.sku.toLowerCase()===q.sku.toLowerCase()))fail('SKU repetido.');
+ if(p.id)Object.assign(find(s.products,p.id),q);else{const product={id:next(s.products),...q,stock:num(p.stock)};s.products.push(product);if(product.stock)move(product,'ENTRADA',product.stock,'Stock inicial')}break;
+ }
+ case 'deleteProduct':if(s.sales.some(v=>v.items.some(i=>i.productId===p.id))||s.purchases.some(v=>v.productId===p.id))fail('El producto tiene operaciones vinculadas.');find(s.products,p.id);s.products=s.products.filter(x=>x.id!==p.id);break;
+ case 'saveStockMove':{const product=find(s.products,p.id),qty=num(p.qty),type=p.type,detail=str(p.detail,500,true);if(!['ENTRADA','SALIDA','AJUSTE'].includes(type)||type!=='AJUSTE'&&qty<=0)fail('Ajuste inválido.');if(type==='SALIDA'&&qty>product.stock)fail('Stock insuficiente.');product.stock=type==='AJUSTE'?qty:product.stock+(type==='ENTRADA'?qty:-qty);move(product,type,type==='SALIDA'?-qty:qty,detail);break}
+ case 'saveSupplier':{const q={name:str(p.name,300,true),ruc:str(p.ruc,100),phone:str(p.phone,100),contact:str(p.contact,300)};if(p.id)Object.assign(find(s.suppliers,p.id),q);else s.suppliers.push({id:next(s.suppliers),...q});break}
+ case 'deleteSupplier':if(s.purchases.some(v=>v.supplierId===p.id))fail('El proveedor tiene compras.');find(s.suppliers,p.id);s.suppliers=s.suppliers.filter(x=>x.id!==p.id);break;
+ case 'savePurchase':{const supplier=find(s.suppliers,p.supplierId),product=find(s.products,p.productId),qty=num(p.qty,0.001),cost=num(p.cost,0.01);s.purchases.unshift({id:next(s.purchases),date:date(p.date),supplierId:supplier.id,supplier:supplier.name,productId:product.id,product:product.name,qty,cost,total:num(qty*cost),invoice:str(p.invoice,100),operatorUid:actor.uid});product.stock+=qty;product.cost=cost;move(product,'ENTRADA',qty,'Compra · '+supplier.name);break}
+ case 'saveClient':{const old=p.id?find(s.clients,p.id):null;const q={name:str(p.name,300,true),doc:str(p.doc,100),phone:str(p.phone,100),address:str(p.address,500),limit:actor.role==='ADMIN'?num(p.limit):old?.limit||0};if(old)Object.assign(old,q);else s.clients.push({id:next(s.clients),...q});break}
+ case 'deleteClient':if(s.sales.some(v=>v.clientId===p.id)||s.credits.some(v=>v.clientId===p.id))fail('El cliente tiene operaciones.');find(s.clients,p.id);s.clients=s.clients.filter(x=>x.id!==p.id);break;
+ case 'openCash':if(s.cash.isOpen)fail('Tu caja ya está abierta.');Object.assign(s.cash,{isOpen:true,openedAt:now,openingAmount:num(p.amount),sessionId:actor.uid+":"+ctx.opid,operatorUid:actor.uid});break;
+ case 'addCashMove':requireCash();if(!['INGRESO','EGRESO'].includes(p.type))fail('Tipo inválido.');cashMove(num(p.amount,0.01),p.type,str(p.detail,500,true));break;
+ case 'closeCash':{requireCash();const total=expected(s,actor.uid),declared=num(p.declared);s.cash.history.unshift({id:next(s.cash.history),date:day,openedAt:s.cash.openedAt,closedAt:now,openingAmount:s.cash.openingAmount,expected:total,declared,difference:declared-total,cashSessionId:s.cash.sessionId,operatorUid:actor.uid});Object.assign(s.cash,{isOpen:false,openedAt:null,openingAmount:0});break}
+ case 'finishSale':{
+ requireCash();if(!Array.isArray(p.items)||!p.items.length||p.items.length>100)fail('Carrito inválido.');const used=new Set();
+ const items=p.items.map(i=>{if(used.has(i.productId))fail('Producto repetido.');used.add(i.productId);const product=find(s.products,i.productId),qty=num(i.qty,1,1e6);if(!Number.isInteger(qty)||qty>product.stock)fail('Cantidad inválida o stock insuficiente.');if(i.price!==product.price||i.vat!==product.vat)fail('El precio o IVA cambió. Revisá la venta.','failed-precondition');return {productId:product.id,name:product.name,qty,price:product.price,vat:product.vat}});
+ const taxes=tax(items),total=num(taxes.total,0.01),client=p.clientId?find(s.clients,p.clientId):null,pay=p.pay;
+ if(!['Efectivo','Transferencia','Tarjeta de débito','Tarjeta de crédito','Crédito'].includes(pay))fail('Forma de pago inválida.');
+ if(pay==='Crédito'){if(!client)fail('Elegí un cliente.');date(p.dueDate);if(p.dueDate<day)fail('Vencimiento inválido.');if(actor.role!=='ADMIN'&&s.credits.filter(c=>c.clientId===client.id).reduce((n,c)=>n+c.balance,0)+total>client.limit)fail('La venta supera el límite de crédito autorizado.','permission-denied')}
+ let invoice=null;
+ if(p.invoice){const st=find(s.stamps,p.invoice.stampId);if(!st.enabled||day<st.validFrom||day>st.validTo||st.next>st.end)fail('Timbrado no disponible.');invoice={enabled:true,doc:str(p.invoice.doc,100,true),name:str(p.invoice.name,300,true),stampId:st.id,stamp:st.number,establishment:st.establishment,point:st.point,sequence:st.next,number:st.establishment+'-'+st.point+'-'+String(st.next).padStart(7,'0'),condition:pay==='Crédito'?'CRÉDITO':'CONTADO'};st.next++}
+ const id=next(s.sales);s.sales.unshift({id,date:day,datetime:now,operatorUid:actor.uid,cashSessionId:s.cash.sessionId,clientId:client?.id||null,client:client?.name||'Consumidor final',pay,total,taxes,invoice,items});
+ items.forEach(i=>{const product=find(s.products,i.productId);product.stock-=i.qty;move(product,'SALIDA',-i.qty,'Venta Nº '+id)});
+ if(pay==='Crédito')s.credits.push({id:next(s.credits),clientId:client.id,client:client.name,date:day,dueDate:p.dueDate,amount:total,balance:total,note:'Generado por venta Nº '+id,payments:[],operatorUid:actor.uid});break;
+ }
+ case 'saveCredit':{const client=find(s.clients,p.clientId),old=p.id?find(s.credits,p.id):null,amount=num(p.amount,0.01);date(p.date);date(p.dueDate);if(p.dueDate<p.date)fail('Vencimiento inválido.');const q={clientId:client.id,client:client.name,date:p.date,dueDate:p.dueDate,note:str(p.note,1000)};if(old){if(old.payments.length&&(old.clientId!==client.id||old.amount!==amount))fail('No se puede cambiar un crédito con pagos.');Object.assign(old,q);if(!old.payments.length)Object.assign(old,{amount,balance:amount})}else s.credits.push({id:next(s.credits),...q,amount,balance:amount,payments:[],operatorUid:actor.uid});break}
+ case 'saveCreditPayment':{const cr=find(s.credits,p.id),amount=num(p.amount,0.01);if(amount>cr.balance)fail('Pago superior al saldo.');if(!['Efectivo','Transferencia','Tarjeta de débito','Tarjeta de crédito'].includes(p.method))fail('Medio de pago inválido.');if(p.method==='Efectivo')requireCash();const detail=str(p.detail,500);cr.payments.push({date:date(p.date),amount,method:p.method,detail,operatorUid:actor.uid});cr.balance-=amount;if(p.method==='Efectivo')cashMove(amount,'INGRESO','Pago de crédito #'+cr.id);break}
+ case 'saveStamp':{const old=p.id?find(s.stamps,p.id):null,q={number:str(p.number,100,true),establishment:str(p.establishment,3,true),point:str(p.point,3,true),validFrom:date(p.validFrom),validTo:date(p.validTo),start:num(p.start,1,9999999),end:num(p.end,1,9999999),next:num(p.next,1,10000000),enabled:p.enabled,note:str(p.note,1000)};if(!/^\d{3}$/.test(q.establishment)||!/^\d{3}$/.test(q.point)||typeof q.enabled!=='boolean'||![q.start,q.end,q.next].every(Number.isInteger)||q.end<q.start||q.next<q.start||q.next>q.end+1||q.validTo<q.validFrom)fail('Timbrado inválido.');if(s.stamps.some(st=>st.id!==p.id&&st.number===q.number&&st.establishment===q.establishment&&st.point===q.point))fail('Timbrado repetido.');if(old&&s.sales.some(v=>v.invoice?.stampId===old.id)&&(q.next<old.next||['number','establishment','point','start','end'].some(k=>q[k]!==old[k])))fail('No se puede alterar la numeración utilizada.');if(old)Object.assign(old,q);else s.stamps.push({id:next(s.stamps),...q});break}
+ case 'deleteStamp':if(s.sales.some(v=>v.invoice?.stampId===p.id))fail('Desactivá el timbrado: tiene facturas emitidas.');find(s.stamps,p.id);s.stamps=s.stamps.filter(x=>x.id!==p.id);break;
+ case 'restore':{
+ const d=p.data;if(!d||JSON.stringify(d).length>4e6)fail('Backup demasiado grande.');for(const k of arrays){if(!Array.isArray(d[k]))fail('Backup inválido.');const ids=new Set();for(const v of d[k]){num(v.id,0);if(ids.has(v.id))fail('ID duplicado.');ids.add(v.id)}}
+ if(!d.cash||!Array.isArray(d.cash.moves)||!Array.isArray(d.cash.history))fail('Caja inválida.');
+ for(const v of s.sales)if(!d.sales.some(x=>isDeepStrictEqual(x,v)))fail('El backup alteraría ventas existentes.');
+ for(const st of s.stamps)if(!d.stamps.some(x=>x.id===st.id&&x.next>=st.next))fail('El backup retrocedería la numeración.');
+ for(const v of d.products)for(const k of ['stock','cost','price','min','avg'])num(v[k]);
+ for(const c of d.clients){str(c.name,300,true);num(c.limit)}
+ for(const c of d.credits){num(c.amount);num(c.balance);if(c.balance>c.amount||!Array.isArray(c.payments))fail('Crédito inválido.');for(const pay of c.payments){num(pay.amount);date(pay.date);str(pay.method,100)}}
+ for(const v of d.sales){num(v.total);date(v.date);if(!Array.isArray(v.items)||v.items.length>100)fail('Venta inválida.');for(const item of v.items){num(item.qty,0.001);num(item.price);num(item.productId);if(![0,5,10].includes(item.vat))fail('IVA inválido.')}if(Math.abs(tax(v.items).total-v.total)>.01)fail('Total inconsistente.')}
+ for(const v of d.purchases){num(v.qty);num(v.cost);num(v.total);date(v.date)}
+ for(const m of d.moves){if(typeof m.qty!=='number'||!Number.isFinite(m.qty))fail('Movimiento inválido.')}
+ for(const st of d.stamps){if(![st.start,st.end,st.next].every(Number.isInteger)||st.start<1||st.end<st.start||st.end>9999999||st.next<st.start||st.next>st.end+1)fail('Numeración inválida.');date(st.validFrom);date(st.validTo)}
+ num(d.cash.openingAmount);if(typeof d.cash.isOpen!=='boolean')fail('Caja inválida.');for(const m of d.cash.moves)num(m.amount);for(const h of d.cash.history){num(h.declared);num(h.openingAmount)}
+ for(const key of [...arrays,'cash'])s[key]=clone(d[key]);break;
+ }
+ default:fail('Operación desconocida.');
+ }
+ return s;
+}
+module.exports={ROLES,arrays,empty,project,apply,authorize,manageAllowed,expected,tax,clone,fail,str,num};
+
+return module.exports;})();
+/* StockPro 8: account roles and durable command outbox. This file is embedded
+   into index.html by stockpro-firebase/build-client.py for standalone offline use. */
+let effectiveRole='LOCAL',commandContext=null,roleBlocked=false;
+const ROLE_NAMES={ADMIN:'Administrador · superusuario',CAJERO:'Cajero',ENCARGADO:'Encargado',LOCAL:'Demo local',BLOCKED:'Sin acceso'};
+const ROLE_ACTIONS={ADMIN:['saveProduct','deleteProduct','saveStockMove','saveSupplier','deleteSupplier','savePurchase','finishSale','saveClient','deleteClient','saveCredit','saveStamp','deleteStamp','openCash','closeCash','addCashMove','saveCreditPayment','restore'],CAJERO:['finishSale','saveClient','openCash','closeCash','addCashMove','saveCreditPayment'],ENCARGADO:['saveProduct','deleteProduct','saveStockMove','saveSupplier','deleteSupplier','savePurchase']};
+const ROLE_PAGES={ADMIN:['dashboard','productos','ventas','clientes','proveedores','compras','creditos','facturacion','caja','movimientos','datos','usuarios'],CAJERO:['ventas','clientes','creditos','caja','datos'],ENCARGADO:['dashboard','productos','proveedores','compras','movimientos','datos','usuarios'],LOCAL:['dashboard','productos','ventas','clientes','proveedores','compras','creditos','facturacion','caja','movimientos','datos'],BLOCKED:['datos']};
+function allowed(action){return activeOwner==='local'||!roleBlocked&&ROLE_ACTIONS[effectiveRole]?.includes(action)}
+function roleUI(){
+ const pages=ROLE_PAGES[effectiveRole]||['datos'];
+ document.querySelectorAll('[data-page]').forEach(el=>el.hidden=!pages.includes(el.dataset.page));
+ document.querySelectorAll('.page').forEach(el=>{if(!pages.includes(el.id))el.classList.remove('active')});
+ if(!document.querySelector('.page.active')){document.getElementById(pages[0]).classList.add('active');document.querySelector('[data-page="'+pages[0]+'"]').classList.add('active')}
+ document.getElementById('roleLabel').textContent=ROLE_NAMES[effectiveRole]||'Sin acceso';
+ const protectedActions=['openCredit','deleteClient','openStamp','deleteStamp','exportBackup','importBackup','migrateV6','resetDemo'];
+ document.querySelectorAll('button[onclick]').forEach(el=>{const f=el.getAttribute('onclick').split('(')[0];if(protectedActions.includes(f))el.hidden=activeOwner!=='local'&&effectiveRole!=='ADMIN'});
+ document.querySelectorAll('label').forEach(el=>{if(el.querySelector('input[type=file]'))el.hidden=activeOwner!=='local'&&effectiveRole!=='ADMIN'});
+ document.getElementById('cLimit').disabled=activeOwner!=='local'&&effectiveRole!=='ADMIN';
+ document.getElementById('userRole').querySelector('option[value=ADMIN]').hidden=effectiveRole!=='ADMIN';
+ if(effectiveRole==='ENCARGADO'){
+ document.getElementById('dashKpis').innerHTML='<div class="col-md-6"><div class="card p-3"><span>Stock valorizado</span><div class="kpi">'+money(db.products.reduce((n,p)=>n+p.cost*p.stock,0))+'</div></div></div>';
+ document.querySelector('.chart-card').hidden=true;
+ }else document.querySelector('.chart-card').hidden=false;
+}
+const renderedBeforeRoles=renderAll;renderAll=function(){renderedBeforeRoles();roleUI()};
+const canMutateBeforeRoles=canMutate;canMutate=function(){if(roleBlocked){toast('Tu acceso cambió. Iniciá sesión nuevamente.');return false}return canMutateBeforeRoles()};
+const roleValue=id=>document.getElementById(id).value;
+const roleNumber=id=>Number(roleValue(id));
+function captureCommand(action,args){
+ switch(action){
+ case 'saveProduct':return {id:roleNumber('productId'),sku:roleValue('pSku').trim(),name:roleValue('pName').trim(),category:roleValue('pCategory').trim(),cost:roleNumber('pCost'),price:roleNumber('pPrice'),stock:roleNumber('pStock'),min:roleNumber('pMin'),avg:roleNumber('pAvg'),vat:roleNumber('pVat')};
+ case 'deleteProduct':case 'deleteClient':case 'deleteSupplier':case 'deleteStamp':return {id:args[0]};
+ case 'saveStockMove':return {id:roleNumber('stockProductId'),type:roleValue('stockType'),qty:roleNumber('stockQty'),detail:roleValue('stockDetail')};
+ case 'saveClient':return {id:roleNumber('clientId'),name:roleValue('cName'),doc:roleValue('cDoc'),phone:roleValue('cPhone'),address:roleValue('cAddress'),limit:roleNumber('cLimit')};
+ case 'saveSupplier':return {id:roleNumber('supplierId'),name:roleValue('sName'),ruc:roleValue('sRuc'),phone:roleValue('sPhone'),contact:roleValue('sContact')};
+ case 'savePurchase':return {date:roleValue('buyDate'),supplierId:roleNumber('buySupplier'),productId:roleNumber('buyProduct'),qty:roleNumber('buyQty'),cost:roleNumber('buyCost'),invoice:roleValue('buyInvoice')};
+ case 'finishSale':return {items:clone(cart),clientId:roleNumber('saleClient')||null,pay:roleValue('salePay'),dueDate:roleValue('saleDue'),invoice:saleInvoice.checked?{stampId:roleNumber('invStampSelect'),doc:roleValue('invDoc'),name:roleValue('invName')}:null};
+ case 'saveCredit':return {id:roleNumber('creditId'),clientId:roleNumber('crClient'),date:roleValue('crDate'),dueDate:roleValue('crDue'),amount:roleNumber('crAmount'),note:roleValue('crNote')};
+ case 'saveCreditPayment':return {id:roleNumber('paymentCreditId'),date:roleValue('payDate'),amount:roleNumber('payAmount'),method:roleValue('payMethod'),detail:roleValue('payDetail')};
+ case 'saveStamp':return {id:roleNumber('stampId'),number:roleValue('stNumber'),establishment:pad3(roleValue('stEst')),point:pad3(roleValue('stPoint')),validFrom:roleValue('stFrom'),validTo:roleValue('stTo'),start:roleNumber('stStart'),end:roleNumber('stEnd'),next:roleNumber('stNext'),enabled:roleValue('stEnabled')==='true',note:roleValue('stNote')};
+ case 'openCash':return {amount:roleNumber('cashOpening')};
+ case 'closeCash':return {declared:roleNumber('cashDeclared')};
+ case 'addCashMove':return {type:roleValue('cashMoveType'),amount:roleNumber('cashMoveAmount'),detail:roleValue('cashMoveDetail')};
+ }
+}
+for(const action of ROLE_ACTIONS.ADMIN.filter(x=>x!=='restore')){
+ const original=window[action];window[action]=function(...args){
+ if(!allowed(action))return toast('Tu rol no permite esta operación.');
+ if(action==='finishSale'&&effectiveRole==='CAJERO'&&salePay.value==='Crédito'){
+ const customer=db.clients.find(c=>c.id===Number(saleClient.value));if(!customer||debt(customer.id)+taxBreakdown(cart).total>customer.limit)return toast('La venta supera el límite de crédito autorizado.');
+ }
+ if(action==='saveClient'&&effectiveRole==='CAJERO')cLimit.value=db.clients.find(c=>c.id===Number(clientId.value))?.limit||0;
+ const prior=commandContext;commandContext={action,payload:captureCommand(action,args)};
+ try{return original(...args)}finally{commandContext=prior}
+ };
+}
+const localSave=save;
+save=function(){
+ if(activeOwner==='local')return localSave();
+ const command=commandContext||{action:'restore',payload:{data:clone(db)}};
+ if(!allowed(command.action)){db=clone(envelope.data);renderAll();throw Error('Tu rol no permite guardar esta operación.')}
+ const prior=clone(envelope.data);
+ try{const data=validateDB(db),queue=[...(envelope.queue||[]),{...clone(command),opid:randomId()}];persist({...envelope,schema:8,data,pending:true,queue,txid:null,role:effectiveRole})}
+ catch(e){db=prior;renderAll();alert('La operación no pudo guardarse: '+e.message);throw e}
+ setSync('pending','Operación guardada localmente; pendiente de validación por el servidor.');queueMicrotask(flushCloud);
+};
+async function callRoles(name,data={}){
+ if(!auth?.currentUser)throw Error('Iniciá sesión.');
+ const token=await auth.currentUser.getIdToken(),controller=new AbortController(),timeout=setTimeout(()=>controller.abort(),30000);
+ try{const prefix=window.STOCKPRO_EMULATOR==='localhost'&&['localhost','127.0.0.1'].includes(location.hostname)?'http://127.0.0.1:5008/demo-stockpro/us-central1/':'https://us-central1-despensa-5dd6d.cloudfunctions.net/';
+ const response=await fetch(prefix+name,{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+token},body:JSON.stringify({data}),signal:controller.signal});const body=await response.json();
+ if(body.error){const error=Error(body.error.message);error.code=body.error.status;throw error}if(!response.ok)throw Error('Servidor no disponible.');return body.result;
+ }finally{clearTimeout(timeout)}
+}
+const failureBeforeRoles=cloudFailure;cloudFailure=function(e){if(e.code==='ABORTED'||e.message==='CONFLICT')e=Error('CONFLICT');if(e.code==='PERMISSION_DENIED'){roleBlocked=true;effectiveRole='BLOCKED';db=emptyDB();renderAll()}failureBeforeRoles(e)};
+function acceptSnapshot(result){effectiveRole=result.role;roleBlocked=false;serverVerified=true;db=validateDB(result.data);persist({...envelope,schema:8,role:result.role,data:clone(db),base:clone(db),revision:result.revision,pending:false,queue:[],txid:null});renderAll();
+ const box=document.getElementById('cashOverview');box.innerHTML=effectiveRole==='ADMIN'?(result.cashOverview||[]).map(t=>'<div class="border-bottom py-2">'+esc(t.uid)+' · '+(t.isOpen?'Abierta':'Cerrada')+' · '+money(t.expected)+'</div>').join(''):'';
+}
+flushCloud=async function(){
+ if(activeOwner==='local'||syncing||reading||conflict||roleBlocked||!auth?.currentUser)return false;
+ if(!navigator.onLine){setSync('offline','Sin conexión. Las operaciones pendientes se validarán al reconectar.');return false}
+ if(!envelope.pending)return refreshCloud();
+ if(!envelope.queue?.length){cloudFailure(Error('La caché antigua debe migrarse con un backup por el administrador.'));return false}
+ const generation=authGeneration;syncing=true;setSync('syncing','Validando permisos y operaciones…');
+ try{
+ while(envelope.queue.length){const command=envelope.queue[0],result=await callRoles('stockproOperate',{...command,revision:envelope.revision});if(generation!==authGeneration)return false;
+ const remaining=envelope.queue.slice(1);effectiveRole=result.role;persist({...envelope,base:validateDB(result.data),revision:result.revision,queue:remaining,pending:remaining.length>0,role:result.role});
+ if(remaining.length&&result.opRevision!==result.revision)throw Error('CONFLICT');
+ if(!remaining.length)acceptSnapshot(result);
+ }
+ setSync('connected','Operaciones confirmadas por Firebase. '+ROLE_NAMES[effectiveRole]);return true;
+ }catch(e){if(generation===authGeneration)cloudFailure(e);return false}finally{if(generation===authGeneration)syncing=false}
+};
+refreshCloud=async function(){
+ if(activeOwner==='local'||syncing||reading||conflict||roleBlocked||!auth?.currentUser)return false;if(envelope.pending)return flushCloud();
+ if(!navigator.onLine){setSync('offline','Sin conexión. Usando la caché de esta cuenta.');return false}
+ if(cart.length||document.querySelector('.modal.show'))return false;
+ const generation=authGeneration;reading=true;
+ try{const result=await callRoles('stockproSnapshot');if(generation!==authGeneration)return false;acceptSnapshot(result);setSync('connected','Firebase conectado · '+ROLE_NAMES[effectiveRole]);return true}
+ catch(e){if(generation===authGeneration)cloudFailure(e);return false}finally{if(generation===authGeneration)reading=false}
+};
+startCloud=async function(){
+ if(storageBroken){setSync('error',lastCloudError);return}
+ try{firebase.initializeApp(firebaseConfig);auth=firebase.auth();cloud=firebase.firestore();
+ if(window.STOCKPRO_EMULATOR==='localhost'&&['localhost','127.0.0.1'].includes(location.hostname)){auth.useEmulator('http://127.0.0.1:9099',{disableWarnings:true});cloud.useEmulator('127.0.0.1',8088)}
+ auth.onAuthStateChanged(async user=>{
+ const generation=++authGeneration;if(stopWatch)stopWatch();syncing=false;reading=false;conflict=false;roleBlocked=false;storageBroken=false;serverVerified=false;activeOwner=user?user.uid:'local';db=load();cart=[];
+ effectiveRole=user?(envelope.role||'BLOCKED'):'LOCAL';renderAll();
+ if(storageBroken){setSync('error',lastCloudError);return}
+ if(!user){setSync('local','Modo demo local. Iniciá sesión con tu cuenta individual para operar la despensa.');return}
+ await retrySync();if(generation!==authGeneration)return;
+ stopWatch=cloud.doc('stockproMembers/'+user.uid).onSnapshot(snap=>{if(snap.metadata.fromCache||snap.metadata.hasPendingWrites)return;const member=snap.data();if(!member?.active||member.role!==effectiveRole){roleBlocked=true;effectiveRole='BLOCKED';db=emptyDB();cart=[];renderAll();setSync('error','Tu acceso cambió o está desactivado. Volvé a iniciar sesión. Los pendientes siguen conservados en esta cuenta.')}},cloudFailure);
+ },cloudFailure);
+ }catch(e){cloudFailure(e)}
+};
+const backupBeforeRoles=exportBackup;exportBackup=function(){if(activeOwner!=='local'&&effectiveRole!=='ADMIN')return toast('Solo el administrador puede exportar un backup completo.');backupBeforeRoles()};
+const importBeforeRoles=importBackup;importBackup=async function(input){if(!allowed('restore'))return toast('Solo el administrador puede restaurar datos.');return importBeforeRoles(input)};
+const migrationBeforeRoles=migrateV6;migrateV6=function(){if(!allowed('restore'))return toast('Solo el administrador puede migrar datos.');migrationBeforeRoles()};
+function exportPendingCommands(){if(!envelope?.queue?.length)return toast('No hay operaciones pendientes.');downloadText(JSON.stringify({uid:activeOwner,revision:envelope.revision,commands:envelope.queue},null,2),'stockpro_pendientes_'+today()+'.json','application/json')}
+useRemoteVersion=async function(){if(!conflict||!navigator.onLine||syncing||reading)return;if(!confirm('Se descargará el detalle de operaciones pendientes y luego se cargará Firebase. Revisá antes de volver a registrarlas.'))return;
+ exportPendingCommands();try{localStorage.setItem(KEY+':recovery:'+activeOwner+':'+Date.now(),JSON.stringify(envelope));conflict=false;persistedRaw=localStorage.getItem(cacheKey());persist({...envelope,queue:[],pending:false});await refreshCloud()}catch(e){conflict=true;cloudFailure(e)}
+};
+let managedUsers=[];
+async function loadUsers(){
+ if(!['ADMIN','ENCARGADO'].includes(effectiveRole))return;
+ try{const result=await callRoles('stockproUsers',{action:'list'});managedUsers=result.users;document.getElementById('usersBody').innerHTML=result.users.map((u,i)=>'<tr><td>'+esc(u.name)+'</td><td>'+esc(u.email)+'</td><td>'+esc(ROLE_NAMES[u.role])+'</td><td>'+(u.active?'Activo':'Inactivo')+'</td><td><button class="btn btn-sm btn-outline-primary" onclick="editUser('+i+')">Editar</button></td></tr>').join('')}catch(e){toast(e.message)}
+}
+function editUser(index){const u=index==null?null:managedUsers[index];userUid.value=u?.uid||'';userName.value=u?.name||'';userEmail.value=u?.email||'';userEmail.disabled=!!u;userRole.value=u?.role||'CAJERO';userActive.checked=u?.active??true;modal('userModal').show()}
+async function saveUser(){const button=document.getElementById('saveUserButton');button.disabled=true;
+ try{await callRoles('stockproUsers',{action:userUid.value?'update':'create',uid:userUid.value||null,name:userName.value.trim(),email:userEmail.value.trim(),role:userRole.value,active:userActive.checked});modal('userModal').hide();await loadUsers();toast('Acceso actualizado. El usuario puede establecer su contraseña desde la pantalla de ingreso.')}
+ catch(e){toast(e.message)}finally{button.disabled=false}
+}
+async function resetOwnPassword(){if(!auth)return;const email=loginEmail.value.trim();if(!email)return toast('Ingresá tu correo electrónico.');try{await auth.sendPasswordResetEmail(email);toast('Si la cuenta existe, Firebase enviará las instrucciones a ese correo.')}catch(e){toast('No se pudo enviar el correo. Revisá la configuración de Authentication.')}}
+document.querySelector('[data-page="usuarios"]').addEventListener('click',loadUsers);
+
+/* Spark adapter. Authenticated SDK requests are enforced by firestore.rules.
+   No callable endpoints, private keys, or paid backend required. */
+const sparkRoot=()=>cloud.doc('stockproStores/despensa');
+const sparkEmail=()=>auth.currentUser.email.toLowerCase();
+const sparkAccess=()=>cloud.doc('stockproAccess/'+sparkEmail());
+function sparkError(message,code='PERMISSION_DENIED'){const e=Error(message);e.code=code;return e}
+async function sparkActor(){
+ const user=auth.currentUser;if(!user)throw sparkError('Iniciá sesión.');
+ if(!user.emailVerified)throw sparkError('Verificá tu correo con el enlace recibido y volvé a iniciar sesión.','EMAIL_NOT_VERIFIED');
+ const doc=await sparkAccess().get({source:'server'}),m=doc.data();
+ if(!m?.active||!StockDomain.ROLES.includes(m.role))throw sparkError('Tu correo todavía no tiene acceso. Pedí al administrador que lo autorice.');
+ return {...m,uid:user.uid};
+}
+async function sparkSnapshot(){
+ const actor=await sparkActor(),root=sparkRoot(),meta=root.collection('meta').doc('state');
+ for(let attempt=0;attempt<3;attempt++){
+ const start=await meta.get({source:'server'}),revision=start.exists?start.data().revision:0;
+ const data=emptyDB(),keys=actor.role==='ENCARGADO'?['products','suppliers','purchases','moves']:actor.role==='CAJERO'?['products','clients','sales','credits','stamps','payments','cashMoves','cashClosings']:CLOUD_KEYS.filter(k=>k!=='cash');
+ const groups={};await Promise.all(keys.map(async k=>{let q=root.collection(k);if(actor.role==='CAJERO'&&['sales','cashMoves','cashClosings'].includes(k))q=q.where('operatorUid','==',actor.uid);const s=await q.get({source:'server'});groups[k]=s.docs.map(x=>x.data())}));
+ for(const k of ENTITY_KEYS)data[k]=groups[k]||[];
+ if(actor.role!=='CAJERO'){const costs=await root.collection('productCosts').get({source:'server'});const byId=Object.fromEntries(costs.docs.map(d=>[d.id,d.data().cost]));data.products.forEach(p=>p.cost=byId[p.id]||0)}else data.products.forEach(p=>p.cost=0);
+ data.credits.forEach(c=>c.payments=(groups.payments||[]).filter(p=>p.creditId===c.id).sort((a,b)=>a.position-b.position).map(({creditId,position,...p})=>p));
+ let overview=[];
+ if(actor.role!=='ENCARGADO'){
+ const cash=await root.collection('cash').doc(actor.uid).get({source:'server'});if(cash.exists)data.cash={...cash.data(),moves:[],history:[]};
+ data.cash.moves=(groups.cashMoves||[]).filter(m=>m.operatorUid===actor.uid).sort((a,b)=>b.id-a.id);data.cash.history=(groups.cashClosings||[]).filter(m=>m.operatorUid===actor.uid).sort((a,b)=>b.id-a.id);
+ if(actor.role==='ADMIN'){const all=await root.collection('cash').get({source:'server'});overview=all.docs.map(d=>({uid:d.data().operatorEmail||d.id,...d.data(),expected:d.data().expectedBalance||0}))}
+ }
+ for(const k of ['sales','purchases','moves'])data[k].sort((a,b)=>b.id-a.id);
+ const end=await meta.get({source:'server'});if((end.exists?end.data().revision:0)===revision)return {role:actor.role,ownerUid:'despensa',revision,data:validateDB(data),cashOverview:overview};
+ }
+ throw sparkError('Los datos cambiaron durante la lectura. Reintentá.','UNAVAILABLE');
+}
+function sparkFlat(data,actor){
+ const map=new Map();
+ for(const key of ENTITY_KEYS)for(const row of data[key]){const value=clone(row);if(key==='products'){if(actor.role!=='CAJERO')map.set('productCosts/'+row.id,{id:row.id,cost:row.cost});delete value.cost}
+ if(key==='credits'){delete value.payments;row.payments.forEach((p,n)=>map.set('payments/'+row.id+'_'+n,{...p,creditId:row.id,position:n}))}
+ map.set(key+'/'+row.id,value)}
+ if(actor.role!=='ENCARGADO'&&data.cash.operatorUid){const cash=clone(data.cash);delete cash.moves;delete cash.history;map.set('cash/'+actor.uid,cash);for(const [key,rows] of [['cashMoves',data.cash.moves],['cashClosings',data.cash.history]])rows.forEach(m=>map.set(key+'/'+actor.uid+'_'+m.id,m))}
+ return map;
+}
+function withoutOp(x){if(!x)return x;const d=clone(x);delete d._op;return d}
+async function sparkOperate(command){
+ const actor=await sparkActor(),root=sparkRoot(),meta=root.collection('meta').doc('state'),opRef=root.collection('operations').doc(actor.uid+'_'+command.opid);
+ const priorReceipt=await opRef.get({source:'server'});if(priorReceipt.exists){const snap=await sparkSnapshot();return {...snap,opRevision:priorReceipt.data().revision}}
+ // Restore was already validated before it entered the durable outbox.
+ const source=clone(envelope.base),before=sparkFlat(source,actor),now=new Date().toISOString();
+ const state=StockDomain.apply(source,command.action,command.payload,actor,{opid:command.opid,now});
+ const createdSale=command.action==='finishSale'&&state.sales.find(v=>!source.sales.some(old=>old.id===v.id));
+ const createdCredit=command.action!=='restore'&&state.credits.find(v=>!source.credits.some(old=>old.id===v.id));
+ if(createdCredit&&createdSale)createdCredit.saleId=createdSale.id;
+ if(createdSale){let runningTotal=0;createdSale.items.forEach(i=>{runningTotal+=i.qty*i.price;i.runningTotal=runningTotal});createdSale.date=today();createdSale.creditId=createdCredit?.id||null;createdSale.items.forEach((item,index)=>{const p=state.products.find(p=>p.id===item.productId);p.lastSaleId=createdSale.id;p.lastSaleIndex=index});if(createdSale.invoice)state.stamps.find(st=>st.id===createdSale.invoice.stampId).lastSaleId=createdSale.id;}
+ if(command.action==='restore')for(const v of state.sales){if(source.sales.some(old=>old.id===v.id))continue;let runningTotal=0;v.items.forEach(i=>{runningTotal+=i.qty*i.price;i.runningTotal=runningTotal});v.datetime=v.datetime||v.date+'T00:00:00.000Z';v.operatorUid=v.operatorUid||actor.uid;v.cashSessionId=v.cashSessionId||'legacy:'+v.id;v.creditId=v.creditId||null;}
+ for(const c of state.clients)c.balance=state.credits.filter(cr=>cr.clientId===c.id).reduce((n,cr)=>n+cr.balance,0);
+ let paymentId=null;if(command.action==='saveCreditPayment'){const cr=state.credits.find(c=>c.id===command.payload.id);paymentId=cr.id+'_'+(cr.payments.length-1);cr.lastPaymentId=paymentId;const move=state.cash.moves.find(m=>!source.cash.moves.some(old=>old.id===m.id));if(move)move.paymentId=paymentId;}
+ if(actor.role!=='ENCARGADO'&&(['openCash','closeCash','addCashMove','finishSale','restore'].includes(command.action)||command.action==='saveCreditPayment'&&command.payload.method==='Efectivo')){state.cash.sessionId=state.cash.sessionId||null;state.cash.operatorUid=actor.uid;state.cash.operatorEmail=sparkEmail();state.cash.expectedBalance=state.cash.isOpen?StockDomain.expected(state,actor.uid):0;}
+ const after=sparkFlat(state,actor),changed=[];if(createdSale){for(let start=0;start<createdSale.items.length;start+=5)after.set('saleChecks/'+createdSale.id+'_'+start,{saleId:createdSale.id,start,operatorUid:actor.uid})}
+ for(const [key,value] of after)if(JSON.stringify(withoutOp(value))!==JSON.stringify(withoutOp(before.get(key)))||key==='cash/'+actor.uid&&(['openCash','closeCash','addCashMove','finishSale'].includes(command.action)||command.action==='saveCreditPayment'&&command.payload.method==='Efectivo'))changed.push([key,{...value,_op:command.opid}]);for(const key of before.keys())if(!after.has(key))changed.push([key,null]);
+ if(changed.length>400)throw Error('El lote supera 400 documentos. Conservá el backup y dividí la importación.');
+ const newCashMove=state.cash.moves.find(m=>!source.cash.moves.some(o=>o.id===m.id)),newClosing=state.cash.history.find(m=>!source.cash.history.some(o=>o.id===m.id));
+ const context={role:actor.role,cashMoveId:newCashMove?actor.uid+'_'+newCashMove.id:'',closingId:newClosing?actor.uid+'_'+newClosing.id:'',action:command.action,opid:command.opid,actorUid:actor.uid,saleId:createdSale?.id||0,creditId:createdCredit?.id||command.payload.id||0,paymentId:paymentId||'',updatedAt:firebase.firestore.FieldValue.serverTimestamp()};
+ const result=await cloud.runTransaction(async tx=>{
+ const op=await tx.get(opRef),current=await tx.get(meta);const revision=current.exists?current.data().revision:0;
+ if(op.exists)return {revision,opRevision:op.data().revision,duplicate:true};
+ if(revision!==command.revision)throw Error('CONFLICT');
+ for(const [key,value] of changed){if(value===null)tx.delete(root.collection(key.split('/')[0]).doc(key.split('/')[1]));else tx.set(root.collection(key.split('/')[0]).doc(key.split('/')[1]),value)}
+ tx.set(meta,{...context,revision:revision+1,schema:9});tx.set(opRef,{...context,revision:revision+1});
+ return {revision:revision+1,opRevision:revision+1};
+ });
+ if(result.duplicate){const snap=await sparkSnapshot();return {...snap,opRevision:result.opRevision}}
+ return {role:actor.role,ownerUid:'despensa',data:state,...result};
+}
+async function sparkUsers(p){
+ const actor=await sparkActor();if(!['ADMIN','ENCARGADO'].includes(actor.role))throw sparkError('No podés gestionar usuarios.');
+ if(p.action==='list'){let q=cloud.collection('stockproAccess');if(actor.role==='ENCARGADO')q=q.where('role','in',['CAJERO','ENCARGADO']);const snap=await q.get({source:'server'});return {users:snap.docs.map(d=>({uid:d.id,...d.data()}))}}
+ const email=(p.uid||p.email||'').trim().toLowerCase();if(!/^[^\s/@]+@[^\s/@]+\.[^\s/@]+$/.test(email))throw Error('Correo inválido.');
+ const ref=cloud.doc('stockproAccess/'+email),old=await ref.get({source:'server'});
+ if(p.action==='create'&&old.exists)throw Error('El correo ya está autorizado. Editalo desde la lista.');
+ if(p.action==='update'&&!old.exists)throw Error('Acceso no encontrado.');
+ await ref.set({email,name:StockDomain.str(p.name,200,true),role:p.role,active:p.active,updatedBy:actor.uid,updatedAt:firebase.firestore.FieldValue.serverTimestamp()});return {uid:email};
+}
+callRoles=async function(name,data={}){try{if(name==='stockproSnapshot')return await sparkSnapshot();if(name==='stockproOperate')return await sparkOperate(data);if(name==='stockproUsers')return await sparkUsers(data);throw Error('Operación desconocida.')}catch(e){if(e.code==='permission-denied')e.code='PERMISSION_DENIED';throw e}};
+startCloud=async function(){
+ try{firebase.initializeApp(firebaseConfig);auth=firebase.auth();cloud=firebase.firestore();
+ if(window.STOCKPRO_EMULATOR==='localhost'&&['localhost','127.0.0.1'].includes(location.hostname)){auth.useEmulator('http://127.0.0.1:9099',{disableWarnings:true});cloud.useEmulator('127.0.0.1',8088)}
+ auth.onAuthStateChanged(async user=>{const generation=++authGeneration;if(stopWatch)stopWatch();syncing=false;reading=false;conflict=false;roleBlocked=false;serverVerified=false;activeOwner=user?user.uid:'local';db=load();cart=[];effectiveRole=user?(envelope.role||'BLOCKED'):'LOCAL';renderAll();
+ if(!user){setSync('local','Modo local. Iniciá sesión para usar la despensa compartida.');return}
+ if(!user.emailVerified){effectiveRole='BLOCKED';db=emptyDB();renderAll();setSync('error','Verificá tu correo y volvé a iniciar sesión. Si necesitás otro enlace, cerrá sesión y pulsá Crear mi cuenta con tu correo y contraseña.');return}
+ await retrySync();if(generation!==authGeneration)return;
+ stopWatch=sparkAccess().onSnapshot(snap=>{if(snap.metadata.fromCache||snap.metadata.hasPendingWrites)return;const m=snap.data();if(!m?.active||m.role!==effectiveRole){roleBlocked=true;effectiveRole='BLOCKED';db=emptyDB();cart=[];renderAll();setSync('error','Tu acceso cambió. Volvé a iniciar sesión. Los pendientes están conservados.')}},cloudFailure);
+ },cloudFailure);
+ }catch(e){cloudFailure(e)}
+};
+async function registerOwnAccount(){
+ const email=loginEmail.value.trim().toLowerCase(),password=loginPassword.value;if(!email||password.length<8)return toast('Ingresá tu correo y una contraseña de al menos 8 caracteres.');
+ try{let credential;try{credential=await auth.createUserWithEmailAndPassword(email,password)}catch(e){if(e.code!=='auth/email-already-in-use')throw e;credential=await auth.signInWithEmailAndPassword(email,password)}
+ if(!credential.user.emailVerified){await credential.user.sendEmailVerification();toast('Revisá tu correo (también spam), abrí el enlace de verificación y luego iniciá sesión.');await auth.signOut()}else toast('Cuenta verificada. Iniciando sesión…');
+ }catch(e){toast('No se pudo crear o verificar la cuenta: '+e.message)}
+}
+const sparkCanMutate=canMutate;canMutate=function(){if(activeOwner!=='local'&&envelope.queue?.some(c=>(['saveProduct','saveClient','saveSupplier','saveCredit','restore'].includes(c.action)||c.action==='finishSale'&&c.payload.pay==='Crédito'))){toast('Sincronizá el alta pendiente antes de usar ese registro.');return false}return sparkCanMutate()};
+const sparkFinishSale=finishSale;finishSale=function(...args){if(activeOwner!=='local'&&cart.length>10)return toast('Máximo 10 productos distintos por venta en esta versión del plan gratuito. Dividí el carrito en dos ventas.');return sparkFinishSale(...args)};
+saveUser=async function(){const button=document.getElementById('saveUserButton');button.disabled=true;try{await sparkUsers({action:userUid.value?'update':'create',uid:userUid.value||null,name:userName.value.trim(),email:userEmail.value.trim(),role:userRole.value,active:userActive.checked});modal('userModal').hide();await loadUsers();toast('Correo autorizado. La persona debe crear su cuenta y verificar su correo para ingresar.')}catch(e){toast(e.message)}finally{button.disabled=false}};
+
+renderAll();startCloud();
+</script><!-- STOCKPRO_SPARK_END -->
 </body></html>

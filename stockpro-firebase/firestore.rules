@@ -1,0 +1,14 @@
+rules_version = '2';
+service cloud.firestore {
+ match /databases/{database}/documents {
+  // Clients use authenticated callable endpoints. Never authorize a client
+  // role supplied in its request, cache, profile write or UI.
+  match /stockproMembers/{uid} {
+   allow read: if request.auth != null && request.auth.uid == uid;
+   allow write: if false;
+  }
+  match /stockproConfig/{id} { allow read, write: if false; }
+  match /stockproUsers/{owner}/{document=**} { allow read, write: if false; }
+  match /{document=**} { allow read, write: if false; }
+ }
+}

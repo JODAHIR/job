@@ -1,0 +1,1 @@
+{"name":"stockpro-spark-tests","version":"8.1.0","private":true,"scripts":{"test":"node --test tests/*.test.cjs"},"devDependencies":{"@firebase/rules-unit-testing":"latest","firebase":"latest"}}
