@@ -18,8 +18,17 @@ body{background:var(--paper);font-size:14px;letter-spacing:-.015em}.container-fl
 @media print{.sidebar,.topbar,.sync-note,.no-print{display:none!important}main.col-lg-10{margin:0;width:100%}.page{display:none!important}.page.active{display:block!important}}
 </style>
 </head>
-<body>
-<div class="container-fluid"><div class="row">
+<body class="auth-locked"><!-- STOCKPRO_LOGIN_START --><style>
+[hidden]{display:none!important}body.auth-locked #appShell,body.auth-locked>.modal,body.auth-locked>.modal-backdrop{display:none!important}
+.login-screen{min-height:100dvh;display:grid;grid-template-columns:1fr 1fr;background:#f3f6fa;color:#172b3a}.login-story{background:linear-gradient(145deg,#112d3c,#16594e);color:white;padding:clamp(32px,7vw,110px);display:flex;flex-direction:column;justify-content:center;gap:24px}.login-brand{font-size:26px;font-weight:800;letter-spacing:-1px}.login-story h1{font-size:clamp(36px,4.5vw,64px);line-height:1.08;letter-spacing:-2px;max-width:520px}.login-story p{color:#cae0da;max-width:410px;line-height:1.7}.login-panel{display:flex;align-items:center;justify-content:center;padding:40px 24px}.login-card{width:100%;max-width:420px}.login-card h2{font-size:32px;letter-spacing:-1px}.login-card .form-control{min-height:48px}.login-card #loginForm button{width:100%;margin-top:10px;min-height:46px}.login-help{font-size:14px;color:#607181;line-height:1.6;margin-top:24px}.login-status{padding:12px 14px;border-radius:12px;background:#e6eef3;line-height:1.5;margin:20px 0;overflow-wrap:anywhere}.login-status[data-error=true]{background:#fff0ed;color:#9a3424}.login-session{display:flex;gap:10px;flex-wrap:wrap}.login-eyebrow{font-size:12px;letter-spacing:2px;text-transform:uppercase;color:#497d70;font-weight:700}.session-email{max-width:220px;overflow:hidden;text-overflow:ellipsis;font-size:13px;color:#607181}
+@media(max-width:760px){.login-screen{grid-template-columns:1fr}.login-story{padding:28px 24px;gap:12px}.login-story h1{font-size:32px;letter-spacing:-1px;margin:0}.login-story p{display:none}.login-panel{padding:30px 24px}.login-card h2{font-size:28px}.session-email{display:none}}
+</style>
+<section id="loginScreen" class="login-screen" aria-labelledby="loginHeading">
+ <div class="login-story"><div class="login-brand">▥ StockPro</div><h1>Tu despensa,<br>en buenas manos.</h1><p>Un espacio para organizar el inventario, atender a tus clientes y llevar el control de cada jornada.</p></div>
+ <div class="login-panel"><div class="login-card"><div class="login-eyebrow">Bienvenido a tu espacio</div><h2 id="loginHeading" class="mt-2">Iniciá sesión</h2><p class="text-secondary">Ingresá con tu correo y contraseña.</p><div id="loginStatus" class="login-status" role="status" aria-live="polite">Preparando acceso seguro…</div><div id="loginFormSlot"></div><div id="loginSessionActions" class="login-session" hidden><button class="btn btn-primary" type="button" onclick="retryLoginAccess()">Reintentar acceso</button><button class="btn btn-outline-secondary" type="button" onclick="logoutCloud()">Cerrar sesión</button></div><p class="login-help">Vas a ver los módulos habilitados para tu rol. Si es tu primer ingreso, creá tu cuenta, verificá tu correo y pedí al administrador que autorice tu acceso.</p><noscript>Activá JavaScript para iniciar sesión.</noscript></div></div>
+</section>
+<!-- STOCKPRO_LOGIN_END -->
+<div id="appShell" class="container-fluid" inert><div class="row">
 <aside class="col-lg-2 sidebar">
  <div class="brand"><span class="brand-mark">▥</span><span class="brand-text">StockPro<small>GESTIÓN DE DESPENSA</small></span></div><div class="nav-caption">ESPACIO DE TRABAJO</div>
  <nav id="nav">
@@ -686,6 +695,7 @@ invCondition.disabled=true;
 
 
 
+
 <!-- STOCKPRO_SPARK_START --><script>
 const StockDomain=(()=>{const module={exports:{}};
 'use strict';
@@ -1017,6 +1027,35 @@ async function registerOwnAccount(){
 const sparkCanMutate=canMutate;canMutate=function(){if(activeOwner!=='local'&&envelope.queue?.some(c=>(['saveProduct','saveClient','saveSupplier','saveCredit','restore'].includes(c.action)||c.action==='finishSale'&&c.payload.pay==='Crédito'))){toast('Sincronizá el alta pendiente antes de usar ese registro.');return false}return sparkCanMutate()};
 const sparkFinishSale=finishSale;finishSale=function(...args){if(activeOwner!=='local'&&cart.length>10)return toast('Máximo 10 productos distintos por venta en esta versión del plan gratuito. Dividí el carrito en dos ventas.');return sparkFinishSale(...args)};
 saveUser=async function(){const button=document.getElementById('saveUserButton');button.disabled=true;try{await sparkUsers({action:userUid.value?'update':'create',uid:userUid.value||null,name:userName.value.trim(),email:userEmail.value.trim(),role:userRole.value,active:userActive.checked});modal('userModal').hide();await loadUsers();toast('Correo autorizado. La persona debe crear su cuenta y verificar su correo para ingresar.')}catch(e){toast(e.message)}finally{button.disabled=false}};
+
+/* Login is a presentation boundary. Firestore rules remain the authority. */
+const loginFormNode=document.getElementById('loginForm');
+document.getElementById('loginFormSlot').append(loginFormNode);
+document.querySelector('.top-right').insertAdjacentHTML('beforeend','<span id="sessionEmail" class="session-email"></span><button class="btn btn-outline-secondary btn-sm" onclick="logoutCloud()">Salir</button>');
+let loginBusy=false,loginOpenedFor=null;
+function loginMessage(message,error=false){const el=document.getElementById('loginStatus');el.textContent=message;el.dataset.error=String(error)}
+function loginGate(){
+ const user=auth?.currentUser,ready=!!(user?.emailVerified&&serverVerified&&!roleBlocked&&ROLE_ACTIONS[effectiveRole]);
+ document.body.classList.toggle('auth-locked',!ready);
+ document.getElementById('appShell').inert=!ready;
+ document.getElementById('loginScreen').hidden=ready;
+ loginFormNode.hidden=!!user;
+ document.getElementById('loginSessionActions').hidden=!user||ready;
+ document.getElementById('sessionEmail').textContent=user?.email||'';
+ if(!ready){document.body.classList.remove('sidebar-open');loginOpenedFor=null}
+ if(user&&!ready){loginMessage(!user.emailVerified?'Verificá tu correo antes de ingresar. Cerrá sesión y usá Crear mi cuenta si necesitás otro enlace.':roleBlocked?'Tu cuenta no tiene acceso activo. Consultá con el administrador.':syncState==='error'||syncState==='offline'?syncDetail:'Verificando tu cuenta y los módulos habilitados…',roleBlocked||syncState==='error')}
+ else if(!user&&!loginBusy&&syncState!=='error')loginMessage('Acceso exclusivo para usuarios autorizados.');
+ if(ready&&loginOpenedFor!==user.uid){loginOpenedFor=user.uid;goPage(ROLE_PAGES[effectiveRole][0])}
+}
+const loginRoleUI=roleUI;roleUI=function(){loginRoleUI();loginGate();const page=document.querySelector('.page.active');document.querySelectorAll('[data-page]').forEach(b=>b.classList.toggle('active',b.dataset.page===page?.id));if(page)document.getElementById('pageCrumb').textContent=document.querySelector('[data-page="'+page.id+'"]').textContent.trim()};
+const loginSetSync=setSync;setSync=function(state,detail){loginSetSync(state,detail);loginGate()};
+const loginGoPage=goPage;goPage=function(page){if(document.body.classList.contains('auth-locked')||!ROLE_PAGES[effectiveRole]?.includes(page))return;loginGoPage(page)};
+document.addEventListener('click',event=>{const button=event.target.closest('[data-page]');if(button&&(document.body.classList.contains('auth-locked')||!ROLE_PAGES[effectiveRole]?.includes(button.dataset.page))){event.preventDefault();event.stopImmediatePropagation()}},true);
+const loginAllowed=allowed;allowed=function(action){return !document.body.classList.contains('auth-locked')&&loginAllowed(action)};
+function friendlyLoginError(e){return ['auth/invalid-credential','auth/wrong-password','auth/user-not-found','auth/invalid-login-credentials'].includes(e.code)?'El correo o la contraseña no son correctos.':e.code==='auth/too-many-requests'?'Demasiados intentos. Esperá unos minutos antes de reintentar.':e.code==='auth/network-request-failed'?'No hay conexión. Revisá tu red y reintentá.':'No se pudo iniciar sesión. Revisá tu correo y la conexión.'}
+loginCloud=async function(event){event.preventDefault();if(loginBusy)return;if(!auth)return loginMessage('No se pudo conectar. Recargá la página e intentá nuevamente.',true);if(!navigator.onLine)return loginMessage('Necesitás conexión para iniciar sesión.',true);loginBusy=true;const buttons=loginFormNode.querySelectorAll('button');buttons.forEach(b=>b.disabled=true);loginMessage('Ingresando…');try{await auth.signInWithEmailAndPassword(loginEmail.value.trim(),loginPassword.value);loginPassword.value=''}catch(e){loginPassword.value='';loginMessage(friendlyLoginError(e),true)}finally{loginBusy=false;buttons.forEach(b=>b.disabled=false)}};
+async function retryLoginAccess(){if(!auth?.currentUser)return;try{await auth.currentUser.reload();if(!auth.currentUser.emailVerified)return loginGate();await auth.currentUser.getIdToken(true);roleBlocked=false;await retrySync();loginGate()}catch(e){loginMessage('No se pudo verificar el acceso. Revisá la conexión e intentá nuevamente.',true)}}
+loginGate();
 
 renderAll();startCloud();
 </script><!-- STOCKPRO_SPARK_END -->
