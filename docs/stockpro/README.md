@@ -5,7 +5,7 @@ Proyecto Firebase: `despensa-5dd6d`. Firestore Standard `(default)` en `us-centr
 
 ## Primer ingreso
 
-1. Abrir la página y entrar en **Datos y sincronización**.
+1. Abrir la página: se muestra la pantalla de ingreso.
 2. Escribir el correo autorizado y una contraseña propia de al menos 8 caracteres. Pulsar **Crear mi cuenta**.
 3. Revisar el correo (también spam), abrir el enlace de verificación y regresar a **Iniciar sesión**.
 4. Para una cuenta existente usar **Iniciar sesión** o **Recuperar contraseña**.
@@ -56,3 +56,7 @@ Pruebas de reglas en emulador: anónimo, correo no verificado, no invitado, desa
 Pruebas en Chrome con emuladores aislados: tres roles, stock, venta, caja propia/supervisión, cola sin conexión, factura a crédito con 10 productos, cobro en efectivo, cierre, revocación y vista móvil de 390 px. El informe de pruebas no sustituye la verificación del despliegue real.
 
 Reglas diseñadas como prototipo revisable: denegación por defecto, invitaciones verificadas y validación de operaciones acopladas. Revisar antes de ampliar el acceso a muchos usuarios. Los SDK y las pruebas no constituyen una auditoría independiente.
+
+## Pantalla de ingreso
+
+El sistema permanece oculto hasta verificar la cuenta y cargar el rol desde Firebase. El cajero inicia en Punto de venta; administrador y encargado en su panel. Cada menú muestra únicamente los módulos de su rol. Salir devuelve al login. Los errores de credenciales aparecen en la misma pantalla. Una sesión ya verificada conserva su contingencia offline; al recargar se requiere validar el acceso antes de abrir los módulos.
