@@ -7,24 +7,29 @@ function sparkError(message,code='PERMISSION_DENIED'){const e=Error(message);e.c
 async function sparkActor(){
  const user=auth.currentUser;if(!user)throw sparkError('Iniciá sesión.');
  if(!user.emailVerified)throw sparkError('Verificá tu correo con el enlace recibido y volvé a iniciar sesión.','EMAIL_NOT_VERIFIED');
- const doc=await sparkAccess().get({source:'server'}),m=doc.data();
+ const [doc,policy]=await Promise.all([sparkAccess().get({source:'server'}),Promise.all([cloud.doc('stockproConfig/main').get({source:'server'}),cloud.doc('stockproConfig/modules').get({source:'server'})])]),m=doc.data();
  if(!m?.active||!StockDomain.ROLES.includes(m.role))throw sparkError('Tu correo todavía no tiene acceso. Pedí al administrador que lo autorice.');
- const actor={...m,uid:user.uid};await readModulePolicy(actor);return actor;
+ const actor={...m,uid:user.uid};if(auth.currentUser?.uid!==user.uid)throw sparkError('La sesión cambió.');applyModulePolicy(policy[1].data()?.enabled||{},actor.role==='ADMIN'&&policy[0].data()?.ownerEmail===sparkEmail());return actor;
 }
 async function sparkSnapshot(){
- const actor=await sparkActor(),root=sparkRoot(),meta=root.collection('meta').doc('state');
+ const root=sparkRoot(),meta=root.collection('meta').doc('state');
+ const [actor,initial]=await Promise.all([sparkActor(),meta.get({source:'server'})]);
  for(let attempt=0;attempt<3;attempt++){
- const start=await meta.get({source:'server'}),revision=start.exists?start.data().revision:0;
+ const start=attempt===0?initial:await meta.get({source:'server'}),revision=start.exists?start.data().revision:0;
  const data=emptyDB(),keys=actor.role==='ENCARGADO'?['products','suppliers','purchases','moves']:actor.role==='CAJERO'?['products','clients','sales','credits','stamps','payments','cashMoves','cashClosings']:CLOUD_KEYS.filter(k=>k!=='cash');
- const groups={};await Promise.all(keys.map(async k=>{let q=root.collection(k);if(actor.role==='CAJERO'&&['sales','cashMoves','cashClosings'].includes(k))q=q.where('operatorUid','==',actor.uid);const s=await q.get({source:'server'});groups[k]=s.docs.map(x=>x.data())}));
+ const costsTask=actor.role!=='CAJERO'?root.collection('productCosts').get({source:'server'}):Promise.resolve(null);
+ const cashTask=actor.role!=='ENCARGADO'?root.collection('cash').doc(actor.uid).get({source:'server'}):Promise.resolve(null);
+ const overviewTask=actor.role==='ADMIN'?root.collection('cash').get({source:'server'}):Promise.resolve(null);
+ const groups={};const collectionsTask=Promise.all(keys.map(async k=>{let q=root.collection(k);if(actor.role==='CAJERO'&&['sales','cashMoves','cashClosings'].includes(k))q=q.where('operatorUid','==',actor.uid);const s=await q.get({source:'server'});groups[k]=s.docs.map(x=>x.data())}));
+ const [costs,cash,all]=await Promise.all([costsTask,cashTask,overviewTask,collectionsTask]);
  for(const k of ENTITY_KEYS)data[k]=groups[k]||[];
- if(actor.role!=='CAJERO'){const costs=await root.collection('productCosts').get({source:'server'});const byId=Object.fromEntries(costs.docs.map(d=>[d.id,d.data().cost]));data.products.forEach(p=>p.cost=byId[p.id]||0)}else data.products.forEach(p=>p.cost=0);
+ if(actor.role!=='CAJERO'){const byId=Object.fromEntries(costs.docs.map(d=>[d.id,d.data().cost]));data.products.forEach(p=>p.cost=byId[p.id]||0)}else data.products.forEach(p=>p.cost=0);
  data.credits.forEach(c=>c.payments=(groups.payments||[]).filter(p=>p.creditId===c.id).sort((a,b)=>a.position-b.position).map(({creditId,position,...p})=>p));
  let overview=[];
  if(actor.role!=='ENCARGADO'){
- const cash=await root.collection('cash').doc(actor.uid).get({source:'server'});if(cash.exists)data.cash={...cash.data(),moves:[],history:[]};
+ if(cash.exists)data.cash={...cash.data(),moves:[],history:[]};
  data.cash.moves=(groups.cashMoves||[]).filter(m=>m.operatorUid===actor.uid).sort((a,b)=>b.id-a.id);data.cash.history=(groups.cashClosings||[]).filter(m=>m.operatorUid===actor.uid).sort((a,b)=>b.id-a.id);
- if(actor.role==='ADMIN'){const all=await root.collection('cash').get({source:'server'});overview=all.docs.map(d=>({uid:d.data().operatorEmail||d.id,...d.data(),expected:d.data().expectedBalance||0}))}
+ if(actor.role==='ADMIN'){overview=all.docs.map(d=>({uid:d.data().operatorEmail||d.id,...d.data(),expected:d.data().expectedBalance||0}))}
  }
  for(const k of ['sales','purchases','moves'])data[k].sort((a,b)=>b.id-a.id);
  const end=await meta.get({source:'server'});if((end.exists?end.data().revision:0)===revision)return {role:actor.role,ownerUid:'despensa',revision,data:validateDB(data),cashOverview:overview};
@@ -84,12 +89,12 @@ callRoles=async function(name,data={}){try{if(name==='stockproSnapshot')return a
 startCloud=async function(){
  try{firebase.initializeApp(firebaseConfig);auth=firebase.auth();auth.languageCode='es';cloud=firebase.firestore();
  if(window.STOCKPRO_EMULATOR==='localhost'&&['localhost','127.0.0.1'].includes(location.hostname)){auth.useEmulator('http://127.0.0.1:9099',{disableWarnings:true});cloud.useEmulator('127.0.0.1',8088)}
- auth.onAuthStateChanged(async user=>{const generation=++authGeneration;if(stopWatch)stopWatch();if(stopModules)stopModules();applyModulePolicy({},false);syncing=false;reading=false;conflict=false;roleBlocked=false;serverVerified=false;activeOwner=user?user.uid:'local';db=load();cart=[];effectiveRole=user?(envelope.role||'BLOCKED'):'LOCAL';renderAll();
+ auth.onAuthStateChanged(async user=>{const generation=++authGeneration;if(stopWatch)stopWatch();if(stopModules)stopModules();stopLiveUpdates();applyModulePolicy({},false);syncing=false;reading=false;conflict=false;roleBlocked=false;serverVerified=false;activeOwner=user?user.uid:'local';db=load();cart=[];effectiveRole=user?(envelope.role||'BLOCKED'):'LOCAL';renderAll();
  if(!user){setSync('local','Modo local. Iniciá sesión para usar la despensa compartida.');return}
  if(!user.emailVerified){effectiveRole='BLOCKED';db=emptyDB();renderAll();setSync('error','Verificá tu correo y volvé a iniciar sesión. Si necesitás otro enlace, cerrá sesión y pulsá Crear mi cuenta con tu correo y contraseña.');return}
- await retrySync();if(generation!==authGeneration)return;
+ startLiveUpdates(generation);await retrySync();if(generation!==authGeneration)return;
  stopModules=cloud.doc('stockproConfig/modules').onSnapshot(snap=>{if(generation!==authGeneration||snap.metadata.fromCache||snap.metadata.hasPendingWrites)return;applyModulePolicy(snap.data()?.enabled||{},isSuperAdmin);renderAll()},cloudFailure);
- stopWatch=sparkAccess().onSnapshot(snap=>{if(snap.metadata.fromCache||snap.metadata.hasPendingWrites)return;const m=snap.data();if(!m?.active||m.role!==effectiveRole){roleBlocked=true;effectiveRole='BLOCKED';db=emptyDB();cart=[];renderAll();setSync('error','Tu acceso cambió. Volvé a iniciar sesión. Los pendientes están conservados.')}},cloudFailure);
+ stopWatch=sparkAccess().onSnapshot(snap=>{if(generation!==authGeneration)return;if(snap.metadata.fromCache||snap.metadata.hasPendingWrites)return;const m=snap.data();if(!m?.active||m.role!==effectiveRole){roleBlocked=true;effectiveRole='BLOCKED';db=emptyDB();cart=[];renderAll();setSync('error','Tu acceso cambió. Volvé a iniciar sesión. Los pendientes están conservados.')}},cloudFailure);
  },cloudFailure);
  }catch(e){cloudFailure(e)}
 };
