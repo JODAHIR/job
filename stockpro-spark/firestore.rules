@@ -18,12 +18,17 @@ service cloud.firestore {
   function date(s){return text(s,10)&&s.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$');}
   function validAccess(d,id){return d.keys().hasOnly(['email','name','role','active','updatedBy','updatedAt'])&&d.email==id&&required(d.name,200)&&d.role in ['ADMIN','CAJERO','ENCARGADO']&&d.active is bool&&d.updatedBy==request.auth.uid&&d.updatedAt==request.time;}
   function manageable(id,d){return catalog()&&id!=email()&&id!=get(/databases/$(database)/documents/stockproConfig/main).data.ownerEmail&&(admin()||d.role!='ADMIN');}
-  match /stockproConfig/{id}{allow read:if active(); allow write:if false;}
+  // Module settings: complete boolean map, timestamp and actor UID. Only the protected owner may change it.
+  function superAdmin(){return admin()&&email()==get(/databases/$(database)/documents/stockproConfig/main).data.ownerEmail;}
+  function enabledModule(id){let p=/databases/$(database)/documents/stockproConfig/modules;return !exists(p)||get(p).data.enabled[id];}
+  function validModules(d){return d.keys().hasOnly(['enabled','updatedBy','updatedAt'])&&d.keys().hasAll(['enabled','updatedBy','updatedAt'])&&d.updatedBy==request.auth.uid&&d.updatedAt==request.time&&d.enabled is map&&d.enabled.keys().hasOnly(['dashboard', 'productos', 'ventas', 'clientes', 'proveedores', 'compras', 'creditos', 'facturacion', 'caja', 'movimientos', 'usuarios'])&&d.enabled.keys().hasAll(['dashboard', 'productos', 'ventas', 'clientes', 'proveedores', 'compras', 'creditos', 'facturacion', 'caja', 'movimientos', 'usuarios'])&&d.enabled.dashboard is bool&&d.enabled.productos is bool&&d.enabled.ventas is bool&&d.enabled.clientes is bool&&d.enabled.proveedores is bool&&d.enabled.compras is bool&&d.enabled.creditos is bool&&d.enabled.facturacion is bool&&d.enabled.caja is bool&&d.enabled.movimientos is bool&&d.enabled.usuarios is bool;}
+  match /stockproConfig/{id}{allow read:if active();allow create,update:if id=='modules'&&superAdmin()&&validModules(request.resource.data);allow delete:if false;}
+
   match /stockproAccess/{id}{
    allow get:if verified()&&(id==email()||admin()||catalog()&&(!exists(/databases/$(database)/documents/stockproAccess/$(id))||resource.data.role!='ADMIN'));
    allow list:if admin()||catalog()&&resource.data.role in ['CAJERO','ENCARGADO'];
-   allow create:if validAccess(request.resource.data,id)&&manageable(id,request.resource.data);
-   allow update:if validAccess(request.resource.data,id)&&manageable(id,request.resource.data)&&(admin()||resource.data.role!='ADMIN');
+   allow create:if enabledModule('usuarios')&&validAccess(request.resource.data,id)&&manageable(id,request.resource.data);
+   allow update:if enabledModule('usuarios')&&validAccess(request.resource.data,id)&&manageable(id,request.resource.data)&&(admin()||resource.data.role!='ADMIN');
    allow delete:if false;
   }
   match /stockproStores/despensa {
@@ -32,6 +37,18 @@ service cloud.firestore {
    function oldRevision(){return exists(path('meta','state'))?get(path('meta','state')).data.revision:0;}
    function validMeta(d){return d.keys().hasOnly(['role','cashMoveId','closingId','action','opid','actorUid','saleId','creditId','paymentId','updatedAt','revision','schema'])&&d.role==membership().role&&text(d.cashMoveId,160)&&text(d.closingId,160)&&d.actorUid==request.auth.uid&&required(d.opid,100)&&required(d.action,40)&&number(d.saleId)&&number(d.creditId)&&text(d.paymentId,100)&&d.updatedAt==request.time&&d.revision==oldRevision()+1&&d.schema==9;}
    function actionAllowed(a){return admin()||catalog()&&a in ['saveProduct','deleteProduct','saveSupplier','deleteSupplier','savePurchase','saveStockMove']||cashier()&&a in ['finishSale','saveClient','openCash','closeCash','addCashMove','saveCreditPayment'];}
+   function moduleAction(a){let m=exists(/databases/$(database)/documents/stockproConfig/modules)?get(/databases/$(database)/documents/stockproConfig/modules).data.enabled:{'dashboard':true,'productos':true,'ventas':true,'clientes':true,'proveedores':true,'compras':true,'creditos':true,'facturacion':true,'caja':true,'movimientos':true,'usuarios':true};return
+    a in ['saveProduct','deleteProduct']&&m.productos
+    ||a=='saveStockMove'&&m.productos&&m.movimientos
+    ||a in ['saveSupplier','deleteSupplier']&&m.proveedores
+    ||a=='savePurchase'&&m.compras
+    ||a in ['saveClient','deleteClient']&&m.clientes
+    ||a=='saveCredit'&&m.creditos
+    ||a=='saveCreditPayment'&&m.creditos&&(getAfter(path('payments',meta().paymentId)).data.method!='Efectivo'||m.caja)
+    ||a in ['saveStamp','deleteStamp']&&m.facturacion
+    ||a in ['openCash','closeCash','addCashMove']&&m.caja
+    ||a=='finishSale'&&m.ventas&&m.caja&&(sale().invoice==null||m.facturacion)&&(sale().pay!='Crédito'||m.creditos)&&(sale().clientId==null||m.clientes)
+    ||a=='restore'&&m.dashboard&&m.productos&&m.ventas&&m.clientes&&m.proveedores&&m.compras&&m.creditos&&m.facturacion&&m.caja&&m.movimientos&&m.usuarios;}
    function commit(){let m=meta();return m.actorUid==request.auth.uid&&m.revision==oldRevision()+1&&m.updatedAt==request.time;}
    function wAdmin(){return meta().role=='ADMIN';}
    function wCatalog(){return meta().role in ['ADMIN','ENCARGADO'];}
@@ -94,7 +111,7 @@ service cloud.firestore {
    function validMove(d){return d.keys().hasOnly(['id','date','datetime','productId','product','type','qty','detail','operatorUid','_op'])&&number(d.id)&&date(d.date)&&text(d.datetime,40)&&number(d.productId)&&text(d.product,300)&&d.type in ['ENTRADA','SALIDA','AJUSTE']&&d.qty is number&&d.qty>=-1000000000000000&&d.qty<=1000000000000000&&text(d.detail,500)&&text(d.get('operatorUid',''),128);}
    function saleMove(d){let p=getAfter(path('products',d.productId)).data;return p.lastSaleId==meta().saleId&&d.qty==-sale().items[p.lastSaleIndex].qty;}
    match /moves/{id}{allow read:if catalog();allow create:if changed(request.resource.data)&&validMove(request.resource.data)&&(wCatalog()||wCashier()&&act('finishSale')&&own(request.resource.data)&&request.resource.data.type=='SALIDA'&&request.resource.data.qty<0&&saleMove(request.resource.data));allow update,delete:if wAdmin()&&commit()&&act('restore')&&(request.resource==null||validMove(request.resource.data));}
-   match /meta/state{allow read:if active();allow create,update:if active()&&validMeta(request.resource.data)&&actionAllowed(request.resource.data.action)&&getAfter(path('operations',request.auth.uid+'_'+request.resource.data.opid)).data.revision==request.resource.data.revision;allow delete:if false;}
+   match /meta/state{allow read:if active();allow create,update:if active()&&validMeta(request.resource.data)&&actionAllowed(request.resource.data.action)&&moduleAction(request.resource.data.action)&&getAfter(path('operations',request.auth.uid+'_'+request.resource.data.opid)).data.revision==request.resource.data.revision;allow delete:if false;}
    match /operations/{id}{allow read:if admin()||active()&&resource.data.actorUid==request.auth.uid;allow get:if active()&&id.matches(request.auth.uid+'_.*');allow create:if active()&&id==request.auth.uid+'_'+request.resource.data.opid&&request.resource.data.keys().hasOnly(['role','cashMoveId','closingId','action','opid','actorUid','saleId','creditId','paymentId','updatedAt','revision'])&&request.resource.data.actorUid==request.auth.uid&&request.resource.data.updatedAt==request.time&&request.resource.data.revision==meta().revision&&request.resource.data.opid==meta().opid&&request.resource.data.action==meta().action;allow update,delete:if false;}
   }
   match /{doc=**}{allow read,write:if false;}

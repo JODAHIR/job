@@ -49,7 +49,8 @@ for(const action of ROLE_ACTIONS.ADMIN.filter(x=>x!=='restore')){
  const customer=db.clients.find(c=>c.id===Number(saleClient.value));if(!customer||debt(customer.id)+taxBreakdown(cart).total>customer.limit)return toast('La venta supera el límite de crédito autorizado.');
  }
  if(action==='saveClient'&&effectiveRole==='CAJERO')cLimit.value=db.clients.find(c=>c.id===Number(clientId.value))?.limit||0;
- const prior=commandContext;commandContext={action,payload:captureCommand(action,args)};
+ const payload=captureCommand(action,args);if(typeof actionModuleEnabled==='function'&&!actionModuleEnabled(action,payload))return toast('Un módulo necesario para esta operación está desactivado.');
+ const prior=commandContext;commandContext={action,payload};
  try{return original(...args)}finally{commandContext=prior}
  };
 }
@@ -129,5 +130,5 @@ async function saveUser(){const button=document.getElementById('saveUserButton')
  try{await callRoles('stockproUsers',{action:userUid.value?'update':'create',uid:userUid.value||null,name:userName.value.trim(),email:userEmail.value.trim(),role:userRole.value,active:userActive.checked});modal('userModal').hide();await loadUsers();toast('Acceso actualizado. El usuario puede establecer su contraseña desde la pantalla de ingreso.')}
  catch(e){toast(e.message)}finally{button.disabled=false}
 }
-async function resetOwnPassword(){if(!auth)return;const email=loginEmail.value.trim();if(!email)return toast('Ingresá tu correo electrónico.');try{await auth.sendPasswordResetEmail(email);toast('Si la cuenta existe, Firebase enviará las instrucciones a ese correo.')}catch(e){toast('No se pudo enviar el correo. Revisá la configuración de Authentication.')}}
+async function resetOwnPassword(){if(!auth)return;const email=loginEmail.value.trim();if(!email)return toast('Ingresá tu correo electrónico.');try{auth.languageCode='es';await auth.sendPasswordResetEmail(email);toast('Si la cuenta existe, Firebase enviará las instrucciones a ese correo.')}catch(e){toast('No se pudo enviar el correo. Revisá la configuración de Authentication.')}}
 document.querySelector('[data-page="usuarios"]').addEventListener('click',loadUsers);

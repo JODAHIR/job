@@ -2,10 +2,11 @@
 const loginFormNode=document.getElementById('loginForm');
 document.getElementById('loginFormSlot').append(loginFormNode);
 document.querySelector('.top-right').insertAdjacentHTML('beforeend','<span id="sessionEmail" class="session-email"></span><button class="btn btn-outline-secondary btn-sm" onclick="logoutCloud()">Salir</button>');
-let loginBusy=false,loginOpenedFor=null;
+let loginBusy=false,loginOpenedFor=null,loginValidatedUid=null;
 function loginMessage(message,error=false){const el=document.getElementById('loginStatus');el.textContent=message;el.dataset.error=String(error)}
 function loginGate(){
- const user=auth?.currentUser,ready=!!(user?.emailVerified&&serverVerified&&!roleBlocked&&ROLE_ACTIONS[effectiveRole]);
+ const user=auth?.currentUser;if(!user||roleBlocked)loginValidatedUid=null;if(user?.emailVerified&&serverVerified&&!roleBlocked)loginValidatedUid=user.uid;
+ const ready=!!(user?.emailVerified&&(serverVerified||loginValidatedUid===user.uid)&&!roleBlocked&&ROLE_ACTIONS[effectiveRole]);
  document.body.classList.toggle('auth-locked',!ready);
  document.getElementById('appShell').inert=!ready;
  document.getElementById('loginScreen').hidden=ready;

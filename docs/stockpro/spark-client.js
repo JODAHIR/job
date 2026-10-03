@@ -9,7 +9,7 @@ async function sparkActor(){
  if(!user.emailVerified)throw sparkError('Verificá tu correo con el enlace recibido y volvé a iniciar sesión.','EMAIL_NOT_VERIFIED');
  const doc=await sparkAccess().get({source:'server'}),m=doc.data();
  if(!m?.active||!StockDomain.ROLES.includes(m.role))throw sparkError('Tu correo todavía no tiene acceso. Pedí al administrador que lo autorice.');
- return {...m,uid:user.uid};
+ const actor={...m,uid:user.uid};await readModulePolicy(actor);return actor;
 }
 async function sparkSnapshot(){
  const actor=await sparkActor(),root=sparkRoot(),meta=root.collection('meta').doc('state');
@@ -44,6 +44,7 @@ async function sparkOperate(command){
  const actor=await sparkActor(),root=sparkRoot(),meta=root.collection('meta').doc('state'),opRef=root.collection('operations').doc(actor.uid+'_'+command.opid);
  const priorReceipt=await opRef.get({source:'server'});if(priorReceipt.exists){const snap=await sparkSnapshot();return {...snap,opRevision:priorReceipt.data().revision}}
  // Restore was already validated before it entered the durable outbox.
+ if(!actionModuleEnabled(command.action,command.payload))throw sparkError('El módulo de esta operación está desactivado. Los pendientes se conservan.','MODULE_DISABLED');
  const source=clone(envelope.base),before=sparkFlat(source,actor),now=new Date().toISOString();
  const state=StockDomain.apply(source,command.action,command.payload,actor,{opid:command.opid,now});
  const createdSale=command.action==='finishSale'&&state.sales.find(v=>!source.sales.some(old=>old.id===v.id));
@@ -71,7 +72,7 @@ async function sparkOperate(command){
  return {role:actor.role,ownerUid:'despensa',data:state,...result};
 }
 async function sparkUsers(p){
- const actor=await sparkActor();if(!['ADMIN','ENCARGADO'].includes(actor.role))throw sparkError('No podés gestionar usuarios.');
+ const actor=await sparkActor();if(!moduleEnabled('usuarios'))throw Error('El módulo de usuarios está desactivado.');if(!['ADMIN','ENCARGADO'].includes(actor.role))throw sparkError('No podés gestionar usuarios.');
  if(p.action==='list'){let q=cloud.collection('stockproAccess');if(actor.role==='ENCARGADO')q=q.where('role','in',['CAJERO','ENCARGADO']);const snap=await q.get({source:'server'});return {users:snap.docs.map(d=>({uid:d.id,...d.data()}))}}
  const email=(p.uid||p.email||'').trim().toLowerCase();if(!/^[^\s/@]+@[^\s/@]+\.[^\s/@]+$/.test(email))throw Error('Correo inválido.');
  const ref=cloud.doc('stockproAccess/'+email),old=await ref.get({source:'server'});
@@ -81,21 +82,22 @@ async function sparkUsers(p){
 }
 callRoles=async function(name,data={}){try{if(name==='stockproSnapshot')return await sparkSnapshot();if(name==='stockproOperate')return await sparkOperate(data);if(name==='stockproUsers')return await sparkUsers(data);throw Error('Operación desconocida.')}catch(e){if(e.code==='permission-denied')e.code='PERMISSION_DENIED';throw e}};
 startCloud=async function(){
- try{firebase.initializeApp(firebaseConfig);auth=firebase.auth();cloud=firebase.firestore();
+ try{firebase.initializeApp(firebaseConfig);auth=firebase.auth();auth.languageCode='es';cloud=firebase.firestore();
  if(window.STOCKPRO_EMULATOR==='localhost'&&['localhost','127.0.0.1'].includes(location.hostname)){auth.useEmulator('http://127.0.0.1:9099',{disableWarnings:true});cloud.useEmulator('127.0.0.1',8088)}
- auth.onAuthStateChanged(async user=>{const generation=++authGeneration;if(stopWatch)stopWatch();syncing=false;reading=false;conflict=false;roleBlocked=false;serverVerified=false;activeOwner=user?user.uid:'local';db=load();cart=[];effectiveRole=user?(envelope.role||'BLOCKED'):'LOCAL';renderAll();
+ auth.onAuthStateChanged(async user=>{const generation=++authGeneration;if(stopWatch)stopWatch();if(stopModules)stopModules();applyModulePolicy({},false);syncing=false;reading=false;conflict=false;roleBlocked=false;serverVerified=false;activeOwner=user?user.uid:'local';db=load();cart=[];effectiveRole=user?(envelope.role||'BLOCKED'):'LOCAL';renderAll();
  if(!user){setSync('local','Modo local. Iniciá sesión para usar la despensa compartida.');return}
  if(!user.emailVerified){effectiveRole='BLOCKED';db=emptyDB();renderAll();setSync('error','Verificá tu correo y volvé a iniciar sesión. Si necesitás otro enlace, cerrá sesión y pulsá Crear mi cuenta con tu correo y contraseña.');return}
  await retrySync();if(generation!==authGeneration)return;
+ stopModules=cloud.doc('stockproConfig/modules').onSnapshot(snap=>{if(generation!==authGeneration||snap.metadata.fromCache||snap.metadata.hasPendingWrites)return;applyModulePolicy(snap.data()?.enabled||{},isSuperAdmin);renderAll()},cloudFailure);
  stopWatch=sparkAccess().onSnapshot(snap=>{if(snap.metadata.fromCache||snap.metadata.hasPendingWrites)return;const m=snap.data();if(!m?.active||m.role!==effectiveRole){roleBlocked=true;effectiveRole='BLOCKED';db=emptyDB();cart=[];renderAll();setSync('error','Tu acceso cambió. Volvé a iniciar sesión. Los pendientes están conservados.')}},cloudFailure);
  },cloudFailure);
  }catch(e){cloudFailure(e)}
 };
 async function registerOwnAccount(){
  const email=loginEmail.value.trim().toLowerCase(),password=loginPassword.value;if(!email||password.length<8)return toast('Ingresá tu correo y una contraseña de al menos 8 caracteres.');
- try{let credential;try{credential=await auth.createUserWithEmailAndPassword(email,password)}catch(e){if(e.code!=='auth/email-already-in-use')throw e;credential=await auth.signInWithEmailAndPassword(email,password)}
+ try{auth.languageCode='es';let credential;try{credential=await auth.createUserWithEmailAndPassword(email,password)}catch(e){if(e.code!=='auth/email-already-in-use')throw e;credential=await auth.signInWithEmailAndPassword(email,password)}
  if(!credential.user.emailVerified){await credential.user.sendEmailVerification();toast('Revisá tu correo (también spam), abrí el enlace de verificación y luego iniciá sesión.');await auth.signOut()}else toast('Cuenta verificada. Iniciando sesión…');
- }catch(e){toast('No se pudo crear o verificar la cuenta: '+e.message)}
+ }catch(e){toast(e.code==='auth/weak-password'?'La contraseña no cumple los requisitos de seguridad. Usá una contraseña más larga.':e.code==='auth/invalid-email'?'El correo electrónico no es válido.':friendlyLoginError(e))}
 }
 const sparkCanMutate=canMutate;canMutate=function(){if(activeOwner!=='local'&&envelope.queue?.some(c=>(['saveProduct','saveClient','saveSupplier','saveCredit','restore'].includes(c.action)||c.action==='finishSale'&&c.payload.pay==='Crédito'))){toast('Sincronizá el alta pendiente antes de usar ese registro.');return false}return sparkCanMutate()};
 const sparkFinishSale=finishSale;finishSale=function(...args){if(activeOwner!=='local'&&cart.length>10)return toast('Máximo 10 productos distintos por venta en esta versión del plan gratuito. Dividí el carrito en dos ventas.');return sparkFinishSale(...args)};

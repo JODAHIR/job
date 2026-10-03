@@ -60,3 +60,13 @@ Reglas diseñadas como prototipo revisable: denegación por defecto, invitacione
 ## Pantalla de ingreso
 
 El sistema permanece oculto hasta verificar la cuenta y cargar el rol desde Firebase. El cajero inicia en Punto de venta; administrador y encargado en su panel. Cada menú muestra únicamente los módulos de su rol. Salir devuelve al login. Los errores de credenciales aparecen en la misma pantalla. Una sesión ya verificada conserva su contingencia offline; al recargar se requiere validar el acceso antes de abrir los módulos.
+
+## Módulos y correos en español
+
+El propietario definido en stockproConfig/main.ownerEmail, con rol ADMIN y correo verificado, dispone de Datos y sincronización → Módulos del sistema. Los interruptores se guardan en stockproConfig/modules y se aplican globalmente, intersectados con los permisos del rol. No eliminan registros: otros módulos pueden seguir usándolos como referencias y los backups conservan los datos. Datos y sincronización siempre permanece accesible. La venta necesita Caja; facturas, crédito y cliente identificado necesitan sus módulos. Los cambios requieren conexión; los pendientes rechazados se conservan hasta reactivar el módulo y reintentar. La restauración exige todos los módulos activos.
+
+Solo el propietario puede cambiar interruptores, incluso frente a otros ADMIN. Las reglas validan identidad, mapa booleano completo y marcas de auditoría; las operaciones atómicas verifican el estado de los módulos. No son una auditoría independiente.
+
+I've set up prototype Security Rules to keep the data in Firestore safe. They are designed to be secure for verified invited users, protected-owner module settings, validated configuration, and atomic operation checks. However, you should review and verify them before broadly sharing your app. If you'd like, I can help you harden these rules.
+
+Firebase Authentication usa idioma español en la plantilla predeterminada y auth.languageCode='es' en el cliente. Afecta nuevos correos de verificación y recuperación; no modifica mensajes ya enviados.
