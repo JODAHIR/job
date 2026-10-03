@@ -1,0 +1,51 @@
+name: Publicar sitio y StockPro
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'docs/**'
+      - 'stockpro-spark/**'
+      - 'stockpro-firebase/functions/domain.js'
+      - 'stockpro-firebase/tests/domain.test.js'
+      - '.github/workflows/pages.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: pages
+  cancel-in-progress: false
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - name: Comprobar operaciones y acceso
+        run: node --test stockpro-spark/tests/login.test.cjs stockpro-firebase/tests/domain.test.js
+      - name: Construir StockPro
+        run: |
+          python3 stockpro-spark/build.py
+          python3 - <<'PY'
+          import json, os
+          from pathlib import Path
+          Path('docs/stockpro/version.json').write_text(json.dumps({'commit': os.environ['GITHUB_SHA']}))
+          PY
+      - uses: actions/configure-pages@v5
+      - uses: actions/jekyll-build-pages@v1
+        with:
+          source: ./docs
+          destination: ./_site
+      - uses: actions/upload-pages-artifact@v4
+  deploy:
+    needs: build
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Publicar
+        id: deployment
+        uses: actions/deploy-pages@v4
