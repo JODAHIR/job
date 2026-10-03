@@ -3,7 +3,7 @@ import re
 root=Path(__file__).resolve().parent.parent
 p=root/'docs/stockpro/index.html';s=p.read_text()
 s=re.sub(r'<!-- STOCKPRO_ROLES_START -->.*?<!-- STOCKPRO_ROLES_END -->','',s,flags=re.S)
-s=re.sub(r'<!-- STOCKPRO_SPARK_START -->.*?<!-- STOCKPRO_SPARK_END -->','',s,flags=re.S)
+s=re.sub(r'\s*<!-- STOCKPRO_SPARK_START -->.*?<!-- STOCKPRO_SPARK_END -->\s*','\n',s,flags=re.S)
 s=re.sub(r'<!-- STOCKPRO_LOGIN_START -->.*?<!-- STOCKPRO_LOGIN_END -->','',s,flags=re.S)
 s=s.replace('<body>', '<body class="auth-locked">')
 s=s.replace('<div class="container-fluid"><div class="row">', '<div id="appShell" class="container-fluid" inert><div class="row">',1)
