@@ -16,6 +16,7 @@ if 'registerOwnAccount()' not in s:
  s=s.replace('<h5>Backup y recuperación</h5>', '<div class="alert alert-info">Acceso por correo y contraseña. Si es tu primer ingreso, creá tu cuenta y verificá el enlace que recibirás por correo. Tu correo debe estar autorizado por un administrador o encargado.</div><h5>Backup y recuperación</h5>')
  s=s.replace('La persona establece su contraseña desde la pantalla de ingreso.', 'La persona crea su cuenta y verifica su correo desde la pantalla de ingreso.')
 s=s.replace("setInterval(()=>{if(auth?.currentUser&&!conflict&&navigator.onLine)retrySync()},30000);", '')
+s=s.replace('else saleMsg.innerHTML=\'<div class="alert alert-success">Venta guardada. \'+(activeOwner===\'local\'?\'Modo local.\':\'Consultá el indicador de sincronización.\')+\'</div>\';', "else saleMsg.innerHTML='';")
 bridge=(root/'docs/stockpro/roles-client.js').read_text()
 # Shared domain operations run locally; Firestore Security Rules enforce authority.
 domain=(root/'stockpro-firebase/functions/domain.js').read_text().replace("const {isDeepStrictEqual}=require('node:util');", "const isDeepStrictEqual=(a,b)=>JSON.stringify(a)===JSON.stringify(b);")
