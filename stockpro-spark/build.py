@@ -18,6 +18,8 @@ if 'registerOwnAccount()' not in s:
 s=s.replace("setInterval(()=>{if(auth?.currentUser&&!conflict&&navigator.onLine)retrySync()},30000);", '')
 s=s.replace('else saleMsg.innerHTML=\'<div class="alert alert-success">Venta guardada. \'+(activeOwner===\'local\'?\'Modo local.\':\'Consultá el indicador de sincronización.\')+\'</div>\';', "else saleMsg.innerHTML='';")
 s=s.replace("'<div class=\"alert alert-success\">Venta y numeración confirmadas por Firebase.</div>'", "''")
+# Keep the status node for existing synchronization code, hide the shared banner.
+s=s.replace('<div class="sync-note">', '<div class="sync-note" hidden style="display:none">')
 bridge=(root/'docs/stockpro/roles-client.js').read_text()
 # Shared domain operations run locally; Firestore Security Rules enforce authority.
 domain=(root/'stockpro-firebase/functions/domain.js').read_text().replace("const {isDeepStrictEqual}=require('node:util');", "const isDeepStrictEqual=(a,b)=>JSON.stringify(a)===JSON.stringify(b);")
