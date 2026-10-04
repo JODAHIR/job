@@ -20,7 +20,7 @@ jobs:
     steps:
       - uses: actions/checkout@v6
       - name: Comprobar operaciones y acceso
-        run: node --test stockpro-spark/tests/clients.test.cjs stockpro-spark/tests/login.test.cjs stockpro-spark/tests/dashboard.test.cjs stockpro-spark/tests/products.test.cjs stockpro-firebase/tests/domain.test.js
+        run: node --test stockpro-spark/tests/session.test.cjs stockpro-spark/tests/clients.test.cjs stockpro-spark/tests/login.test.cjs stockpro-spark/tests/dashboard.test.cjs stockpro-spark/tests/products.test.cjs stockpro-firebase/tests/domain.test.js
       - name: Construir StockPro
         run: |
           python3 stockpro-spark/build.py

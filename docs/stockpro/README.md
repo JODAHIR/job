@@ -74,3 +74,7 @@ Firebase Authentication usa idioma español en la plantilla predeterminada y aut
 ## Líneas de crédito de clientes
 
 Solo Encargado con Clientes habilitado puede modificar categorías, límites y vencimientos. Los nuevos clientes inician como Nuevo con ₲300.000. Ver [categorías, topes y uso](CLIENTES_CREDITO.md).
+
+## Cierre por inactividad
+
+Tras 5 minutos sin interacción se cierra la sesión de Firebase y aparece el login. La actividad se comparte entre pestañas del mismo navegador. Las actualizaciones de datos no extienden la sesión; la suspensión o recarga de una pestaña no reinicia el plazo. Las operaciones ya guardadas localmente y pendientes se conservan para la misma cuenta al volver a ingresar. Los formularios sin guardar y el carrito sin confirmar no se guardan como operaciones.
