@@ -9,24 +9,24 @@ async function sparkActor(){
  if(!user.emailVerified)throw sparkError('Verificá tu correo con el enlace recibido y volvé a iniciar sesión.','EMAIL_NOT_VERIFIED');
  const [doc,policy]=await Promise.all([sparkAccess().get({source:'server'}),Promise.all([cloud.doc('stockproConfig/main').get({source:'server'}),cloud.doc('stockproConfig/modules').get({source:'server'})])]),m=doc.data();
  if(!m?.active||!StockDomain.ROLES.includes(m.role))throw sparkError('Tu correo todavía no tiene acceso. Pedí al administrador que lo autorice.');
- const actor={...m,uid:user.uid};if(auth.currentUser?.uid!==user.uid)throw sparkError('La sesión cambió.');applyModulePolicy(policy[1].data()?.enabled||{},actor.role==='ADMIN'&&policy[0].data()?.ownerEmail===sparkEmail());return actor;
+ const actor={...m,uid:user.uid,moduleRoles:policy[1].data()?.roles||{}};if(auth.currentUser?.uid!==user.uid)throw sparkError('La sesión cambió.');applyModulePolicy(policy[1].data()?.enabled||{},actor.role==='ADMIN'&&policy[0].data()?.ownerEmail===sparkEmail(),actor.moduleRoles);return actor;
 }
 async function sparkSnapshot(){
  const root=sparkRoot(),meta=root.collection('meta').doc('state');
  const [actor,initial]=await Promise.all([sparkActor(),meta.get({source:'server'})]);
  for(let attempt=0;attempt<3;attempt++){
  const start=attempt===0?initial:await meta.get({source:'server'}),revision=start.exists?start.data().revision:0;
- const data=emptyDB(),keys=actor.role==='ENCARGADO'?['products','suppliers','purchases','moves']:actor.role==='CAJERO'?['products','clients','sales','credits','stamps','payments','cashMoves','cashClosings']:CLOUD_KEYS.filter(k=>k!=='cash');
- const costsTask=actor.role!=='CAJERO'?root.collection('productCosts').get({source:'server'}):Promise.resolve(null);
- const cashTask=actor.role!=='ENCARGADO'?root.collection('cash').doc(actor.uid).get({source:'server'}):Promise.resolve(null);
+ const data=emptyDB(),profile=accessProfile(actor.role),keys=['products',...(profile.suppliers?['suppliers']:[]),...(profile.purchases?['purchases']:[]),...(profile.moves?['moves']:[]),...(profile.clients?['clients']:[]),...(profile.credits?['credits','payments']:[]),...(profile.stamps?['stamps']:[]),...(profile.sales?['sales']:[]),...(profile.cash?['cashMoves','cashClosings']:[])];
+ const costsTask=profile.costs?root.collection('productCosts').get({source:'server'}):Promise.resolve(null);
+ const cashTask=profile.cash?root.collection('cash').doc(actor.uid).get({source:'server'}):Promise.resolve(null);
  const overviewTask=actor.role==='ADMIN'?root.collection('cash').get({source:'server'}):Promise.resolve(null);
- const groups={};const collectionsTask=Promise.all(keys.map(async k=>{let q=root.collection(k);if(actor.role==='CAJERO'&&['sales','cashMoves','cashClosings'].includes(k))q=q.where('operatorUid','==',actor.uid);const s=await q.get({source:'server'});groups[k]=s.docs.map(x=>x.data())}));
+ const groups={};const collectionsTask=Promise.all(keys.map(async k=>{let q=root.collection(k);if(actor.role!=='ADMIN'&&['sales','cashMoves','cashClosings'].includes(k))q=q.where('operatorUid','==',actor.uid);const s=await q.get({source:'server'});groups[k]=s.docs.map(x=>x.data())}));
  const [costs,cash,all]=await Promise.all([costsTask,cashTask,overviewTask,collectionsTask]);
  for(const k of ENTITY_KEYS)data[k]=groups[k]||[];
- if(actor.role!=='CAJERO'){const byId=Object.fromEntries(costs.docs.map(d=>[d.id,d.data().cost]));data.products.forEach(p=>p.cost=byId[p.id]||0)}else data.products.forEach(p=>p.cost=0);
+ if(profile.costs){const byId=Object.fromEntries(costs.docs.map(d=>[d.id,d.data().cost]));data.products.forEach(p=>p.cost=byId[p.id]||0)}else data.products.forEach(p=>p.cost=0);
  data.credits.forEach(c=>c.payments=(groups.payments||[]).filter(p=>p.creditId===c.id).sort((a,b)=>a.position-b.position).map(({creditId,position,...p})=>p));
  let overview=[];
- if(actor.role!=='ENCARGADO'){
+ if(profile.cash){
  if(cash.exists)data.cash={...cash.data(),moves:[],history:[]};
  data.cash.moves=(groups.cashMoves||[]).filter(m=>m.operatorUid===actor.uid).sort((a,b)=>b.id-a.id);data.cash.history=(groups.cashClosings||[]).filter(m=>m.operatorUid===actor.uid).sort((a,b)=>b.id-a.id);
  if(actor.role==='ADMIN'){overview=all.docs.map(d=>({uid:d.data().operatorEmail||d.id,...d.data(),expected:d.data().expectedBalance||0}))}
@@ -38,10 +38,10 @@ async function sparkSnapshot(){
 }
 function sparkFlat(data,actor){
  const map=new Map();
- for(const key of ENTITY_KEYS)for(const row of data[key]){const value=clone(row);if(key==='products'){if(actor.role!=='CAJERO')map.set('productCosts/'+row.id,{id:row.id,cost:row.cost});delete value.cost}
+ for(const key of ENTITY_KEYS)for(const row of data[key]){const value=clone(row);if(key==='products'){if(accessProfile(actor.role).costs)map.set('productCosts/'+row.id,{id:row.id,cost:row.cost});delete value.cost}
  if(key==='credits'){delete value.payments;row.payments.forEach((p,n)=>map.set('payments/'+row.id+'_'+n,{...p,creditId:row.id,position:n}))}
  map.set(key+'/'+row.id,value)}
- if(actor.role!=='ENCARGADO'&&data.cash.operatorUid){const cash=clone(data.cash);delete cash.moves;delete cash.history;map.set('cash/'+actor.uid,cash);for(const [key,rows] of [['cashMoves',data.cash.moves],['cashClosings',data.cash.history]])rows.forEach(m=>map.set(key+'/'+actor.uid+'_'+m.id,m))}
+ if(accessProfile(actor.role).cash&&data.cash.operatorUid){const cash=clone(data.cash);delete cash.moves;delete cash.history;map.set('cash/'+actor.uid,cash);for(const [key,rows] of [['cashMoves',data.cash.moves],['cashClosings',data.cash.history]])rows.forEach(m=>map.set(key+'/'+actor.uid+'_'+m.id,m))}
  return map;
 }
 function withoutOp(x){if(!x)return x;const d=clone(x);delete d._op;return d}
@@ -59,7 +59,7 @@ async function sparkOperate(command){
  if(command.action==='restore')for(const v of state.sales){if(source.sales.some(old=>old.id===v.id))continue;let runningTotal=0;v.items.forEach(i=>{runningTotal+=i.qty*i.price;i.runningTotal=runningTotal});v.datetime=v.datetime||v.date+'T00:00:00.000Z';v.operatorUid=v.operatorUid||actor.uid;v.cashSessionId=v.cashSessionId||'legacy:'+v.id;v.creditId=v.creditId||null;}
  for(const c of state.clients)c.balance=state.credits.filter(cr=>cr.clientId===c.id).reduce((n,cr)=>n+cr.balance,0);
  let paymentId=null;if(command.action==='saveCreditPayment'){const cr=state.credits.find(c=>c.id===command.payload.id);paymentId=cr.id+'_'+(cr.payments.length-1);cr.lastPaymentId=paymentId;const move=state.cash.moves.find(m=>!source.cash.moves.some(old=>old.id===m.id));if(move)move.paymentId=paymentId;}
- if(actor.role!=='ENCARGADO'&&(['openCash','closeCash','addCashMove','finishSale','restore'].includes(command.action)||command.action==='saveCreditPayment'&&command.payload.method==='Efectivo')){state.cash.sessionId=state.cash.sessionId||null;state.cash.operatorUid=actor.uid;state.cash.operatorEmail=sparkEmail();state.cash.expectedBalance=state.cash.isOpen?StockDomain.expected(state,actor.uid):0;}
+ if(accessProfile(actor.role).cash&&(['openCash','closeCash','addCashMove','finishSale','restore'].includes(command.action)||command.action==='saveCreditPayment'&&command.payload.method==='Efectivo')){state.cash.sessionId=state.cash.sessionId||null;state.cash.operatorUid=actor.uid;state.cash.operatorEmail=sparkEmail();state.cash.expectedBalance=state.cash.isOpen?StockDomain.expected(state,actor.uid):0;}
  const after=sparkFlat(state,actor),changed=[];if(createdSale){for(let start=0;start<createdSale.items.length;start+=5)after.set('saleChecks/'+createdSale.id+'_'+start,{saleId:createdSale.id,start,operatorUid:actor.uid})}
  for(const [key,value] of after)if(JSON.stringify(withoutOp(value))!==JSON.stringify(withoutOp(before.get(key)))||key==='cash/'+actor.uid&&(['openCash','closeCash','addCashMove','finishSale'].includes(command.action)||command.action==='saveCreditPayment'&&command.payload.method==='Efectivo'))changed.push([key,{...value,_op:command.opid}]);for(const key of before.keys())if(!after.has(key))changed.push([key,null]);
  if(changed.length>400)throw Error('El lote supera 400 documentos. Conservá el backup y dividí la importación.');
@@ -77,8 +77,8 @@ async function sparkOperate(command){
  return {role:actor.role,ownerUid:'despensa',data:state,...result};
 }
 async function sparkUsers(p){
- const actor=await sparkActor();if(!moduleEnabled('usuarios'))throw Error('El módulo de usuarios está desactivado.');if(!['ADMIN','ENCARGADO'].includes(actor.role))throw sparkError('No podés gestionar usuarios.');
- if(p.action==='list'){let q=cloud.collection('stockproAccess');if(actor.role==='ENCARGADO')q=q.where('role','in',['CAJERO','ENCARGADO']);const snap=await q.get({source:'server'});return {users:snap.docs.map(d=>({uid:d.id,...d.data()}))}}
+ const actor=await sparkActor();if(!moduleEnabled('usuarios'))throw Error('El módulo de usuarios está desactivado.');if(!roleHasModule('usuarios',actor.role))throw sparkError('No podés gestionar usuarios.');
+ if(p.action==='list'){let q=cloud.collection('stockproAccess');if(actor.role!=='ADMIN')q=q.where('role','in',['CAJERO','ENCARGADO']);const snap=await q.get({source:'server'});return {users:snap.docs.map(d=>({uid:d.id,...d.data()}))}}
  const email=(p.uid||p.email||'').trim().toLowerCase();if(!/^[^\s/@]+@[^\s/@]+\.[^\s/@]+$/.test(email))throw Error('Correo inválido.');
  const ref=cloud.doc('stockproAccess/'+email),old=await ref.get({source:'server'});
  if(p.action==='create'&&old.exists)throw Error('El correo ya está autorizado. Editalo desde la lista.');
@@ -93,7 +93,7 @@ startCloud=async function(){
  if(!user){setSync('local','Modo local. Iniciá sesión para usar la despensa compartida.');return}
  if(!user.emailVerified){effectiveRole='BLOCKED';db=emptyDB();renderAll();setSync('error','Verificá tu correo y volvé a iniciar sesión. Si necesitás otro enlace, cerrá sesión y pulsá Crear mi cuenta con tu correo y contraseña.');return}
  startLiveUpdates(generation);await retrySync();if(generation!==authGeneration)return;
- stopModules=cloud.doc('stockproConfig/modules').onSnapshot(snap=>{if(generation!==authGeneration||snap.metadata.fromCache||snap.metadata.hasPendingWrites)return;applyModulePolicy(snap.data()?.enabled||{},isSuperAdmin);renderAll()},cloudFailure);
+ stopModules=cloud.doc('stockproConfig/modules').onSnapshot(snap=>{if(generation!==authGeneration||snap.metadata.fromCache||snap.metadata.hasPendingWrites)return;const changed=effectiveRole!=='ADMIN'&&Object.keys(MODULE_LABELS).some(id=>StockDomain.roleModule(effectiveRole,id,moduleRoles)!==StockDomain.roleModule(effectiveRole,id,snap.data()?.roles||{}));applyModulePolicy(snap.data()?.enabled||{},isSuperAdmin,snap.data()?.roles||{});if(changed){roleBlocked=true;effectiveRole='BLOCKED';db=emptyDB();cart=[];setSync('error','Tus permisos cambiaron. Cerrá sesión y volvé a ingresar. Los pendientes se conservan.');}renderAll()},cloudFailure);
  stopWatch=sparkAccess().onSnapshot(snap=>{if(generation!==authGeneration)return;if(snap.metadata.fromCache||snap.metadata.hasPendingWrites)return;const m=snap.data();if(!m?.active||m.role!==effectiveRole){roleBlocked=true;effectiveRole='BLOCKED';db=emptyDB();cart=[];renderAll();setSync('error','Tu acceso cambió. Volvé a iniciar sesión. Los pendientes están conservados.')}},cloudFailure);
  },cloudFailure);
  }catch(e){cloudFailure(e)}

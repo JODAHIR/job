@@ -28,13 +28,13 @@ dashboardSection.innerHTML=`<style>
 <div class="card p-3 mt-3"><h5>Predicción de faltantes</h5><div class="table-responsive"><table class="table"><thead><tr><th>Producto</th><th>Stock</th><th>Prom./día</th><th>Cobertura</th><th>Reposición sugerida</th></tr></thead><tbody id="forecastTable"></tbody></table></div></div>`;
 renderDashboard=function(){
  const sales=db.sales.filter(s=>s.date===today());
- const kpis=effectiveRole==='ENCARGADO'?[[money(db.products.reduce((n,p)=>n+p.stock*p.cost,0)),'Stock valorizado']]:[[money(sales.reduce((n,s)=>n+s.total,0)),'Ventas de hoy'],[money(db.credits.reduce((n,c)=>n+c.balance,0)),'Cuentas por cobrar'],[money(db.credits.filter(c=>creditState(c)==='EN MORA').reduce((n,c)=>n+c.balance,0)),'Saldo en mora'],[money(db.products.reduce((n,p)=>n+p.stock*p.cost,0)),'Stock valorizado']];
+ const kpis=!accessProfile(effectiveRole).sales?[[money(db.products.reduce((n,p)=>n+p.stock*p.cost,0)),'Stock valorizado']]:[[money(sales.reduce((n,s)=>n+s.total,0)),'Ventas de hoy'],[money(db.credits.reduce((n,c)=>n+c.balance,0)),'Cuentas por cobrar'],[money(db.credits.filter(c=>creditState(c)==='EN MORA').reduce((n,c)=>n+c.balance,0)),'Saldo en mora'],[money(db.products.reduce((n,p)=>n+p.stock*p.cost,0)),'Stock valorizado']];
  document.getElementById('dashKpis').innerHTML=kpis.map(([value,label])=>`<div class="col-6 col-xl-3"><div class="card p-3"><div class="text-secondary">${label}</div><div class="kpi">${value}</div></div></div>`).join('');
  const risks=db.products.map(p=>({...p,days:p.avg>0?p.stock/p.avg:999,suggest:Math.max(0,Math.ceil(p.avg*14-p.stock))})).filter(p=>p.days<=14).sort((a,b)=>a.days-b.days);
  document.getElementById('forecastTable').innerHTML=risks.map(p=>`<tr><td><b>${esc(p.name)}</b></td><td>${p.stock}</td><td>${p.avg.toFixed(1)}</td><td><span class="badge text-bg-${p.days<=3?'danger':p.days<=7?'warning':'primary'}">${p.days.toFixed(1)} días</span></td><td>${p.suggest?'Reponer '+p.suggest:'—'}</td></tr>`).join('')||'<tr><td colspan="5" class="text-secondary">Sin riesgo relevante.</td></tr>';
- document.querySelector('.chart-card').hidden=effectiveRole==='ENCARGADO';
+ document.querySelector('.chart-card').hidden=!accessProfile(effectiveRole).sales;
  if(dashboardFollowToday){dashboardDay=today();document.getElementById('dashboardDate').value=dashboardDay;}
- if(effectiveRole!=='ENCARGADO'){renderChart();const data=dailySalesBreakdown(db,dashboardDay);renderDailyPie('paymentPie',data.payments);renderDailyPie('categoryPie',data.categories);}
+ if(accessProfile(effectiveRole).sales){renderChart();const data=dailySalesBreakdown(db,dashboardDay);renderDailyPie('paymentPie',data.payments);renderDailyPie('categoryPie',data.categories);}
 };
 // Aging changes at midnight even when no sale is inserted.
 let dashboardLastDay=today();setInterval(()=>{if(today()!==dashboardLastDay){dashboardLastDay=today();renderDashboard()}},60000);

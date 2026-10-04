@@ -6,7 +6,10 @@ const catalog=['saveProduct','deleteProduct','saveStockMove','saveSupplier','del
 const till=['finishSale','saveClient','openCash','closeCash','addCashMove','saveCreditPayment'];
 const onlyAdmin=['deleteClient','saveCredit','saveStamp','deleteStamp','restore'];
 function fail(message,code='invalid-argument'){const e=Error(message);e.code=code;throw e}
-function authorize(role,action){if(!ROLES.includes(role)||!(role==='ADMIN'&&[...catalog,...till,...onlyAdmin].includes(action)||role==='CAJERO'&&till.includes(action)||role==='ENCARGADO'&&catalog.includes(action)))fail('Tu rol no permite esta operación.','permission-denied')}
+const MODULE_DEFAULT_ROLES={dashboard:['ADMIN','ENCARGADO'],productos:['ADMIN','ENCARGADO'],ventas:['ADMIN','CAJERO'],clientes:['ADMIN','CAJERO'],proveedores:['ADMIN','ENCARGADO'],compras:['ADMIN','ENCARGADO'],creditos:['ADMIN','CAJERO'],facturacion:['ADMIN'],caja:['ADMIN','CAJERO'],movimientos:['ADMIN','ENCARGADO'],usuarios:['ADMIN','ENCARGADO']};
+const ACTION_MODULES={saveProduct:'productos',deleteProduct:'productos',saveStockMove:'movimientos',saveSupplier:'proveedores',deleteSupplier:'proveedores',savePurchase:'compras',finishSale:'ventas',saveClient:'clientes',deleteClient:'clientes',saveCredit:'creditos',saveCreditPayment:'creditos',saveStamp:'facturacion',deleteStamp:'facturacion',openCash:'caja',closeCash:'caja',addCashMove:'caja'};
+function roleModule(role,id,grants={}){return role==='ADMIN'||(grants[id]||MODULE_DEFAULT_ROLES[id]||[]).includes(role)}
+function authorize(role,action,grants){if(!ROLES.includes(role))fail('Tu rol no permite esta operación.','permission-denied');if(grants!==undefined){const id=ACTION_MODULES[action];if(action==='restore'?role==='ADMIN':id&&roleModule(role,id,grants)&&(!['deleteClient','saveCredit'].includes(action)||role==='ADMIN'))return;}else if(role==='ADMIN'&&[...catalog,...till,...onlyAdmin].includes(action)||role==='CAJERO'&&till.includes(action)||role==='ENCARGADO'&&catalog.includes(action))return;fail('Tu rol no permite esta operación.','permission-denied')}
 function manageAllowed(actor,target,role,uid,ownerUid){
  if(!actor.active||!['ADMIN','ENCARGADO'].includes(actor.role))fail('No podés gestionar usuarios.','permission-denied');
  if(!ROLES.includes(role))fail('Rol inválido.');
@@ -34,7 +37,7 @@ function project(s,actor){const d=clone(s);
  return d;
 }
 function apply(state,action,p,actor,ctx){
- authorize(actor.role,action);const s=clone(state),now=ctx.now||new Date().toISOString(),day=ctx.day||new Date(now).toLocaleDateString('en-CA',{timeZone:'America/Asuncion'});let serial=0;
+ authorize(actor.role,action,actor.moduleRoles);const s=clone(state),now=ctx.now||new Date().toISOString(),day=ctx.day||new Date(now).toLocaleDateString('en-CA',{timeZone:'America/Asuncion'});let serial=0;
  const move=(product,type,qty,detail)=>s.moves.unshift({id:next(s.moves),date:day,datetime:now,productId:product.id,product:product.name,type,qty,detail,operatorUid:actor.uid});
  const cashMove=(amount,type,detail)=>s.cash.moves.unshift({id:next(s.cash.moves),date:day,datetime:now,amount,type,detail,cashSessionId:s.cash.sessionId,operatorUid:actor.uid});
  const requireCash=()=>{if(!s.cash.isOpen)fail('Abrí tu caja antes de operar.','failed-precondition')};
@@ -89,4 +92,4 @@ function apply(state,action,p,actor,ctx){
  }
  return s;
 }
-module.exports={nextProductSku,ROLES,arrays,empty,project,apply,authorize,manageAllowed,expected,tax,clone,fail,str,num};
+module.exports={roleModule,MODULE_DEFAULT_ROLES,ACTION_MODULES,nextProductSku,ROLES,arrays,empty,project,apply,authorize,manageAllowed,expected,tax,clone,fail,str,num};

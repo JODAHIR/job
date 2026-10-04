@@ -12,11 +12,11 @@ function roleUI(){
  if(!document.querySelector('.page.active')){document.getElementById(pages[0]).classList.add('active');document.querySelector('[data-page="'+pages[0]+'"]').classList.add('active')}
  document.getElementById('roleLabel').textContent=ROLE_NAMES[effectiveRole]||'Sin acceso';
  const protectedActions=['openCredit','deleteClient','openStamp','deleteStamp','exportBackup','importBackup','migrateV6','resetDemo'];
- document.querySelectorAll('button[onclick]').forEach(el=>{const f=el.getAttribute('onclick').split('(')[0];if(protectedActions.includes(f))el.hidden=activeOwner!=='local'&&effectiveRole!=='ADMIN'});
+ document.querySelectorAll('button[onclick]').forEach(el=>{const f=el.getAttribute('onclick').split('(')[0];if(protectedActions.includes(f))el.hidden=activeOwner!=='local'&&(f==='openStamp'||f==='deleteStamp'?!roleHasModule('facturacion'):effectiveRole!=='ADMIN')});
  document.querySelectorAll('label').forEach(el=>{if(el.querySelector('input[type=file]'))el.hidden=activeOwner!=='local'&&effectiveRole!=='ADMIN'});
  document.getElementById('cLimit').disabled=activeOwner!=='local'&&effectiveRole!=='ADMIN';
  document.getElementById('userRole').querySelector('option[value=ADMIN]').hidden=effectiveRole!=='ADMIN';
- if(effectiveRole==='ENCARGADO'){
+ if(!accessProfile(effectiveRole).sales){
  document.getElementById('dashKpis').innerHTML='<div class="col-md-6"><div class="card p-3"><span>Stock valorizado</span><div class="kpi">'+money(db.products.reduce((n,p)=>n+p.cost*p.stock,0))+'</div></div></div>';
  document.querySelector('.chart-card').hidden=true;
  }else document.querySelector('.chart-card').hidden=false;
@@ -122,7 +122,7 @@ useRemoteVersion=async function(){if(!conflict||!navigator.onLine||syncing||read
 };
 let managedUsers=[];
 async function loadUsers(){
- if(!['ADMIN','ENCARGADO'].includes(effectiveRole))return;
+ if(!roleHasModule('usuarios'))return;
  try{const result=await callRoles('stockproUsers',{action:'list'});managedUsers=result.users;document.getElementById('usersBody').innerHTML=result.users.map((u,i)=>'<tr><td>'+esc(u.name)+'</td><td>'+esc(u.email)+'</td><td>'+esc(ROLE_NAMES[u.role])+'</td><td>'+(u.active?'Activo':'Inactivo')+'</td><td><button class="btn btn-sm btn-outline-primary" onclick="editUser('+i+')">Editar</button></td></tr>').join('')}catch(e){toast(e.message)}
 }
 function editUser(index){const u=index==null?null:managedUsers[index];userUid.value=u?.uid||'';userName.value=u?.name||'';userEmail.value=u?.email||'';userEmail.disabled=!!u;userRole.value=u?.role||'CAJERO';userActive.checked=u?.active??true;modal('userModal').show()}
