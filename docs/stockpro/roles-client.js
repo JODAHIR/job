@@ -14,7 +14,7 @@ function roleUI(){
  const protectedActions=['openCredit','deleteClient','openStamp','deleteStamp','exportBackup','importBackup','migrateV6','resetDemo'];
  document.querySelectorAll('button[onclick]').forEach(el=>{const f=el.getAttribute('onclick').split('(')[0];if(protectedActions.includes(f))el.hidden=activeOwner!=='local'&&(f==='openStamp'||f==='deleteStamp'?!roleHasModule('facturacion'):effectiveRole!=='ADMIN')});
  document.querySelectorAll('label').forEach(el=>{if(el.querySelector('input[type=file]'))el.hidden=activeOwner!=='local'&&effectiveRole!=='ADMIN'});
- document.getElementById('cLimit').disabled=activeOwner!=='local'&&effectiveRole!=='ADMIN';
+ document.getElementById('cLimit').disabled=activeOwner!=='local'&&effectiveRole!=='ENCARGADO';
  document.getElementById('userRole').querySelector('option[value=ADMIN]').hidden=effectiveRole!=='ADMIN';
  if(!accessProfile(effectiveRole).sales){
  document.getElementById('dashKpis').innerHTML='<div class="col-md-6"><div class="card p-3"><span>Stock valorizado</span><div class="kpi">'+money(db.products.reduce((n,p)=>n+p.cost*p.stock,0))+'</div></div></div>';
@@ -48,7 +48,7 @@ for(const action of ROLE_ACTIONS.ADMIN.filter(x=>x!=='restore')){
  if(action==='finishSale'&&effectiveRole==='CAJERO'&&salePay.value==='Crédito'){
  const customer=db.clients.find(c=>c.id===Number(saleClient.value));if(!customer||debt(customer.id)+taxBreakdown(cart).total>customer.limit)return toast('La venta supera el límite de crédito autorizado.');
  }
- if(action==='saveClient'&&effectiveRole==='CAJERO')cLimit.value=db.clients.find(c=>c.id===Number(clientId.value))?.limit||0;
+ if(action==='saveClient'&&effectiveRole!=='ENCARGADO')cLimit.value=db.clients.find(c=>c.id===Number(clientId.value))?.limit??300000;
  const payload=captureCommand(action,args);if(typeof actionModuleEnabled==='function'&&!actionModuleEnabled(action,payload))return toast('Un módulo necesario para esta operación está desactivado.');
  const prior=commandContext;commandContext={action,payload};
  try{return original(...args)}finally{commandContext=prior}
