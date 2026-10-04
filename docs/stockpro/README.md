@@ -14,7 +14,7 @@ Crear una cuenta no concede acceso. Su correo verificado debe estar autorizado e
 
 ## Roles
 
-- **Administrador:** todos los módulos, gestión de usuarios y administradores, timbrados, límites de crédito, backup/restauración y supervisión de cajas.
+- **Administrador:** todos los módulos, gestión de usuarios y administradores, timbrados, consulta de límites de crédito, backup/restauración y supervisión de cajas.
 - **Cajero:** ventas, clientes, cobros y su propio turno de caja. Consulta sus ventas y no recibe costos de productos, proveedores ni compras. No modifica límites de crédito.
 - **Encargado:** productos, proveedores, compras, ajustes y gestión de cajeros/encargados. No administra cuentas de administrador.
 
@@ -70,3 +70,7 @@ Solo el propietario puede cambiar interruptores, incluso frente a otros ADMIN. L
 I've set up prototype Security Rules to keep the data in Firestore safe. They are designed to be secure for verified invited users, protected-owner module settings, validated configuration, and atomic operation checks. However, you should review and verify them before broadly sharing your app. If you'd like, I can help you harden these rules.
 
 Firebase Authentication usa idioma español en la plantilla predeterminada y auth.languageCode='es' en el cliente. Afecta nuevos correos de verificación y recuperación; no modifica mensajes ya enviados.
+
+## Líneas de crédito de clientes
+
+Solo Encargado con Clientes habilitado puede modificar categorías, límites y vencimientos. Los nuevos clientes inician como Nuevo con ₲300.000. Ver [categorías, topes y uso](CLIENTES_CREDITO.md).
