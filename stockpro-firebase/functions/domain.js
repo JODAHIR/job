@@ -1,3 +1,4 @@
+function nextProductSku(products){const max=products.reduce((n,p)=>/^\d+$/.test(p.sku)?Math.max(n,Number(p.sku)):n,0);if(!Number.isSafeInteger(max+1))throw Error('Se agotó la numeración de SKU.');return String(max+1).padStart(6,'0')}
 'use strict';
 const {isDeepStrictEqual}=require('node:util');
 const ROLES=['ADMIN','CAJERO','ENCARGADO'];
@@ -39,7 +40,7 @@ function apply(state,action,p,actor,ctx){
  const requireCash=()=>{if(!s.cash.isOpen)fail('Abrí tu caja antes de operar.','failed-precondition')};
  switch(action){
  case 'saveProduct':{
- const q={sku:str(p.sku,100,true),name:str(p.name,300,true),category:str(p.category,100,true),cost:num(p.cost),price:num(p.price,0.01),min:num(p.min),avg:num(p.avg),vat:p.vat};if(![0,5,10].includes(q.vat))fail('IVA inválido.');
+ const q={sku:!p.id&&p.autoSku?nextProductSku(s.products):str(p.sku,100,true),name:str(p.name,300,true),category:str(p.category,100,true),cost:num(p.cost),price:num(p.price,0.01),min:num(p.min),avg:num(p.avg),vat:p.vat};if(![0,5,10].includes(q.vat))fail('IVA inválido.');
  if(s.products.some(x=>x.id!==p.id&&x.sku.toLowerCase()===q.sku.toLowerCase()))fail('SKU repetido.');
  if(p.id)Object.assign(find(s.products,p.id),q);else{const product={id:next(s.products),...q,stock:num(p.stock)};s.products.push(product);if(product.stock)move(product,'ENTRADA',product.stock,'Stock inicial')}break;
  }
@@ -88,4 +89,4 @@ function apply(state,action,p,actor,ctx){
  }
  return s;
 }
-module.exports={ROLES,arrays,empty,project,apply,authorize,manageAllowed,expected,tax,clone,fail,str,num};
+module.exports={nextProductSku,ROLES,arrays,empty,project,apply,authorize,manageAllowed,expected,tax,clone,fail,str,num};
