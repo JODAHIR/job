@@ -40,6 +40,7 @@ function project(s,actor){const d=clone(s);
  if(actor.role==='ENCARGADO'){d.clients=[];d.sales=[];d.credits=[];d.stamps=[];d.cash=empty().cash;}
  return d;
 }
+function clientInArrears(credits,clientId,day){return credits.some(c=>c.clientId===clientId&&Number(c.balance)>0&&c.dueDate<day)}
 function apply(state,action,p,actor,ctx){
  authorize(actor.role,action,actor.moduleRoles);const s=clone(state),now=ctx.now||new Date().toISOString(),day=ctx.day||new Date(now).toLocaleDateString('en-CA',{timeZone:'America/Asuncion'});let serial=0;
  const move=(product,type,qty,detail)=>s.moves.unshift({id:next(s.moves),date:day,datetime:now,productId:product.id,product:product.name,type,qty,detail,operatorUid:actor.uid});
@@ -76,6 +77,7 @@ function apply(state,action,p,actor,ctx){
  const items=p.items.map(i=>{if(used.has(i.productId))fail('Producto repetido.');used.add(i.productId);const product=find(s.products,i.productId),qty=num(i.qty,1,1e6);if(!Number.isInteger(qty)||qty>product.stock)fail('Cantidad inválida o stock insuficiente.');if(i.price!==product.price||i.vat!==product.vat)fail('El precio o IVA cambió. Revisá la venta.','failed-precondition');return {productId:product.id,name:product.name,qty,price:product.price,vat:product.vat}});
  const taxes=tax(items),total=num(taxes.total,0.01),client=p.clientId?find(s.clients,p.clientId):null,pay=p.pay;
  if(!['Efectivo','Transferencia','Tarjeta de débito','Tarjeta de crédito','Crédito'].includes(pay))fail('Forma de pago inválida.');
+ if(client&&clientInArrears(s.credits,client.id,day))fail('Cliente en mora. Registrá el cobro del saldo vencido antes de realizar una venta.','failed-precondition');
  if(pay==='Crédito'){if(!client)fail('Elegí un cliente.');if(actor.role!=='ENCARGADO')p={...p,dueDate:defaultCreditDue(day)};date(p.dueDate);if(p.dueDate<day)fail('Vencimiento inválido.');if(s.credits.filter(c=>c.clientId===client.id).reduce((n,c)=>n+c.balance,0)+total>client.limit)fail('La venta supera el límite de crédito autorizado.','permission-denied')}
  let invoice=null;
  if(p.invoice){const st=find(s.stamps,p.invoice.stampId);if(!st.enabled||day<st.validFrom||day>st.validTo||st.next>st.end)fail('Timbrado no disponible.');invoice={enabled:true,doc:str(p.invoice.doc,100,true),name:str(p.invoice.name,300,true),stampId:st.id,stamp:st.number,establishment:st.establishment,point:st.point,sequence:st.next,number:st.establishment+'-'+st.point+'-'+String(st.next).padStart(7,'0'),condition:pay==='Crédito'?'CRÉDITO':'CONTADO'};st.next++}
@@ -107,4 +109,4 @@ function apply(state,action,p,actor,ctx){
  }
  return s;
 }
-module.exports={CREDIT_LIMITS,lastBusinessDay,defaultCreditDue,roleModule,MODULE_DEFAULT_ROLES,ACTION_MODULES,nextProductSku,ROLES,arrays,empty,project,apply,authorize,manageAllowed,expected,tax,clone,fail,str,num};
+module.exports={clientInArrears,CREDIT_LIMITS,lastBusinessDay,defaultCreditDue,roleModule,MODULE_DEFAULT_ROLES,ACTION_MODULES,nextProductSku,ROLES,arrays,empty,project,apply,authorize,manageAllowed,expected,tax,clone,fail,str,num};

@@ -9,6 +9,22 @@ function dailySalesBreakdown(data,date){
  const rows=map=>[...map].sort((a,b)=>b[1]-a[1]).map(([label,value])=>({label,value}));
  return {payments:rows(payments),categories:rows(categories)};
 }
+function clientsDueOn(data,date){
+ const clients=new Map(data.clients.map(c=>[c.id,c])),rows=new Map();
+ for(const credit of data.credits){if(credit.dueDate!==date||Number(credit.balance)<=0)continue;
+  const client=clients.get(credit.clientId),row=rows.get(credit.clientId)||{id:credit.clientId,name:client?.name||credit.client||'Cliente',phone:client?.phone||'',count:0,balance:0};
+  row.count++;row.balance+=Number(credit.balance);rows.set(credit.clientId,row);
+ }
+ return [...rows.values()].sort((a,b)=>a.name.localeCompare(b.name,'es'));
+}
+let dueClientsDay=today(),dueClientsFollowToday=true;
+function renderDueClients(){
+ const section=document.getElementById('dueClientsSection');section.hidden=!accessProfile(effectiveRole).credits;if(section.hidden)return;
+ if(dueClientsFollowToday){dueClientsDay=today();document.getElementById('dueClientsDate').value=dueClientsDay;}
+ const rows=clientsDueOn(db,dueClientsDay);
+ document.getElementById('dueClientsSummary').textContent=rows.length+' cliente(s) · '+money(rows.reduce((n,r)=>n+r.balance,0))+' pendiente';
+ document.getElementById('dueClientsTable').innerHTML=rows.map(r=>`<tr><td>${esc(r.name)}</td><td>${esc(r.phone||'—')}</td><td>${r.count}</td><td><b>${money(r.balance)}</b></td></tr>`).join('')||'<tr><td colspan="4" class="text-secondary">No hay créditos pendientes con vencimiento en esta fecha.</td></tr>';
+}
 const dashboardColors=['#635bff','#10b981','#f59e0b','#ec4899','#0ea5e9','#8b5cf6','#f97316','#64748b'];
 function renderDailyPie(id,rows){
  const el=document.getElementById(id),total=rows.reduce((n,r)=>n+r.value,0);
@@ -25,8 +41,10 @@ dashboardSection.innerHTML=`<style>
 <div class="card p-3 chart-card"><div class="chart-head"><div><h5>El ritmo de tus ventas</h5><span class="text-secondary">Últimos 7 días · guaraníes</span></div><b id="weekTotal"></b></div><div class="chart-bars" id="chartBars" aria-label="Ventas de los últimos siete días"></div>
 <div class="d-flex align-items-center gap-2 mt-4 flex-wrap"><label for="dashboardDate">Detalle del día</label><input id="dashboardDate" type="date" class="form-control dashboard-date" value="${dashboardDay}" onchange="if(this.value){dashboardDay=this.value;dashboardFollowToday=this.value===today();renderDashboard()}"><span class="text-secondary small">Distribución por importe vendido</span></div>
 <div class="daily-charts"><div><h6>Medios de pago</h6><div id="paymentPie" class="pie-content"></div><small class="text-secondary">Crédito corresponde a ventas a cobrar; no a dinero recibido.</small></div><div><h6>Categorías de artículos</h6><div id="categoryPie" class="pie-content"></div><small class="text-secondary">Ventas históricas sin categoría guardada usan la categoría actual del producto.</small></div></div></div>
+<div id="dueClientsSection" class="card p-3 mt-3"><div class="d-flex justify-content-between align-items-center flex-wrap gap-2"><h5>Clientes con vencimiento en fecha</h5><label class="small">Fecha de vencimiento<input id="dueClientsDate" type="date" class="form-control dashboard-date" value="${dueClientsDay}" onchange="if(this.value){dueClientsDay=this.value;dueClientsFollowToday=this.value===today();renderDueClients()}"></label></div><p id="dueClientsSummary" class="text-secondary small"></p><div class="table-responsive"><table class="table"><thead><tr><th>Cliente</th><th>Teléfono</th><th>Créditos</th><th>Saldo a cancelar</th></tr></thead><tbody id="dueClientsTable"></tbody></table></div></div>
 <div class="card p-3 mt-3"><h5>Predicción de faltantes</h5><div class="table-responsive"><table class="table"><thead><tr><th>Producto</th><th>Stock</th><th>Prom./día</th><th>Cobertura</th><th>Reposición sugerida</th></tr></thead><tbody id="forecastTable"></tbody></table></div></div>`;
 renderDashboard=function(){
+ renderDueClients();
  const sales=db.sales.filter(s=>s.date===today());
  const kpis=!accessProfile(effectiveRole).sales?[[money(db.products.reduce((n,p)=>n+p.stock*p.cost,0)),'Stock valorizado']]:[[money(sales.reduce((n,s)=>n+s.total,0)),'Ventas de hoy'],[money(db.credits.reduce((n,c)=>n+c.balance,0)),'Cuentas por cobrar'],[money(db.credits.filter(c=>creditState(c)==='EN MORA').reduce((n,c)=>n+c.balance,0)),'Saldo en mora'],[money(db.products.reduce((n,p)=>n+p.stock*p.cost,0)),'Stock valorizado']];
  document.getElementById('dashKpis').innerHTML=kpis.map(([value,label])=>`<div class="col-6 col-xl-3"><div class="card p-3"><div class="text-secondary">${label}</div><div class="kpi">${value}</div></div></div>`).join('');

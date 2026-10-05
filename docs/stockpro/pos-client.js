@@ -8,5 +8,10 @@ function saleDateTime(sale){
 const recentSalesHead=document.getElementById('salesTable').closest('table').querySelector('thead');
 recentSalesHead.innerHTML='<tr><th>Fecha y hora</th><th>Cliente</th><th>Método de pago</th><th>Factura</th><th>Total</th></tr>';
 renderSales=function(){
- document.getElementById('salesTable').innerHTML=db.sales.slice(0,20).map(s=>`<tr><td>${esc(saleDateTime(s))}</td><td>${esc(s.client)}</td><td>${esc(s.pay)}</td><td>${s.invoice?esc(s.invoice.number):'<span class="text-secondary">Sin factura</span>'}${s.invoice&&!isSaleConfirmed(s)?'<br><span class="badge text-bg-warning">Pendiente / sin confirmar</span>':''}<br><button class="btn btn-sm btn-outline-secondary mt-1" onclick="printSale(${Number(s.id)})">Imprimir</button></td><td><b>${money(s.total)}</b></td></tr>`).join('')||'<tr><td colspan="5" class="text-secondary">Sin ventas.</td></tr>';
+ document.getElementById('salesTable').innerHTML=db.sales.filter(s=>s.date===today()).slice(0,20).map(s=>`<tr><td>${esc(saleDateTime(s))}</td><td>${esc(s.client)}</td><td>${esc(s.pay)}</td><td>${s.invoice?esc(s.invoice.number):'<span class="text-secondary">Sin factura</span>'}${s.invoice&&!isSaleConfirmed(s)?'<br><span class="badge text-bg-warning">Pendiente / sin confirmar</span>':''}<br><button class="btn btn-sm btn-outline-secondary mt-1" onclick="printSale(${Number(s.id)})">Imprimir</button></td><td><b>${money(s.total)}</b></td></tr>`).join('')||'<tr><td colspan="5" class="text-secondary">Sin ventas registradas hoy.</td></tr>';
 };
+
+let recentSalesDay=today();
+function refreshDailyViews(){const day=today();if(day!==recentSalesDay){recentSalesDay=day;renderSales();renderClients();renderDashboard();}}
+setInterval(refreshDailyViews,30000);
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)refreshDailyViews()});
