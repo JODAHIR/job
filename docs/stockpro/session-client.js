@@ -16,6 +16,7 @@ async function expireIdleSession(){
  if(idleExpiring||!idleUid)return;idleExpiring=true;idleExpiredNotice=true;clearTimeout(idleTimer);
  // Invalidate in-flight UI updates, stop subscriptions and lock before signOut resolves.
  ++authGeneration;syncing=false;reading=false;roleBlocked=true;serverVerified=false;loginValidatedUid=null;loginOpenedFor=null;
+ if(typeof stopStoreSubscriptions==='function')stopStoreSubscriptions();
  if(stopWatch){stopWatch();stopWatch=null}if(stopModules){stopModules();stopModules=null}stopLiveUpdates();
  db=emptyDB();cart=[];effectiveRole='BLOCKED';document.body.classList.add('auth-locked');document.getElementById('appShell').inert=true;
  document.querySelectorAll('.modal.show').forEach(node=>{const instance=bootstrap.Modal.getInstance(node);if(instance)instance.hide();node.classList.remove('show');node.style.display='none'});

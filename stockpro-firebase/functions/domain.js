@@ -1,7 +1,7 @@
 function nextProductSku(products){const max=products.reduce((n,p)=>/^\d+$/.test(p.sku)?Math.max(n,Number(p.sku)):n,0);if(!Number.isSafeInteger(max+1))throw Error('Se agotó la numeración de SKU.');return String(max+1).padStart(6,'0')}
 'use strict';
 const {isDeepStrictEqual}=require('node:util');
-const ROLES=['ADMIN','CAJERO','ENCARGADO'];
+const ROLES=['ADMIN','CAJERO','ENCARGADO','DUENO'];
 const catalog=['saveProduct','deleteProduct','saveStockMove','saveSupplier','deleteSupplier','savePurchase'];
 const till=['finishSale','saveClient','openCash','closeCash','addCashMove','saveCreditPayment'];
 const onlyAdmin=['deleteClient','saveCredit','saveStamp','deleteStamp','restore'];
@@ -11,14 +11,15 @@ const CREDIT_LIMITS={NUEVO:300000,EXCELENTE:300000,BUENO:150000,MALO:0};
 function lastBusinessDay(day){date(day);const [y,m]=day.split('-').map(Number),d=new Date(Date.UTC(y,m,0));while([0,6].includes(d.getUTCDay()))d.setUTCDate(d.getUTCDate()-1);return d.toISOString().slice(0,10)}
 function defaultCreditDue(day){const due=lastBusinessDay(day);if(due>=day)return due;const d=new Date(day+'T12:00:00Z');d.setUTCMonth(d.getUTCMonth()+1,1);return lastBusinessDay(d.toISOString().slice(0,10))}
 const ACTION_MODULES={setCreditDueDate:'clientes',saveProduct:'productos',deleteProduct:'productos',saveStockMove:'movimientos',saveSupplier:'proveedores',deleteSupplier:'proveedores',savePurchase:'compras',finishSale:'ventas',saveClient:'clientes',deleteClient:'clientes',saveCredit:'creditos',saveCreditPayment:'creditos',saveStamp:'facturacion',deleteStamp:'facturacion',openCash:'caja',closeCash:'caja',addCashMove:'caja'};
-function roleModule(role,id,grants={}){return role==='ADMIN'||(grants[id]||MODULE_DEFAULT_ROLES[id]||[]).includes(role)}
-function authorize(role,action,grants){if(action==='setCreditDueDate'){if(role!=='ENCARGADO'||!roleModule(role,'clientes',grants))fail('Solo Encargado con acceso a Clientes puede modificar el vencimiento.','permission-denied');return;}if(!ROLES.includes(role))fail('Tu rol no permite esta operación.','permission-denied');if(grants!==undefined){const id=ACTION_MODULES[action];if(action==='restore'?role==='ADMIN':id&&roleModule(role,id,grants)&&(!['deleteClient','saveCredit'].includes(action)||role==='ADMIN'))return;}else if(role==='ADMIN'&&[...catalog,...till,...onlyAdmin].includes(action)||role==='CAJERO'&&till.includes(action)||role==='ENCARGADO'&&catalog.includes(action))return;fail('Tu rol no permite esta operación.','permission-denied')}
+function roleModule(role,id,grants={}){if(role==='DUENO')return ['dashboard','caja','usuarios'].includes(id);return role==='ADMIN'||(grants[id]||MODULE_DEFAULT_ROLES[id]||[]).includes(role)}
+function authorize(role,action,grants){if(role==='DUENO')fail('Dueño tiene acceso de consulta; no puede registrar operaciones.','permission-denied');if(action==='setCreditDueDate'){if(role!=='ENCARGADO'||!roleModule(role,'clientes',grants))fail('Solo Encargado con acceso a Clientes puede modificar el vencimiento.','permission-denied');return;}if(!ROLES.includes(role))fail('Tu rol no permite esta operación.','permission-denied');if(grants!==undefined){const id=ACTION_MODULES[action];if(action==='restore'?role==='ADMIN':id&&roleModule(role,id,grants)&&(!['deleteClient','saveCredit'].includes(action)||role==='ADMIN'))return;}else if(role==='ADMIN'&&[...catalog,...till,...onlyAdmin].includes(action)||role==='CAJERO'&&till.includes(action)||role==='ENCARGADO'&&catalog.includes(action))return;fail('Tu rol no permite esta operación.','permission-denied')}
 function manageAllowed(actor,target,role,uid,ownerUid){
+ if(actor.role==='DUENO')fail('Dueño solo puede deshabilitar usuarios de sus despensas.','permission-denied');
  if(!actor.active||!['ADMIN','ENCARGADO'].includes(actor.role))fail('No podés gestionar usuarios.','permission-denied');
  if(!ROLES.includes(role))fail('Rol inválido.');
  if(actor.uid===uid)fail('No podés modificar tu propio acceso.','permission-denied');
  if(uid===ownerUid)fail('El superusuario inicial está protegido.','permission-denied');
- if(actor.role==='ENCARGADO'&&(role==='ADMIN'||target?.role==='ADMIN'))fail('Solo un administrador puede gestionar administradores.','permission-denied');
+ if(actor.role==='ENCARGADO'&&(['ADMIN','DUENO'].includes(role)||['ADMIN','DUENO'].includes(target?.role)))fail('Solo un administrador puede gestionar administradores.','permission-denied');
 }
 const clone=x=>JSON.parse(JSON.stringify(x));
 const arrays=['products','clients','suppliers','sales','purchases','credits','stamps','moves'];

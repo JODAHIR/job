@@ -1,9 +1,9 @@
 /* StockPro 8: account roles and durable command outbox. This file is embedded
    into index.html by stockpro-firebase/build-client.py for standalone offline use. */
 let effectiveRole='LOCAL',commandContext=null,roleBlocked=false;
-const ROLE_NAMES={ADMIN:'Administrador · superusuario',CAJERO:'Cajero',ENCARGADO:'Encargado',LOCAL:'Demo local',BLOCKED:'Sin acceso'};
-const ROLE_ACTIONS={ADMIN:['saveProduct','deleteProduct','saveStockMove','saveSupplier','deleteSupplier','savePurchase','finishSale','saveClient','deleteClient','saveCredit','saveStamp','deleteStamp','openCash','closeCash','addCashMove','saveCreditPayment','restore'],CAJERO:['finishSale','saveClient','openCash','closeCash','addCashMove','saveCreditPayment'],ENCARGADO:['saveProduct','deleteProduct','saveStockMove','saveSupplier','deleteSupplier','savePurchase']};
-const ROLE_PAGES={ADMIN:['dashboard','productos','ventas','clientes','proveedores','compras','creditos','facturacion','caja','movimientos','datos','usuarios'],CAJERO:['ventas','clientes','creditos','caja','datos'],ENCARGADO:['dashboard','productos','proveedores','compras','movimientos','datos','usuarios'],LOCAL:['dashboard','productos','ventas','clientes','proveedores','compras','creditos','facturacion','caja','movimientos','datos'],BLOCKED:['datos']};
+const ROLE_NAMES={DUENO:'Dueño',ADMIN:'Administrador · superusuario',CAJERO:'Cajero',ENCARGADO:'Encargado',LOCAL:'Demo local',BLOCKED:'Sin acceso'};
+const ROLE_ACTIONS={DUENO:[],ADMIN:['saveProduct','deleteProduct','saveStockMove','saveSupplier','deleteSupplier','savePurchase','finishSale','saveClient','deleteClient','saveCredit','saveStamp','deleteStamp','openCash','closeCash','addCashMove','saveCreditPayment','restore'],CAJERO:['finishSale','saveClient','openCash','closeCash','addCashMove','saveCreditPayment'],ENCARGADO:['saveProduct','deleteProduct','saveStockMove','saveSupplier','deleteSupplier','savePurchase']};
+const ROLE_PAGES={DUENO:['dashboard','caja','usuarios','datos'],ADMIN:['dashboard','productos','ventas','clientes','proveedores','compras','creditos','facturacion','caja','movimientos','datos','usuarios'],CAJERO:['ventas','clientes','creditos','caja','datos'],ENCARGADO:['dashboard','productos','proveedores','compras','movimientos','datos','usuarios'],LOCAL:['dashboard','productos','ventas','clientes','proveedores','compras','creditos','facturacion','caja','movimientos','datos'],BLOCKED:['datos']};
 function allowed(action){return activeOwner==='local'||!roleBlocked&&ROLE_ACTIONS[effectiveRole]?.includes(action)}
 function roleUI(){
  const pages=ROLE_PAGES[effectiveRole]||['datos'];
@@ -131,4 +131,4 @@ async function saveUser(){const button=document.getElementById('saveUserButton')
  catch(e){toast(e.message)}finally{button.disabled=false}
 }
 async function resetOwnPassword(){if(!auth)return;const email=loginEmail.value.trim();if(!email)return toast('Ingresá tu correo electrónico.');try{auth.languageCode='es';await auth.sendPasswordResetEmail(email);toast('Si la cuenta existe, Firebase enviará las instrucciones a ese correo.')}catch(e){toast('No se pudo enviar el correo. Revisá la configuración de Authentication.')}}
-document.querySelector('[data-page="usuarios"]').addEventListener('click',loadUsers);
+document.querySelector('[data-page="usuarios"]').addEventListener('click',()=>loadUsers());

@@ -1,15 +1,15 @@
 /* Spark adapter. Authenticated SDK requests are enforced by firestore.rules.
    No callable endpoints, private keys, or paid backend required. */
-const sparkRoot=()=>cloud.doc('stockproStores/despensa');
+const sparkRoot=()=>cloud.doc('stockproStores/'+selectedStoreId);
 const sparkEmail=()=>auth.currentUser.email.toLowerCase();
 const sparkAccess=()=>cloud.doc('stockproAccess/'+sparkEmail());
 function sparkError(message,code='PERMISSION_DENIED'){const e=Error(message);e.code=code;return e}
-async function sparkActor(){
+async function sparkActor(checkStore=true){
  const user=auth.currentUser;if(!user)throw sparkError('Iniciá sesión.');
  if(!user.emailVerified)throw sparkError('Verificá tu correo con el enlace recibido y volvé a iniciar sesión.','EMAIL_NOT_VERIFIED');
  const [doc,policy]=await Promise.all([sparkAccess().get({source:'server'}),Promise.all([cloud.doc('stockproConfig/main').get({source:'server'}),cloud.doc('stockproConfig/modules').get({source:'server'})])]),m=doc.data();
  if(!m?.active||!StockDomain.ROLES.includes(m.role))throw sparkError('Tu correo todavía no tiene acceso. Pedí al administrador que lo autorice.');
- const actor={...m,uid:user.uid,moduleRoles:policy[1].data()?.roles||{}};if(auth.currentUser?.uid!==user.uid)throw sparkError('La sesión cambió.');applyModulePolicy(policy[1].data()?.enabled||{},actor.role==='ADMIN'&&policy[0].data()?.ownerEmail===sparkEmail(),actor.moduleRoles);return actor;
+ const actor={...m,uid:user.uid,moduleRoles:policy[1].data()?.roles||{}};if(auth.currentUser?.uid!==user.uid)throw sparkError('La sesión cambió.');applyModulePolicy(policy[1].data()?.enabled||{},actor.role==='ADMIN'&&policy[0].data()?.ownerEmail===sparkEmail(),actor.moduleRoles);if(checkStore&&!actorCanStore(actor,selectedStoreId))throw sparkError('Tu cuenta no tiene acceso a esta despensa.');return actor;
 }
 async function sparkSnapshot(){
  const root=sparkRoot(),meta=root.collection('meta').doc('state');
@@ -18,21 +18,21 @@ async function sparkSnapshot(){
  const start=attempt===0?initial:await meta.get({source:'server'}),revision=start.exists?start.data().revision:0;
  const data=emptyDB(),profile=accessProfile(actor.role),keys=['products',...(profile.suppliers?['suppliers']:[]),...(profile.purchases?['purchases']:[]),...(profile.moves?['moves']:[]),...(profile.clients?['clients']:[]),...(profile.credits?['credits','payments']:[]),...(profile.stamps?['stamps']:[]),...(profile.sales?['sales']:[]),...(profile.cash?['cashMoves','cashClosings']:[])];
  const costsTask=profile.costs?root.collection('productCosts').get({source:'server'}):Promise.resolve(null);
- const cashTask=profile.cash?root.collection('cash').doc(actor.uid).get({source:'server'}):Promise.resolve(null);
+ const cashTask=profile.cash&&actor.role!=='DUENO'?root.collection('cash').doc(actor.uid).get({source:'server'}):Promise.resolve(null);
  const overviewTask=actor.role==='ADMIN'?root.collection('cash').get({source:'server'}):Promise.resolve(null);
- const groups={};const collectionsTask=Promise.all(keys.map(async k=>{let q=root.collection(k);if(actor.role!=='ADMIN'&&['sales','cashMoves','cashClosings'].includes(k))q=q.where('operatorUid','==',actor.uid);const s=await q.get({source:'server'});groups[k]=s.docs.map(x=>x.data())}));
+ const groups={};const collectionsTask=Promise.all(keys.map(async k=>{let q=root.collection(k);if(!['ADMIN','DUENO'].includes(actor.role)&&['sales','cashMoves','cashClosings'].includes(k))q=q.where('operatorUid','==',actor.uid);const s=await q.get({source:'server'});groups[k]=s.docs.map(x=>x.data())}));
  const [costs,cash,all]=await Promise.all([costsTask,cashTask,overviewTask,collectionsTask]);
  for(const k of ENTITY_KEYS)data[k]=groups[k]||[];
  if(profile.costs){const byId=Object.fromEntries(costs.docs.map(d=>[d.id,d.data().cost]));data.products.forEach(p=>p.cost=byId[p.id]||0)}else data.products.forEach(p=>p.cost=0);
  data.credits.forEach(c=>c.payments=(groups.payments||[]).filter(p=>p.creditId===c.id).sort((a,b)=>a.position-b.position).map(({creditId,position,...p})=>p));
  let overview=[];
  if(profile.cash){
- if(cash.exists)data.cash={...cash.data(),moves:[],history:[]};
- data.cash.moves=(groups.cashMoves||[]).filter(m=>m.operatorUid===actor.uid).sort((a,b)=>b.id-a.id);data.cash.history=(groups.cashClosings||[]).filter(m=>m.operatorUid===actor.uid).sort((a,b)=>b.id-a.id);
+ if(cash?.exists)data.cash={...cash.data(),moves:[],history:[]};
+ data.cash.moves=(groups.cashMoves||[]).filter(m=>m.operatorUid===actor.uid).sort((a,b)=>b.id-a.id);data.cash.history=(groups.cashClosings||[]).filter(m=>actor.role==='DUENO'||m.operatorUid===actor.uid).sort((a,b)=>b.id-a.id);
  if(actor.role==='ADMIN'){overview=all.docs.map(d=>({uid:d.data().operatorEmail||d.id,...d.data(),expected:d.data().expectedBalance||0}))}
  }
  for(const k of ['sales','purchases','moves'])data[k].sort((a,b)=>b.id-a.id);
- const end=await meta.get({source:'server'});if((end.exists?end.data().revision:0)===revision)return {role:actor.role,ownerUid:'despensa',revision,data:validateDB(data),cashOverview:overview};
+ const end=await meta.get({source:'server'});if((end.exists?end.data().revision:0)===revision)return {role:actor.role,ownerUid:selectedStoreId,revision,data:validateDB(data),cashOverview:overview};
  }
  throw sparkError('Los datos cambiaron durante la lectura. Reintentá.','UNAVAILABLE');
 }
@@ -74,27 +74,40 @@ async function sparkOperate(command){
  return {revision:revision+1,opRevision:revision+1};
  });
  if(result.duplicate){const snap=await sparkSnapshot();return {...snap,opRevision:result.opRevision}}
- return {role:actor.role,ownerUid:'despensa',data:state,...result};
+ return {role:actor.role,ownerUid:selectedStoreId,data:state,...result};
 }
 async function sparkUsers(p){
- const actor=await sparkActor();if(!moduleEnabled('usuarios'))throw Error('El módulo de usuarios está desactivado.');if(!roleHasModule('usuarios',actor.role))throw sparkError('No podés gestionar usuarios.');
- if(p.action==='list'){let q=cloud.collection('stockproAccess');if(actor.role!=='ADMIN')q=q.where('role','in',['CAJERO','ENCARGADO']);const snap=await q.get({source:'server'});return {users:snap.docs.map(d=>({uid:d.id,...d.data()}))}}
+ const actor=await sparkActor();if(!moduleEnabled('usuarios')||!roleHasModule('usuarios',actor.role))throw sparkError('No podés gestionar usuarios.');
+ if(p.action==='list'){
+  let users;if(actor.role==='ADMIN'){const snap=await cloud.collection('stockproAccess').get({source:'server'});users=snap.docs.map(d=>({uid:d.id,...d.data()}));}
+  else {const groups=await Promise.all(['CAJERO','ENCARGADO'].map(role=>cloud.collection('stockproAccess').where('storeId','==',selectedStoreId).where('role','==',role).get({source:'server'})));users=groups.flatMap(s=>s.docs.map(d=>({uid:d.id,...d.data()})));}
+  return {users};
+ }
  const email=(p.uid||p.email||'').trim().toLowerCase();if(!/^[^\s/@]+@[^\s/@]+\.[^\s/@]+$/.test(email))throw Error('Correo inválido.');
- const ref=cloud.doc('stockproAccess/'+email),old=await ref.get({source:'server'});
+ const ref=cloud.doc('stockproAccess/'+email);
+ if(actor.role==='DUENO'){
+  if(p.action!=='disable')throw sparkError('Dueño solo puede deshabilitar usuarios.');
+  await cloud.runTransaction(async tx=>{const snap=await tx.get(ref),old=snap.data();if(!old||!['CAJERO','ENCARGADO'].includes(old.role)||!actorCanStore(actor,old.storeId)||old.storeId!==selectedStoreId||!old.active)throw sparkError('No podés deshabilitar esa cuenta.');tx.update(ref,{active:false,updatedBy:actor.uid,updatedAt:firebase.firestore.FieldValue.serverTimestamp()});});return {uid:email};
+ }
+ const old=await ref.get({source:'server'});
  if(p.action==='create'&&old.exists)throw Error('El correo ya está autorizado. Editalo desde la lista.');
  if(p.action==='update'&&!old.exists)throw Error('Acceso no encontrado.');
- await ref.set({email,name:StockDomain.str(p.name,200,true),role:p.role,active:p.active,updatedBy:actor.uid,updatedAt:firebase.firestore.FieldValue.serverTimestamp()});return {uid:email};
+ if(!['create','update'].includes(p.action))throw Error('Operación desconocida.');
+ if(actor.role!=='ADMIN'&&(!['CAJERO','ENCARGADO'].includes(p.role)||(old.exists&&(!['CAJERO','ENCARGADO'].includes(old.data().role)||!actorCanStore(actor,old.data().storeId||'despensa')))))throw sparkError('No podés cambiar ese acceso.');
+ const data={email,name:StockDomain.str(p.name,200,true),role:p.role,active:p.active,updatedBy:actor.uid,updatedAt:firebase.firestore.FieldValue.serverTimestamp()};
+ if(p.role==='DUENO'){if(!Array.isArray(p.storeIds)||!p.storeIds.length||p.storeIds.length>30||new Set(p.storeIds).size!==p.storeIds.length||p.storeIds.some(id=>!availableStores.some(s=>s.id===id&&s.active)))throw Error('Asigná entre una y 30 despensas activas.');data.storeIds=p.storeIds;}
+ else if(p.role!=='ADMIN'){data.storeId=actor.role==='ADMIN'?p.storeId:selectedStoreId;if(!availableStores.some(s=>s.id===data.storeId&&s.active))throw Error('Elegí una despensa activa.');}
+ await ref.set(data);return {uid:email};
 }
 callRoles=async function(name,data={}){try{if(name==='stockproSnapshot')return await sparkSnapshot();if(name==='stockproOperate')return await sparkOperate(data);if(name==='stockproUsers')return await sparkUsers(data);throw Error('Operación desconocida.')}catch(e){if(e.code==='permission-denied')e.code='PERMISSION_DENIED';throw e}};
 startCloud=async function(){
  try{firebase.initializeApp(firebaseConfig);auth=firebase.auth();auth.languageCode='es';cloud=firebase.firestore();
  if(window.STOCKPRO_EMULATOR==='localhost'&&['localhost','127.0.0.1'].includes(location.hostname)){auth.useEmulator('http://127.0.0.1:9099',{disableWarnings:true});cloud.useEmulator('127.0.0.1',8088)}
- auth.onAuthStateChanged(async user=>{const generation=++authGeneration;if(stopWatch)stopWatch();if(stopModules)stopModules();stopLiveUpdates();applyModulePolicy({},false);syncing=false;reading=false;conflict=false;roleBlocked=false;serverVerified=false;activeOwner=user?user.uid:'local';db=load();cart=[];effectiveRole=user?(envelope.role||'BLOCKED'):'LOCAL';renderAll();
- if(!user){setSync('local','Modo local. Iniciá sesión para usar la despensa compartida.');return}
- if(!user.emailVerified){effectiveRole='BLOCKED';db=emptyDB();renderAll();setSync('error','Verificá tu correo y volvé a iniciar sesión. Si necesitás otro enlace, cerrá sesión y pulsá Crear mi cuenta con tu correo y contraseña.');return}
- startLiveUpdates(generation);await retrySync();if(generation!==authGeneration)return;
- stopModules=cloud.doc('stockproConfig/modules').onSnapshot(snap=>{if(generation!==authGeneration||snap.metadata.fromCache||snap.metadata.hasPendingWrites)return;const changed=effectiveRole!=='ADMIN'&&Object.keys(MODULE_LABELS).some(id=>StockDomain.roleModule(effectiveRole,id,moduleRoles)!==StockDomain.roleModule(effectiveRole,id,snap.data()?.roles||{}));applyModulePolicy(snap.data()?.enabled||{},isSuperAdmin,snap.data()?.roles||{});if(changed){roleBlocked=true;effectiveRole='BLOCKED';db=emptyDB();cart=[];setSync('error','Tus permisos cambiaron. Cerrá sesión y volvé a ingresar. Los pendientes se conservan.');}renderAll()},cloudFailure);
- stopWatch=sparkAccess().onSnapshot(snap=>{if(generation!==authGeneration)return;if(snap.metadata.fromCache||snap.metadata.hasPendingWrites)return;const m=snap.data();if(!m?.active||m.role!==effectiveRole){roleBlocked=true;effectiveRole='BLOCKED';db=emptyDB();cart=[];renderAll();setSync('error','Tu acceso cambió. Volvé a iniciar sesión. Los pendientes están conservados.')}},cloudFailure);
+ auth.onAuthStateChanged(async user=>{
+ const generation=++authGeneration;stopStoreSubscriptions();applyModulePolicy({},false);syncing=false;reading=false;conflict=false;roleBlocked=false;serverVerified=false;loginValidatedUid=null;activeOwner=user?user.uid:'local';selectedStoreId='despensa';currentStoreActor=null;availableStores=[];db=user?emptyDB():load();cart=[];effectiveRole=user?'BLOCKED':'LOCAL';renderAll();
+ if(!user){setSync('local','Iniciá sesión para usar tu despensa.');return;}
+ if(!user.emailVerified){roleBlocked=true;effectiveRole='BLOCKED';renderAll();setSync('error','Verificá tu correo y volvé a ingresar.');return;}
+ try{await connectStoreContext(user,generation);}catch(e){if(generation===authGeneration)cloudFailure(e);}
  },cloudFailure);
  }catch(e){cloudFailure(e)}
 };
@@ -106,4 +119,3 @@ async function registerOwnAccount(){
 }
 const sparkCanMutate=canMutate;canMutate=function(){if(activeOwner!=='local'&&envelope.queue?.some(c=>(['saveProduct','saveClient','saveSupplier','saveCredit','restore'].includes(c.action)||c.action==='finishSale'&&c.payload.pay==='Crédito'))){toast('Sincronizá el alta pendiente antes de usar ese registro.');return false}return sparkCanMutate()};
 const sparkFinishSale=finishSale;finishSale=function(...args){if(activeOwner!=='local'&&cart.length>10)return toast('Máximo 10 productos distintos por venta en esta versión del plan gratuito. Dividí el carrito en dos ventas.');return sparkFinishSale(...args)};
-saveUser=async function(){const button=document.getElementById('saveUserButton');button.disabled=true;try{await sparkUsers({action:userUid.value?'update':'create',uid:userUid.value||null,name:userName.value.trim(),email:userEmail.value.trim(),role:userRole.value,active:userActive.checked});modal('userModal').hide();await loadUsers();toast('Correo autorizado. La persona debe crear su cuenta y verificar su correo para ingresar.')}catch(e){toast(e.message)}finally{button.disabled=false}};
