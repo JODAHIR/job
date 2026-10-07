@@ -70,3 +70,14 @@ export async function usageSummary(){
  }
  return [...byUser.values()].sort((a,b)=>b.count-a.count);
 }
+export async function submitProposal(data){
+ const user=auth.currentUser;if(!user||await accessFor(user)==='denied')throw new Error('Tu cuenta no está autorizada.');
+ const proposal={title:String(data.title||'').trim().slice(0,200),steps:String(data.steps||'').trim().slice(0,10000),support:String(data.support||'').trim().slice(0,500),hours:String(data.hours||'').trim().slice(0,500),good:String(data.good||'').trim().slice(0,3000),bad:String(data.bad||'').trim().slice(0,3000),status:'pending',submittedBy:user.uid,submittedEmail:normalizeEmail(user.email),createdAt:serverTimestamp()};
+ if(!proposal.title||!proposal.steps)throw new Error('Completá el título y los pasos operativos.');
+ await setDoc(doc(db,'procedure_proposals',crypto.randomUUID()),proposal);
+}
+export async function listPendingProposals(){
+ if(!isOwner(auth.currentUser))throw new Error('Solo el administrador puede ver propuestas.');
+ const result=await execute(db.pipeline().collection('procedure_proposals').where(field('status').equal('pending')).sort(field('createdAt').descending()).limit(100));
+ return result.results.map(entry=>({id:entry.id,...entry.data()}));
+}
