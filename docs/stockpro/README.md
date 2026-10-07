@@ -82,3 +82,7 @@ Tras 5 minutos sin interacción se cierra la sesión de Firebase y aparece el lo
 ## Varias despensas
 
 La versión actual incorpora el rol independiente Dueño, asignación de personal a una despensa y selector de despensas. Consultá [Despensas y usuarios](DESPENSAS.md) para crear y asignar accesos.
+
+## Proveedores: historial y agenda
+
+Consulta el histórico de compras y programa una próxima visita con avisos dentro del módulo. Ver [guía de proveedores](PROVEEDORES.md).
