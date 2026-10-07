@@ -83,5 +83,17 @@ service cloud.firestore {
         && request.resource.data.createdAt == request.time;
       allow update, delete: if false;
     }
+    match /procedure_proposals/{proposal} {
+      allow read: if owner();
+      allow create: if (owner() || approved())
+        && request.resource.data.keys().hasOnly(['title','steps','support','hours','good','bad','status','submittedBy','submittedEmail','createdAt'])
+        && request.resource.data.status == 'pending'
+        && request.resource.data.submittedBy == request.auth.uid
+        && request.resource.data.submittedEmail == request.auth.token.email.lower()
+        && request.resource.data.title is string && request.resource.data.title.size() > 0 && request.resource.data.title.size() <= 200
+        && request.resource.data.steps is string && request.resource.data.steps.size() > 0 && request.resource.data.steps.size() <= 10000
+        && request.resource.data.createdAt == request.time;
+      allow update, delete: if owner();
+    }
   }
 }
