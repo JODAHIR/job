@@ -19,9 +19,9 @@ async function refreshUsers(){
  const users=await listUsers();$('users-list').replaceChildren();
  for(const user of users){
   const row=document.createElement('li'),label=document.createElement('span'),button=document.createElement('button');
-  label.textContent=user.email+' · '+(user.active?'Autorizado':'Acceso revocado');
+  label.textContent=(user.description?user.description+' · ':'')+user.email+' · '+(user.active?'Autorizado':'Acceso revocado');
   button.type='button';button.textContent=user.active?'Revocar acceso':'Autorizar nuevamente';button.setAttribute('aria-label',button.textContent+' de '+user.email);
-  button.onclick=async()=>{button.disabled=true;try{await setUserAccess(user.email,!user.active);await refreshUsers();$('users-status').textContent=user.active?'Acceso revocado. No podrá realizar nuevas consultas.':'Acceso autorizado.'}catch(e){$('users-status').textContent=errorMessage(e);button.disabled=false}};
+  button.onclick=async()=>{button.disabled=true;try{await setUserAccess(user.email,!user.active,user.description);await refreshUsers();$('users-status').textContent=user.active?'Acceso revocado. No podrá realizar nuevas consultas.':'Acceso autorizado.'}catch(e){$('users-status').textContent=errorMessage(e);button.disabled=false}};
   row.append(label,button);$('users-list').append(row);
  }
  if(!users.length)$('users-status').textContent='Todavía no hay personas autorizadas. La cuenta administradora conserva su acceso.';
@@ -61,7 +61,7 @@ $('refresh-proposals').onclick=()=>refreshProposals().catch(e=>{$('proposals-sta
 $('proposals-tab').addEventListener('shown.bs.tab',()=>refreshProposals().catch(e=>{$('proposals-status').textContent=errorMessage(e)}));
 $('authorize-form').onsubmit=async event=>{
  event.preventDefault();$('authorize').disabled=true;
- try{await setUserAccess($('user-email').value,true);$('authorize-form').reset();await refreshUsers();$('users-status').textContent='Correo autorizado. La persona puede ingresar con Google y consultar el chatbot.'}
+ try{await setUserAccess($('user-email').value,true,$('user-name').value);$('authorize-form').reset();await refreshUsers();$('users-status').textContent='Correo autorizado. La persona puede ingresar con Google y consultar el chatbot.'}
  catch(e){$('users-status').textContent=e.code?errorMessage(e):e.message}
  finally{$('authorize').disabled=false}
 };
