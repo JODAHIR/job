@@ -44,10 +44,11 @@ export async function listUsers(){
   const result=await execute(db.pipeline().collection('authorized_users').sort(field('email').ascending()));
   return result.results.map(d=>({id:d.id,...d.data()}));
 }
-export async function setUserAccess(email,active){
+export async function setUserAccess(email,active,description=''){
   if(!isOwner(auth.currentUser))throw new Error('Solo el administrador puede autorizar personas.');
   email=validateEmail(email);
-  await setDoc(doc(db,'authorized_users',email),{email,active,updatedAt:serverTimestamp(),updatedBy:auth.currentUser.uid});
+  description=String(description||'').trim().slice(0,120);
+  await setDoc(doc(db,'authorized_users',email),{email,description,active,updatedAt:serverTimestamp(),updatedBy:auth.currentUser.uid});
 }
 export async function saveChatMessage(message){
  const user=auth.currentUser;if(!user||await accessFor(user)==='denied')return;
