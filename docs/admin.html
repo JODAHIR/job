@@ -46,6 +46,9 @@
 <li class="nav-item" role="presentation">
 <button class="nav-link" id="activity-tab" data-bs-toggle="pill" data-bs-target="#activity-pane" type="button" role="tab" aria-controls="activity-pane" aria-selected="false">Actividad</button>
 </li>
+<li class="nav-item" role="presentation">
+<button class="nav-link" id="proposals-tab" data-bs-toggle="pill" data-bs-target="#proposals-pane" type="button" role="tab" aria-controls="proposals-pane" aria-selected="false">Propuestas pendientes</button>
+</li>
 </ul>
 <div class="tab-content">
 <div class="tab-pane fade show active" id="procedures-pane" role="tabpanel" aria-labelledby="procedures-tab" tabindex="0">
@@ -162,13 +165,10 @@
 </p>
 <ul id="users-list">
 </ul>
-<hr>
-<p class="eyebrow">PROPUESTAS RECIBIDAS</p>
-<h3>Propuestas pendientes</h3>
-<button id="refresh-proposals" type="button" class="btn btn-outline-primary btn-sm">Actualizar propuestas</button>
-<p id="proposals-status" class="small mt-3" role="status"></p>
-<div id="proposals-list"></div>
 </div>
+</section>
+<section class="tab-pane fade" id="proposals-pane" role="tabpanel" aria-labelledby="proposals-tab" tabindex="0">
+<div class="panel-card users-panel"><p class="eyebrow">REVISIÓN ADMINISTRATIVA</p><h2>Procedimientos en espera de aprobación</h2><p class="text-secondary">Las propuestas enviadas por el equipo se mantienen aquí hasta que el administrador las revise y decida publicarlas.</p><button id="refresh-proposals" type="button" class="btn btn-outline-primary btn-sm">Actualizar propuestas</button><p id="proposals-status" class="small mt-3" role="status"></p><div id="proposals-list"></div></div>
 </section>
 </div>
 </div>
