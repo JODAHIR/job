@@ -1,6 +1,6 @@
 import {renderLibrary,clearHistory,showHistory} from './admin-library.js';
 import {CATEGORIES,categoryForTitle} from './procedure-view.js';
-import {auth,login,logout,watchAuth,isOwner,listProcedures,saveProcedure,listUsers,setUserAccess,usageSummary,errorMessage} from './firebase.js';
+import {auth,login,logout,watchAuth,isOwner,listProcedures,saveProcedure,listUsers,setUserAccess,usageSummary,listPendingProposals,approveProposal,errorMessage} from './firebase.js';
 const $=id=>document.getElementById(id);let selected='',items=[],expectedUpdatedAt=null;const fields=['category','title','questions','support','steps','hours','good','bad'];
 function status(text){$('status').textContent=text}
 function reset(){selected='';expectedUpdatedAt=null;clearHistory();$('editor').reset();$('category').value='';$('published').checked=false;$('edit-title').textContent='Nuevo procedimiento'}
@@ -30,6 +30,8 @@ async function refreshActivity(){
  try{const rows=await usageSummary(),format=new Intl.DateTimeFormat('es-PY',{dateStyle:'medium',timeStyle:'short'});for(const item of rows){const row=document.createElement('tr');for(const value of [item.email,item.count,format.format(item.lastActivity?.toDate?.()||new Date())]){const cell=document.createElement('td');cell.textContent=String(value);row.append(cell)}body.append(row)}$('activity-status').textContent=rows.length?`${rows.length} usuario(s) con actividad registrada.`:'Todavía no hay consultas registradas.'}catch(e){$('activity-status').textContent=e.code?errorMessage(e):e.message}
 }
 $('refresh-activity').onclick=refreshActivity;
+async function refreshProposals(){const list=$('proposals-list');list.replaceChildren();const proposals=await listPendingProposals();$('proposals-status').textContent=proposals.length?`${proposals.length} propuesta(s) pendiente(s).`:'No hay propuestas pendientes.';for(const proposal of proposals){const item=document.createElement('article');item.className='proposal-admin';const title=document.createElement('strong'),detail=document.createElement('p'),button=document.createElement('button');title.textContent=proposal.title;detail.textContent=`${proposal.submittedEmail||''} · ${proposal.steps}`;button.className='btn btn-primary btn-sm';button.textContent='Aprobar y publicar';button.onclick=async()=>{button.disabled=true;try{await approveProposal(proposal);await refreshProposals();await refresh();status('Propuesta aprobada y publicada.')}catch(e){button.disabled=false;status(e.message||errorMessage(e))}};item.append(title,detail,button);list.append(item)}}
+$('refresh-proposals').onclick=()=>refreshProposals().catch(e=>{$('proposals-status').textContent=errorMessage(e)});
 $('authorize-form').onsubmit=async event=>{
  event.preventDefault();$('authorize').disabled=true;
  try{await setUserAccess($('user-email').value,true);$('authorize-form').reset();await refreshUsers();$('users-status').textContent='Correo autorizado. La persona puede ingresar con Google y consultar el chatbot.'}
