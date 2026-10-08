@@ -3,6 +3,7 @@ import {CATEGORIES,categoryForTitle} from './procedure-view.js';
 import {auth,login,logout,watchAuth,isOwner,listProcedures,saveProcedure,listUsers,setUserAccess,usageSummary,listPendingProposals,approveProposal,errorMessage} from './firebase.js';
 const $=id=>document.getElementById(id);let selected='',items=[],expectedUpdatedAt=null;const fields=['category','title','questions','support','steps','hours','good','bad'];
 function status(text){$('status').textContent=text}
+for(const tab of document.querySelectorAll('#admin-tabs [data-bs-target]'))tab.addEventListener('click',()=>{for(const button of document.querySelectorAll('#admin-tabs [data-bs-target]')){const pane=document.querySelector(button.dataset.bsTarget);const active=button===tab;button.classList.toggle('active',active);button.setAttribute('aria-selected',String(active));pane?.classList.toggle('show',active);pane?.classList.toggle('active',active)}});
 function reset(){selected='';expectedUpdatedAt=null;clearHistory();$('editor').reset();$('category').value='';$('published').checked=false;$('edit-title').textContent='Nuevo procedimiento'}
 function edit(item){selected=item.id;expectedUpdatedAt=item.updatedAt;showHistory(item.id);renderLibrary(items,selected,edit);for(const key of fields)$(key).value=item[key]||'';$('published').checked=item.published;$('edit-title').textContent='Editar procedimiento';$('title').focus()}
 async function refresh(){const user=auth.currentUser,result=await listProcedures();if(auth.currentUser?.uid!==user?.uid)return;items=result;renderLibrary(items,selected,edit)}
