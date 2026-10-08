@@ -35,10 +35,16 @@ async function refreshProposals(){
  const list=$('proposals-list');list.replaceChildren();
  const proposals=await listPendingProposals();
  $('proposals-status').textContent=proposals.length?`${proposals.length} propuesta(s) pendiente(s).`:'No hay propuestas pendientes.';
- for(const proposal of proposals){
+ const groups=new Map();for(const proposal of proposals){const author=proposal.submittedEmail||'Usuario sin correo';if(!groups.has(author))groups.set(author,[]);groups.get(author).push(proposal)}
+ for(const [author,authorProposals] of groups){
+  const group=document.createElement('section');group.className='proposal-group';
+  const groupTitle=document.createElement('h3');groupTitle.textContent=author;
+  const groupCount=document.createElement('span');groupCount.className='proposal-count';groupCount.textContent=`${authorProposals.length} pendiente(s)`;
+  const groupHeader=document.createElement('header');groupHeader.className='proposal-group-header';groupHeader.append(groupTitle,groupCount);group.append(groupHeader);
+  for(const proposal of authorProposals){
   const item=document.createElement('article');item.className='proposal-admin';
   const header=document.createElement('div');header.className='proposal-header';
-  const title=document.createElement('h3');title.textContent=proposal.title||'Propuesta sin título';
+  const title=document.createElement('h4');title.textContent=proposal.title||'Propuesta sin título';
   const review=document.createElement('button');review.type='button';review.className='btn btn-outline-primary btn-sm';review.textContent='Revisar y modificar';review.setAttribute('aria-expanded','false');
   const form=document.createElement('form');form.className='proposal-review';form.hidden=true;
   form.innerHTML='<p class="proposal-author">Enviada por '+(proposal.submittedEmail||'usuario')+'</p><label>Título<input name="title" required maxlength="200"></label><label>Pasos operativos<textarea name="steps" required maxlength="10000"></textarea></label><label>Sistema o soporte<input name="support" maxlength="500"></label><label>Horarios<input name="hours" maxlength="500"></label><label>Plantilla correcta<textarea name="good" maxlength="3000"></textarea></label><label>Plantilla incorrecta<textarea name="bad" maxlength="3000"></textarea></label><div class="proposal-actions"><button class="btn btn-primary" type="submit">Guardar y publicar</button><button class="btn btn-outline-secondary" type="button" data-close>Cancelar</button></div>';
@@ -46,7 +52,9 @@ async function refreshProposals(){
   review.onclick=()=>{const opening=form.hidden;form.hidden=!opening;review.textContent=opening?'Ocultar revisión':'Revisar y modificar';review.setAttribute('aria-expanded',String(opening));if(opening)form.elements.title.focus()};
   form.querySelector('[data-close]').onclick=()=>review.click();
   form.onsubmit=async event=>{event.preventDefault();const button=form.querySelector('[type=submit]');button.disabled=true;try{await approveProposal({...proposal,...Object.fromEntries(new FormData(form))});await refreshProposals();await refresh();status('Propuesta actualizada y publicada.')}catch(e){button.disabled=false;status(e.message||errorMessage(e))}};
-  header.append(title,review);item.append(header,form);list.append(item);
+  header.append(title,review);item.append(header,form);group.append(item);
+ }
+ list.append(group);
  }
 }
 $('refresh-proposals').onclick=()=>refreshProposals().catch(e=>{$('proposals-status').textContent=errorMessage(e)});
