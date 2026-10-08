@@ -266,11 +266,14 @@
       padding:15px;
     }
 
-    .note-yellow{background:#fff2aa}
-    .note-blue{background:#dcebff}
-    .note-green{background:#dff5d7}
-    .note-pink{background:#ffe0e8}
-    .note-white{background:#fff}
+    .note-yellow{--note-title:#f4d84f;background:#fff2aa}
+    .note-blue{--note-title:#9fc7f7;background:#dcebff}
+    .note-green{--note-title:#a9dc98;background:#dff5d7}
+    .note-pink{--note-title:#f4afc1;background:#ffe0e8}
+    .note-white{--note-title:#e8edf3;background:#fff}
+    .note-card .item-header{background:var(--note-title);border-bottom-color:rgba(15,23,42,.12)}
+    .note-card .item-title{color:#172235;font-weight:800}
+    .note-card .item-header>.bi-grip-vertical{color:#4f5b6b!important}
 
     .type-image{--kind:#2587d9}
     .type-pdf{--kind:#df4b55}
@@ -999,6 +1002,6 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js" integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI" crossorigin="anonymous"></script>
-<script type="module" src="./app.js?v=20261007-collapse"></script>
+<script type="module" src="./app.js?v=20261007-titlecolor"></script>
 </body>
 </html>

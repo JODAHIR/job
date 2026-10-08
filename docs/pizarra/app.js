@@ -134,7 +134,7 @@ function newItem(type,title,text='',color='note-yellow'){return {type,title,text
 
   function renderItem(item) {
     const el = document.createElement('article');
-    el.className = `board-item ${item.color || ''} ${getTypeClass(item)} ${item.type === 'note' && item.collapsed ? 'note-collapsed' : ''}`.trim();
+    el.className = `board-item ${item.type === 'note' ? 'note-card' : ''} ${item.color || ''} ${getTypeClass(item)} ${item.type === 'note' && item.collapsed ? 'note-collapsed' : ''}`.trim();
     el.dataset.id = item.id;
     el.style.left = `${item.x}px`;
     el.style.top = `${item.y}px`;
