@@ -18,11 +18,14 @@ watchAuth(async user=>{$('logout').hidden=!user;$('login').hidden=!!user;$('work
 async function refreshUsers(){
  const users=await listUsers();$('users-list').replaceChildren();
  for(const user of users){
-  const row=document.createElement('li'),label=document.createElement('span'),button=document.createElement('button');
-  label.textContent=(user.description?user.description+' · ':'')+user.email+' · '+(user.active?'Autorizado':'Acceso revocado');
+  const row=document.createElement('li'),details=document.createElement('div'),label=document.createElement('span'),actions=document.createElement('div'),edit=document.createElement('button'),button=document.createElement('button');
+  details.className='user-details';label.textContent=(user.description?user.description+' · ':'Descripción pendiente · ')+user.email+' · '+(user.active?'Autorizado':'Acceso revocado');
+  const form=document.createElement('form');form.className='user-description';form.hidden=true;form.innerHTML='<label>Nombre o descripción<input required maxlength="120" placeholder="Ej.: María González · Sucursal Centro"></label><button type="submit">Guardar descripción</button>';form.elements[0].value=user.description||'';
+  edit.type='button';edit.textContent=user.description?'Modificar descripción':'Agregar descripción';edit.onclick=()=>{form.hidden=!form.hidden;if(!form.hidden)form.elements[0].focus()};
+  form.onsubmit=async event=>{event.preventDefault();const save=form.querySelector('button');save.disabled=true;try{await setUserAccess(user.email,user.active,form.elements[0].value);await refreshUsers();$('users-status').textContent='Descripción actualizada.'}catch(e){save.disabled=false;$('users-status').textContent=errorMessage(e)}};
   button.type='button';button.textContent=user.active?'Revocar acceso':'Autorizar nuevamente';button.setAttribute('aria-label',button.textContent+' de '+user.email);
   button.onclick=async()=>{button.disabled=true;try{await setUserAccess(user.email,!user.active,user.description);await refreshUsers();$('users-status').textContent=user.active?'Acceso revocado. No podrá realizar nuevas consultas.':'Acceso autorizado.'}catch(e){$('users-status').textContent=errorMessage(e);button.disabled=false}};
-  row.append(label,button);$('users-list').append(row);
+  details.append(label,form);actions.append(edit,button);row.append(details,actions);$('users-list').append(row);
  }
  if(!users.length)$('users-status').textContent='Todavía no hay personas autorizadas. La cuenta administradora conserva su acceso.';
 }
