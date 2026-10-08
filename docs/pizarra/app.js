@@ -24,7 +24,7 @@ function friendlyError(e){
 const error=e=>{const message=friendlyError(e);status('Error: '+message);$('authError').textContent=message;if(currentWorkspaceView!=='board'){const notice=document.createElement('div');notice.className='alert alert-danger mb-3';notice.setAttribute('role','alert');notice.textContent=message;$('adminPanel').prepend(notice);}};
 async function run(fn){if(busy){status('Esperá a que termine la operación en curso.');return;}busy=true;try{await fn();status('Cambios guardados.');}catch(e){error(e);}finally{busy=false;}}
 const itemRef=id=>doc(db,'boards',ownerUid,'items',id);
-async function mutate(action,data={}){if(!user||profile?.status!=='authorized')throw Error('Tu cuenta no está autorizada.');const now=serverTimestamp(),ref=data.id?itemRef(data.id):null;if(action==='create'){const i=data.item;return setDoc(ref,{ownerUid,type:i.type,title:String(i.title||'').slice(0,200),text:String(i.text||'').slice(0,20000),color:i.color||'note-yellow',x:Number(i.x)||0,y:Number(i.y)||0,comments:Array.isArray(i.comments)?i.comments.slice(0,500):[],file:null,attachment:null,state:'active',createdAt:now,updatedAt:now,legacyCreatedAt:String(i.legacyCreatedAt||''),legacyUpdatedAt:String(i.legacyUpdatedAt||''),revision:1});}if(action==='move')return updateDoc(ref,{x:data.x,y:data.y,updatedAt:now,revision:(allItems.find(i=>i.id===data.id)?.revision||0)+1});if(action==='edit')return updateDoc(ref,{title:String(data.title||'').slice(0,200),text:String(data.text||'').slice(0,20000),color:data.color,updatedAt:now,revision:(data.revision||0)+1});if(action==='comment'){const i=allItems.find(x=>x.id===data.id);return updateDoc(ref,{comments:[...(i?.comments||[]),{id:crypto.randomUUID(),text:String(data.text||'').slice(0,2000),createdAt:new Date().toISOString(),authorUid:user.uid}],updatedAt:now,revision:(i?.revision||0)+1});}if(action==='trash'||action==='restore')return updateDoc(ref,{state:action==='trash'?'deleted':'active',updatedAt:now,[action==='trash'?'deletedAt':'restoredAt']:now,[action==='trash'?'deletedBy':'restoredBy']:user.uid});if(action==='purge')return deleteDoc(ref);if(action==='removeAttachment'){const i=allItems.find(x=>x.id===data.id);if(i?.attachment?.localId)await localDelete(i.attachment.localId);return updateDoc(ref,{attachment:null,updatedAt:now});}if(action==='attachLocal')return updateDoc(ref,{[data.target]:data.meta,updatedAt:now});if(action==='setStatus'&&admin()){const target=users.find(x=>x.id===data.uid);if(!target||target.role==='admin')throw Error('No se puede modificar este perfil.');return setDoc(doc(db,'users',data.uid),{ownerUid:data.uid,email:target.email||'',role:'user',status:data.status,updatedAt:now},{merge:true});}throw Error('Acción no disponible.');}
+async function mutate(action,data={}){if(!user||profile?.status!=='authorized')throw Error('Tu cuenta no está autorizada.');const now=serverTimestamp(),ref=data.id?itemRef(data.id):null;if(action==='create'){const i=data.item;return setDoc(ref,{ownerUid,type:i.type,title:String(i.title||'').slice(0,200),text:String(i.text||'').slice(0,20000),color:i.color||'note-yellow',x:Number(i.x)||0,y:Number(i.y)||0,comments:Array.isArray(i.comments)?i.comments.slice(0,500):[],collapsed:!!i.collapsed,file:null,attachment:null,state:'active',createdAt:now,updatedAt:now,legacyCreatedAt:String(i.legacyCreatedAt||''),legacyUpdatedAt:String(i.legacyUpdatedAt||''),revision:1});}if(action==='collapse')return updateDoc(ref,{collapsed:!!data.collapsed,updatedAt:now,revision:(allItems.find(i=>i.id===data.id)?.revision||0)+1});if(action==='move')return updateDoc(ref,{x:data.x,y:data.y,updatedAt:now,revision:(allItems.find(i=>i.id===data.id)?.revision||0)+1});if(action==='edit')return updateDoc(ref,{title:String(data.title||'').slice(0,200),text:String(data.text||'').slice(0,20000),color:data.color,updatedAt:now,revision:(data.revision||0)+1});if(action==='comment'){const i=allItems.find(x=>x.id===data.id);return updateDoc(ref,{comments:[...(i?.comments||[]),{id:crypto.randomUUID(),text:String(data.text||'').slice(0,2000),createdAt:new Date().toISOString(),authorUid:user.uid}],updatedAt:now,revision:(i?.revision||0)+1});}if(action==='trash'||action==='restore')return updateDoc(ref,{state:action==='trash'?'deleted':'active',updatedAt:now,[action==='trash'?'deletedAt':'restoredAt']:now,[action==='trash'?'deletedBy':'restoredBy']:user.uid});if(action==='purge')return deleteDoc(ref);if(action==='removeAttachment'){const i=allItems.find(x=>x.id===data.id);if(i?.attachment?.localId)await localDelete(i.attachment.localId);return updateDoc(ref,{attachment:null,updatedAt:now});}if(action==='attachLocal')return updateDoc(ref,{[data.target]:data.meta,updatedAt:now});if(action==='setStatus'&&admin()){const target=users.find(x=>x.id===data.uid);if(!target||target.role==='admin')throw Error('No se puede modificar este perfil.');return setDoc(doc(db,'users',data.uid),{ownerUid:data.uid,email:target.email||'',role:'user',status:data.status,updatedAt:now},{merge:true});}throw Error('Acción no disponible.');}
 
 const localDb=()=>new Promise((ok,no)=>{const r=indexedDB.open('mi-pizarra-adjuntos',1);r.onupgradeneeded=()=>r.result.createObjectStore('files');r.onsuccess=()=>ok(r.result);r.onerror=()=>no(r.error);});
 async function localPut(id,blob){const d=await localDb();return new Promise((ok,no)=>{const t=d.transaction('files','readwrite');t.objectStore('files').put(blob,`${user.uid}:${id}`);t.oncomplete=ok;t.onerror=()=>no(t.error);});}
@@ -134,7 +134,7 @@ function newItem(type,title,text='',color='note-yellow'){return {type,title,text
 
   function renderItem(item) {
     const el = document.createElement('article');
-    el.className = `board-item ${item.color || ''} ${getTypeClass(item)}`.trim();
+    el.className = `board-item ${item.color || ''} ${getTypeClass(item)} ${item.type === 'note' && item.collapsed ? 'note-collapsed' : ''}`.trim();
     el.dataset.id = item.id;
     el.style.left = `${item.x}px`;
     el.style.top = `${item.y}px`;
@@ -212,6 +212,9 @@ function newItem(type,title,text='',color='note-yellow'){return {type,title,text
         <div class="item-title" title="${escapeHtml(item.title)}">${escapeHtml(item.title)}</div>
         <div class="item-actions">
           ${item.type === 'note' ? `
+            <button type="button" class="btn btn-sm btn-link text-secondary p-0 note-action-btn collapse-note-item" title="${item.collapsed ? 'Expandir nota' : 'Contraer nota'}" aria-label="${item.collapsed ? 'Expandir nota' : 'Contraer nota'}" aria-expanded="${String(!item.collapsed)}">
+              <i class="bi ${item.collapsed ? 'bi-chevron-down' : 'bi-chevron-up'}"></i>
+            </button>
             <button type="button" class="btn btn-sm btn-link text-primary p-0 note-action-btn edit-note-item" title="Editar nota" aria-label="Editar nota">
               <i class="bi bi-pencil-square"></i>
             </button>
@@ -237,6 +240,12 @@ function newItem(type,title,text='',color='note-yellow'){return {type,title,text
       });
     }
 
+
+    el.querySelector('.collapse-note-item')?.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      run(() => mutate('collapse', {id:item.id, collapsed:!item.collapsed}));
+    });
 
     el.querySelector('.edit-note-item')?.addEventListener('click', (e) => {
       e.preventDefault();
@@ -397,7 +406,7 @@ async function exportBoard(){
  if(ownerUid!==user.uid)throw Error('Solo podés exportar tu propia pizarra porque los adjuntos pertenecen al almacenamiento local de cada usuario.');
  const exported=[],missing=[];
  for(let n=0;n<allItems.length;n++){
-  const item=allItems[n],out={type:item.type,title:item.title||'',text:item.text||'',color:item.color||'note-yellow',x:Number(item.x)||0,y:Number(item.y)||0,comments:item.comments||[],state:item.state||'active',createdAt:asIso(item.createdAt),updatedAt:asIso(item.updatedAt)};
+  const item=allItems[n],out={type:item.type,title:item.title||'',text:item.text||'',color:item.color||'note-yellow',x:Number(item.x)||0,y:Number(item.y)||0,comments:item.comments||[],collapsed:!!item.collapsed,state:item.state||'active',createdAt:asIso(item.createdAt),updatedAt:asIso(item.updatedAt)};
   const meta=item.type==='note'?item.attachment:item.file;
   if(meta?.localId){
    try{const dataUrl=await blobAsDataUrl(await localGet(meta.localId));if(item.type==='note')out.attachment={name:meta.name,type:meta.type,size:meta.size,dataUrl};else Object.assign(out,{name:meta.name||item.title,mimeType:meta.type,size:meta.size,dataUrl});}
