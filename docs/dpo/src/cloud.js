@@ -1,14 +1,15 @@
 import {auth,login,logout,watchAuth,isOwner,accessFor,searchProcedures,errorMessage,saveChatMessage,loadChatHistory,submitProposal} from './firebase.js';
 import {selectPendingProcedure,optionsMessage} from './chat-selection.js';
-const button=document.getElementById('cloud-login'),status=document.getElementById('cloud-status');
-button.onclick=async()=>{try{if(auth.currentUser)await logout();else await login()}catch(e){status.textContent=errorMessage(e)}};
+const button=document.getElementById('cloud-login'),status=document.getElementById('cloud-status'),headerSession=document.getElementById('header-session'),loggedUser=document.getElementById('logged-user'),sideAdmin=document.getElementById('side-admin-link');
+async function toggleSession(){try{if(auth.currentUser)await logout();else await login()}catch(e){status.textContent=errorMessage(e)}}
+button.onclick=toggleSession;headerSession.onclick=toggleSession;
 let authVersion=0,pendingOptions=[];
 const adminLink=document.getElementById('admin-link');
 window.firebaseSaveMessage=saveChatMessage;
 window.firebaseLoadMessages=loadChatHistory;
 window.firebaseSubmitProposal=submitProposal;
 watchAuth(async user=>{
- const version=++authVersion;button.textContent=user?'Salir':'Ingresar con Google';adminLink.hidden=!isOwner(user);
+ const version=++authVersion;button.textContent=user?'Salir':'Ingresar con Google';headerSession.textContent=user?'Salir':'Ingresar con Google';loggedUser.hidden=!user;loggedUser.textContent=user?.email||'';adminLink.hidden=!isOwner(user);sideAdmin.hidden=!isOwner(user);
  status.textContent=user?'Verificando autorización…':'Ingresá con Google. El administrador debe autorizar tu correo para consultar.';
  try{const access=user?await accessFor(user):'denied';if(version!==authVersion)return;
  if(user){status.textContent=access==='denied'?'Tu correo no está autorizado. Solicitá acceso al administrador.':access==='admin'?'Cuenta administradora conectada.':'Acceso autorizado · '+user.email;if(access!=='denied'){window.startFreshChat?.();window.restoreChatHistory?.()}}
