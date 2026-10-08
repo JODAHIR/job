@@ -150,6 +150,10 @@
 <h2 id="users-title">Personas autorizadas</h2>
 <p class="text-secondary">Agregá el correo de Google de cada persona que podrá consultar el chatbot. La edición y la gestión de accesos quedan reservadas al administrador.</p>
 <form id="authorize-form" class="row g-3 align-items-end">
+<div class="col-12 col-md-5">
+<label class="form-label" for="user-name">Nombre o descripción</label>
+<input class="form-control" id="user-name" type="text" maxlength="120" required placeholder="Ej.: María González · Sucursal Centro">
+</div>
 <div class="col-12 col-md">
 <label class="form-label" for="user-email">Correo electrónico</label>
 <input class="form-control" id="user-email" type="email" maxlength="254" required placeholder="persona@ejemplo.com">
@@ -177,7 +181,7 @@
 </div>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js" integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI" crossorigin="anonymous">
 </script>
-<script src="admin-proposals-bundle.js?v=grouped-author1" defer>
+<script src="admin-proposals-bundle.js?v=authorized-description1" defer>
 </script>
 </body>
 </html>
