@@ -81,3 +81,9 @@ export async function listPendingProposals(){
  const result=await execute(db.pipeline().collection('procedure_proposals').where(field('status').equal('pending')).sort(field('createdAt').descending()).limit(100));
  return result.results.map(entry=>({id:entry.id,...entry.data()}));
 }
+export async function approveProposal(proposal){
+ if(!isOwner(auth.currentUser))throw new Error('Solo el administrador puede aprobar propuestas.');
+ const id=await saveProcedure('',{category:'Otros procedimientos',title:proposal.title,questions:'',support:proposal.support,steps:proposal.steps,hours:proposal.hours,good:proposal.good,bad:proposal.bad,published:true});
+ await setDoc(doc(db,'procedure_proposals',proposal.id),{status:'approved',procedureId:id,reviewedAt:serverTimestamp()},{merge:true});
+ return id;
+}
