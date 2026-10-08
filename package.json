@@ -3,7 +3,7 @@
   "private": true,
   "version": "1.1.0",
   "scripts": {
-    "build": "esbuild src/admin.js src/cloud.js --bundle --minify --target=es2022 --outdir=docs --entry-names=[name]-bundle",
+    "build": "esbuild src/admin.js src/cloud.js --bundle --minify --target=es2022 --outdir=docs/dpo --entry-names=[name]-bundle",
     "test:access": "node tests/access.test.mjs",
     "test:rules": "node tests/firestore.test.cjs"
   },
