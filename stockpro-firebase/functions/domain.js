@@ -10,9 +10,9 @@ const MODULE_DEFAULT_ROLES={dashboard:['ADMIN','ENCARGADO'],productos:['ADMIN','
 const CREDIT_LIMITS={NUEVO:300000,EXCELENTE:300000,BUENO:150000,MALO:0};
 function lastBusinessDay(day){date(day);const [y,m]=day.split('-').map(Number),d=new Date(Date.UTC(y,m,0));while([0,6].includes(d.getUTCDay()))d.setUTCDate(d.getUTCDate()-1);return d.toISOString().slice(0,10)}
 function defaultCreditDue(day){const due=lastBusinessDay(day);if(due>=day)return due;const d=new Date(day+'T12:00:00Z');d.setUTCMonth(d.getUTCMonth()+1,1);return lastBusinessDay(d.toISOString().slice(0,10))}
-const ACTION_MODULES={setCreditDueDate:'clientes',saveProduct:'productos',deleteProduct:'productos',saveStockMove:'movimientos',saveSupplier:'proveedores',deleteSupplier:'proveedores',savePurchase:'compras',finishSale:'ventas',saveClient:'clientes',deleteClient:'clientes',saveCredit:'creditos',saveCreditPayment:'creditos',saveStamp:'facturacion',deleteStamp:'facturacion',openCash:'caja',closeCash:'caja',addCashMove:'caja'};
+const ACTION_MODULES={setCreditDueDate:'clientes',saveProduct:'productos',deleteProduct:'productos',saveStockMove:'movimientos',saveSupplier:'proveedores',deleteSupplier:'proveedores',savePurchase:'compras',editPurchase:'compras',verifyPurchase:'compras',finishSale:'ventas',saveClient:'clientes',deleteClient:'clientes',saveCredit:'creditos',saveCreditPayment:'creditos',saveStamp:'facturacion',deleteStamp:'facturacion',openCash:'caja',closeCash:'caja',addCashMove:'caja'};
 function roleModule(role,id,grants={}){if(role==='DUENO')return ['dashboard','caja','usuarios'].includes(id);return role==='ADMIN'||(grants[id]||MODULE_DEFAULT_ROLES[id]||[]).includes(role)}
-function authorize(role,action,grants){if(role==='DUENO')fail('Dueño tiene acceso de consulta; no puede registrar operaciones.','permission-denied');if(action==='setCreditDueDate'){if(role!=='ENCARGADO'||!roleModule(role,'clientes',grants))fail('Solo Encargado con acceso a Clientes puede modificar el vencimiento.','permission-denied');return;}if(!ROLES.includes(role))fail('Tu rol no permite esta operación.','permission-denied');if(grants!==undefined){const id=ACTION_MODULES[action];if(action==='restore'?role==='ADMIN':id&&roleModule(role,id,grants)&&(!['deleteClient','saveCredit'].includes(action)||role==='ADMIN'))return;}else if(role==='ADMIN'&&[...catalog,...till,...onlyAdmin].includes(action)||role==='CAJERO'&&till.includes(action)||role==='ENCARGADO'&&catalog.includes(action))return;fail('Tu rol no permite esta operación.','permission-denied')}
+function authorize(role,action,grants){if(['editPurchase','verifyPurchase'].includes(action)){if(role!=='ENCARGADO'||!roleModule(role,'compras',grants))fail('Solo Encargado con acceso a Compras puede corregir y verificar compras.','permission-denied');return;}if(role==='DUENO')fail('Dueño tiene acceso de consulta; no puede registrar operaciones.','permission-denied');if(action==='setCreditDueDate'){if(role!=='ENCARGADO'||!roleModule(role,'clientes',grants))fail('Solo Encargado con acceso a Clientes puede modificar el vencimiento.','permission-denied');return;}if(!ROLES.includes(role))fail('Tu rol no permite esta operación.','permission-denied');if(grants!==undefined){const id=ACTION_MODULES[action];if(action==='restore'?role==='ADMIN':id&&roleModule(role,id,grants)&&(!['deleteClient','saveCredit'].includes(action)||role==='ADMIN'))return;}else if(role==='ADMIN'&&[...catalog,...till,...onlyAdmin].includes(action)||role==='CAJERO'&&till.includes(action)||role==='ENCARGADO'&&catalog.includes(action))return;fail('Tu rol no permite esta operación.','permission-denied')}
 function manageAllowed(actor,target,role,uid,ownerUid){
  if(actor.role==='DUENO')fail('Dueño solo puede deshabilitar usuarios de sus despensas.','permission-denied');
  if(!actor.active||!['ADMIN','ENCARGADO'].includes(actor.role))fail('No podés gestionar usuarios.','permission-denied');
@@ -41,6 +41,7 @@ function project(s,actor){const d=clone(s);
  return d;
 }
 function clientInArrears(credits,clientId,day){return credits.some(c=>c.clientId===clientId&&Number(c.balance)>0&&c.dueDate<day)}
+function purchaseValues(p){return Object.fromEntries(['date','supplierId','supplier','productId','product','qty','cost','total','invoice'].map(k=>[k,p[k]]))}
 function apply(state,action,p,actor,ctx){
  authorize(actor.role,action,actor.moduleRoles);const s=clone(state),now=ctx.now||new Date().toISOString(),day=ctx.day||new Date(now).toLocaleDateString('en-CA',{timeZone:'America/Asuncion'});let serial=0;
  const move=(product,type,qty,detail)=>s.moves.unshift({id:next(s.moves),date:day,datetime:now,productId:product.id,product:product.name,type,qty,detail,operatorUid:actor.uid});
@@ -57,6 +58,20 @@ function apply(state,action,p,actor,ctx){
  case 'saveSupplier':{const category=str(p.category,100,true);if(!Array.isArray(p.productIds)||!p.productIds.length||p.productIds.length>200||new Set(p.productIds).size!==p.productIds.length)fail('Seleccioná entre 1 y 200 productos distintos.');for(const id of p.productIds)if(find(s.products,id).category!==category)fail('Los productos deben pertenecer a la categoría del proveedor.');const q={category,productIds:[...p.productIds],name:str(p.name,300,true),ruc:str(p.ruc,100),phone:str(p.phone,100),contact:str(p.contact,300)};const nextVisit=p.nextVisit===undefined?(p.id?find(s.suppliers,p.id).nextVisit||'':''):p.nextVisit;if(nextVisit!=='')date(nextVisit);q.nextVisit=nextVisit;if(p.id)Object.assign(find(s.suppliers,p.id),q);else s.suppliers.push({id:next(s.suppliers),...q});break}
  case 'deleteSupplier':if(s.purchases.some(v=>v.supplierId===p.id))fail('El proveedor tiene compras.');find(s.suppliers,p.id);s.suppliers=s.suppliers.filter(x=>x.id!==p.id);break;
  case 'savePurchase':{const supplier=find(s.suppliers,p.supplierId),product=find(s.products,p.productId),qty=num(p.qty,0.001),cost=num(p.cost,0.01);s.purchases.unshift({id:next(s.purchases),date:date(p.date),supplierId:supplier.id,supplier:supplier.name,productId:product.id,product:product.name,qty,cost,total:num(qty*cost),invoice:str(p.invoice,100),operatorUid:actor.uid});product.stock+=qty;product.cost=cost;move(product,'ENTRADA',qty,'Compra · '+supplier.name);break}
+ case 'editPurchase':case 'verifyPurchase':{
+ const purchase=find(s.purchases,p.id);if(purchase.verified===true)fail('La compra ya está verificada y no admite modificaciones.','failed-precondition');
+ if(p.expected!==undefined&&!isDeepStrictEqual(p.expected,purchaseValues(purchase)))fail('La compra cambió. Cerrá la revisión y volvé a abrirla.','failed-precondition');
+ const history=purchase.history||{},count=Object.keys(history).length;if(count>=(action==='verifyPurchase'?100:99))fail('Se alcanzó el límite de correcciones de esta compra.');
+ const before=purchaseValues(purchase),reason=str(p.reason||'',500,action==='editPurchase');
+ if(action==='editPurchase'){
+ const supplier=find(s.suppliers,p.supplierId),product=find(s.products,p.productId),oldProduct=find(s.products,purchase.productId),qty=num(p.qty,0.001),cost=num(p.cost,0.01);
+ const changes=new Map([[oldProduct.id,-purchase.qty]]);changes.set(product.id,(changes.get(product.id)||0)+qty);
+ for(const [id,delta] of changes){const item=find(s.products,id);num(item.stock+delta);if(delta){item.stock+=delta;move(item,delta>0?'ENTRADA':'SALIDA',delta,'Corrección de compra #'+purchase.id+' · '+reason.slice(0,300));}}
+ Object.assign(purchase,{date:date(p.date),supplierId:supplier.id,supplier:supplier.name,productId:product.id,product:product.name,qty,cost,total:num(qty*cost),invoice:str(p.invoice,100)});
+ if(isDeepStrictEqual(before,purchaseValues(purchase)))fail('No hay cambios para guardar.');
+ }else purchase.verified=true;
+ purchase.history={...history,[ctx.opid]:{action,actorUid:actor.uid,actorEmail:actor.email||'',at:Date.parse(now),reason,before,after:purchaseValues(purchase)}};purchase.lastChange=ctx.opid;break;
+ }
  case 'saveClient':{const old=p.id?find(s.clients,p.id):null;
  const q={name:str(p.name,300,true),doc:str(p.doc,100),phone:str(p.phone,100),address:str(p.address,500)};
  if(!old)Object.assign(q,{category:'NUEVO',limit:300000});
@@ -92,6 +107,8 @@ function apply(state,action,p,actor,ctx){
  case 'restore':{
  const d=p.data;if(!d||JSON.stringify(d).length>4e6)fail('Backup demasiado grande.');for(const k of arrays){if(!Array.isArray(d[k]))fail('Backup inválido.');const ids=new Set();for(const v of d[k]){num(v.id,0);if(ids.has(v.id))fail('ID duplicado.');ids.add(v.id)}}
  if(!d.cash||!Array.isArray(d.cash.moves)||!Array.isArray(d.cash.history))fail('Caja inválida.');
+ for(const v of s.purchases)if(!d.purchases.some(x=>isDeepStrictEqual(x,v)))fail('El backup no puede alterar ni eliminar compras existentes.');
+ for(const v of d.purchases)if(!s.purchases.some(x=>x.id===v.id)&&(v.verified||Object.keys(v.history||{}).length||v.lastChange))fail('Las compras importadas deben ingresar sin verificación ni historial previo.');
  for(const v of s.sales)if(!d.sales.some(x=>isDeepStrictEqual(x,v)))fail('El backup alteraría ventas existentes.');
  for(const st of s.stamps)if(!d.stamps.some(x=>x.id===st.id&&x.next>=st.next))fail('El backup retrocedería la numeración.');
  for(const v of d.products)for(const k of ['stock','cost','price','min','avg'])num(v[k]);
@@ -109,4 +126,4 @@ function apply(state,action,p,actor,ctx){
  }
  return s;
 }
-module.exports={clientInArrears,CREDIT_LIMITS,lastBusinessDay,defaultCreditDue,roleModule,MODULE_DEFAULT_ROLES,ACTION_MODULES,nextProductSku,ROLES,arrays,empty,project,apply,authorize,manageAllowed,expected,tax,clone,fail,str,num};
+module.exports={purchaseValues,clientInArrears,CREDIT_LIMITS,lastBusinessDay,defaultCreditDue,roleModule,MODULE_DEFAULT_ROLES,ACTION_MODULES,nextProductSku,ROLES,arrays,empty,project,apply,authorize,manageAllowed,expected,tax,clone,fail,str,num};
