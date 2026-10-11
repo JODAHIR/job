@@ -770,6 +770,10 @@
 .app-shell.panel-mode .menu-peek{display:none}
 .account-bar .view-active{background:#6ea8fe;color:#07111e;border-color:#8fbdff}
 .admin-row{display:flex;align-items:center;flex-wrap:wrap;gap:8px;padding:14px 10px;border-bottom:1px solid #ffffff22}
+.admin-category{width:min(190px,100%)}
+.shared-note-card{color:#182334;border-radius:16px;padding:18px;margin-bottom:16px;box-shadow:0 12px 28px #0002}
+.shared-note-card .shared-note-text{white-space:pre-wrap}
+.shared-note-card details{margin:14px 0}.shared-note-card summary{cursor:pointer;font-weight:700}
 .admin-row .label{flex:1;min-width:180px;overflow-wrap:anywhere}
 .user-group{border:1px solid #ffffff18;border-radius:16px;overflow:hidden;background:#ffffff05}
 .user-group-title{margin:0;padding:12px 14px;font-size:.95rem;font-weight:700;background:#142338;border-bottom:1px solid #ffffff18}
@@ -801,7 +805,7 @@
 
 <div id="appShell" class="app-shell">
   <button id="menuPeekBtn" class="btn btn-sm toolbar-btn menu-peek" type="button" aria-label="Mostrar menú superior"><i class="bi bi-list me-1"></i>Menú</button>
-  <div id="accountBar" class="account-bar"><a class="btn btn-sm toolbar-btn" href="https://jodahir.github.io/job/dpo/">← Asistente</a><small id="accountLabel"></small><button id="ownBoardBtn" class="btn btn-sm toolbar-btn">Mi pizarra</button><button id="adminBtn" class="btn btn-sm toolbar-btn" hidden>Administración</button><button id="trashBtn" class="btn btn-sm toolbar-btn">Papelera</button><button id="exportBtn" class="btn btn-sm toolbar-btn"><i class="bi bi-download me-1"></i>Exportar pizarra</button><button id="importBtn" class="btn btn-sm toolbar-btn">Importar respaldo</button><button id="logoutBtn" class="btn btn-sm toolbar-btn">Salir</button></div>
+  <div id="accountBar" class="account-bar"><a class="btn btn-sm toolbar-btn" href="https://jodahir.github.io/job/dpo/">← Asistente</a><small id="accountLabel"></small><button id="ownBoardBtn" class="btn btn-sm toolbar-btn">Mi pizarra</button><button id="sharedBtn" class="btn btn-sm toolbar-btn">Compartidas (0)</button><button id="adminBtn" class="btn btn-sm toolbar-btn" hidden>Administración</button><button id="trashBtn" class="btn btn-sm toolbar-btn">Papelera</button><button id="exportBtn" class="btn btn-sm toolbar-btn"><i class="bi bi-download me-1"></i>Exportar pizarra</button><button id="importBtn" class="btn btn-sm toolbar-btn">Importar respaldo</button><button id="logoutBtn" class="btn btn-sm toolbar-btn">Salir</button></div>
   <div id="statusLine" role="status" aria-live="polite">Esperando conexión</div><section id="adminPanel" class="admin-panel" hidden></section>
   <header class="topbar py-2">
     <div class="container-fluid d-flex align-items-center flex-wrap px-3 px-lg-4">
@@ -963,6 +967,27 @@
   </div>
 </div>
 
+<div class="modal fade" id="shareNoteModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content rounded-4">
+      <div class="modal-header border-secondary-subtle">
+        <h2 class="modal-title h5">Compartir nota</h2>
+        <button class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+      </div>
+      <div class="modal-body">
+        <div id="shareNoteTitle" class="small text-white-50 mb-3"></div>
+        <label for="shareRecipient" class="form-label">Usuario de la misma categoría</label>
+        <select id="shareRecipient" class="form-select bg-dark text-white"></select>
+        <div id="shareHelp" class="form-text text-white-50 mt-2"></div>
+      </div>
+      <div class="modal-footer border-secondary-subtle">
+        <button class="btn btn-outline-light" data-bs-dismiss="modal">Cancelar</button>
+        <button class="btn btn-primary" id="confirmShareBtn">Compartir</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <div class="offcanvas offcanvas-end" tabindex="-1" id="helpCanvas" aria-labelledby="helpTitle">
   <div class="offcanvas-header">
     <h2 id="helpTitle" class="offcanvas-title h5">Cómo usar la pizarra</h2>
@@ -974,6 +999,7 @@
       <div><i class="bi bi-arrows-move me-2"></i>Arrastrá cada tarjeta desde su cabecera.</div>
       <div><i class="bi bi-paperclip me-2"></i>Podés cargar imágenes, PDF, Word, Excel, TXT, CSV o PowerPoint.</div>
       <div><i class="bi bi-search me-2"></i>Usá el buscador para filtrar por título o contenido.</div>
+      <div><i class="bi bi-share me-2"></i>Compartí notas con personas autorizadas de tu misma categoría. Los adjuntos locales no se comparten.</div>
       <div><i class="bi bi-trash me-2"></i>El botón de papelera envía una tarjeta a la papelera.</div>
       <div><i class="bi bi-device-ssd me-2"></i>Los elementos eliminados pasan a la papelera. El administrador puede restaurarlos.</div>
     </div>
@@ -1002,6 +1028,6 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js" integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI" crossorigin="anonymous"></script>
-<script type="module" src="./app.js?v=20261007-titlecolor"></script>
+<script type="module" src="./app.js?v=20261011-share1"></script>
 </body>
 </html>
