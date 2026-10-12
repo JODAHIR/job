@@ -976,6 +976,20 @@
                 margin-top: 0;
                 margin-bottom: 22px;
             }
+            #process-notice {
+                position: sticky;
+                top: 8px;
+                z-index: 20;
+                box-shadow: 0 3px 12px #0002;
+                margin: 0 0 18px;
+            }
+            #process-notice[data-error="true"] {
+                background: #fff0ef;
+                color: #a32821;
+            }
+            #storage-notice {
+                display: none !important;
+            }
         </style>
     </head>
     <body>
@@ -985,6 +999,7 @@
             ><span class="header-note" hidden>Cálculo de intereses</span>
         </header>
         <main>
+            <p id="process-notice" class="auto-note" role="status" aria-live="polite" hidden></p>
             <div class="intro">
                 <div>
                     <p class="eyebrow">CALCULADORA FINANCIERA</p>
@@ -1090,8 +1105,9 @@
                         próxima. Sin interés sobre intereses, IVA pendiente ni gastos. IVA opcional: 10 % sobre la suma
                         de intereses ordinarios y moratorios devengados por cuota, redondeado al guaraní; se descuenta
                         el IVA ya cobrado para no cobrarlo nuevamente. Precisión monetaria: 0 decimales. Los intereses
-                        se redondean al guaraní más cercano por cuota al aplicar pagos o consultar la fecha de
-                        devengado. Todos los montos usan punto como separador de miles.
+                        ordinarios y moratorios se truncan al guaraní inferior por cuota al aplicar pagos o consultar la
+                        fecha de devengado. El IVA mantiene su redondeo al guaraní más cercano. Todos los montos usan
+                        punto como separador de miles.
                     </p>
                 </div>
             </section>
@@ -1585,9 +1601,9 @@
                         interestSnapshots.set(
                             t,
                             rows.map((r) => ({
-                                ordinary: Math.round(r.ordinary),
-                                moratory: Math.round(r.moratory),
-                                vat: Math.round((Math.round(r.ordinary) + Math.round(r.moratory)) * x.vatRate),
+                                ordinary: Math.floor(r.ordinary),
+                                moratory: Math.floor(r.moratory),
+                                vat: Math.round((Math.floor(r.ordinary) + Math.floor(r.moratory)) * x.vatRate),
                             }))
                         );
                     for (const p of ordered.filter((p) => p.t === t)) {
@@ -1652,9 +1668,9 @@
                             interestRemaining: rows.reduce(
                                 (s, r) =>
                                     s +
-                                    Math.round(r.ordinary) -
+                                    Math.floor(r.ordinary) -
                                     r.paidOrdinary +
-                                    Math.round(r.moratory) -
+                                    Math.floor(r.moratory) -
                                     r.paidMoratory,
                                 0
                             ),
@@ -1670,8 +1686,8 @@
                     overdueCapital = 0,
                     overdueInterest = 0;
                 for (const r of rows) {
-                    r.ordinary = Math.round(r.ordinary);
-                    r.moratory = Math.round(r.moratory);
+                    r.ordinary = Math.floor(r.ordinary);
+                    r.moratory = Math.floor(r.moratory);
                     r.vat = Math.round((r.ordinary + r.moratory) * x.vatRate);
                     r.vatRemaining = r.vat - r.paidVat;
                     totalVat += r.vat;
@@ -1792,7 +1808,7 @@
                 const rows = plan.map((p, i) => {
                     const end = date(p.date),
                         capital = Number(p.capital),
-                        interest = Math.round((balance * x.annualRate * ((end - previous) / DAY)) / x.base);
+                        interest = Math.floor((balance * x.annualRate * ((end - previous) / DAY)) / x.base);
                     const vat = Math.round(interest * x.vatRate);
                     const row = {
                         n: i + 1,
@@ -1964,6 +1980,7 @@
                 el.textContent =
                     "Otra ventana actualizó el préstamo. Descargá tus cambios como respaldo antes de recargar. El guardado está bloqueado para evitar sobrescribir datos.";
                 el.hidden = false;
+                notifyProcess(el.textContent, true);
                 lock(busy);
             }
             async function checkExternalChanges() {
@@ -2032,6 +2049,16 @@
                 "interestRemaining",
                 "debt",
             ];
+            function notifyProcess(message, isError = false) {
+                const el = $("process-notice");
+                el.textContent = message;
+                el.hidden = false;
+                el.setAttribute("data-error", String(isError));
+            }
+            function setProcessStatus(id, message) {
+                $(id).textContent = message;
+                notifyProcess(message, /^(No |Guardado sin confirmar)/.test(message));
+            }
             function values() {
                 return Object.fromEntries(
                     [
@@ -2073,9 +2100,10 @@
             }
             function dirtyState() {
                 dirty = true;
-                $("save-status").textContent = loaded
-                    ? "Cambios sin guardar"
-                    : "No se cargó el registro. Reintentá antes de guardar.";
+                setProcessStatus(
+                    "save-status",
+                    loaded ? "Cambios sin guardar" : "No se cargó el registro. Reintentá antes de guardar."
+                );
             }
             function balanceLast() {
                 if (plan.length)
@@ -2108,8 +2136,10 @@
                     dirtyState();
                     render();
                     $("accrual-error").hidden = true;
+                    notifyProcess("Devengado calculado al " + fmt(date(selected)) + ".");
                 } catch (e) {
                     $("accrual-error").textContent = e.message;
+                    notifyProcess(e.message, true);
                     $("accrual-error").hidden = false;
                 }
             }
@@ -2455,22 +2485,26 @@
                     ];
                 }
                 lock(true);
-                $("save-status").textContent = "Guardando…";
+                setProcessStatus("save-status", "Guardando…");
                 try {
                     const result = await persistLoan(revision, candidate);
                     revision = result.revision;
                     unexposedLoan = null;
                     versions = candidate.versions || [];
                     dirty = false;
-                    $("save-status").textContent =
+                    setProcessStatus(
+                        "save-status",
                         "Guardado · " +
-                        new Date(result.updatedAt).toLocaleString("es-PY", { timeZone: "America/Asuncion" });
+                            new Date(result.updatedAt).toLocaleString("es-PY", { timeZone: "America/Asuncion" })
+                    );
                     return result;
                 } catch (e) {
                     if (e.conflict) markStale();
                     dirty = true;
-                    $("save-status").textContent =
-                        (e.uncertain ? "Guardado sin confirmar: " : "No guardado: ") + e.message;
+                    setProcessStatus(
+                        "save-status",
+                        (e.uncertain ? "Guardado sin confirmar: " : "No guardado: ") + e.message
+                    );
                     throw e;
                 } finally {
                     lock(false);
@@ -2518,6 +2552,7 @@
                 $("loan-name").value = candidate.name;
                 draw();
                 const r = render();
+                notifyProcess("Pago registrado e imputado: " + money(payment.amount) + ".");
                 return { id: payment.id, amount: payment.amount, debtAtCut: r.debt };
             }
             async function voidPayment(id) {
@@ -2555,8 +2590,10 @@
                     payments = candidate.payments;
                     render();
                     $("payment-error").hidden = true;
+                    notifyProcess("Pago anulado. Saldos actualizados.");
                 } catch (e) {
                     $("payment-error").textContent = e.message;
+                    notifyProcess(e.message, true);
                     $("payment-error").hidden = false;
                 }
             }
@@ -2650,11 +2687,13 @@
                     a.download = "prestamo-respaldo-" + new Date().toISOString().replaceAll(":", "-") + ".json";
                     a.click();
                     setTimeout(() => URL.revokeObjectURL(url), 1000);
-                    $("storage-notice").textContent =
-                        "Respaldo descargado con los datos visibles, sus pagos y las versiones anteriores.";
+                    setProcessStatus(
+                        "storage-notice",
+                        "Respaldo descargado con los datos visibles, sus pagos y las versiones anteriores."
+                    );
                     $("storage-notice").hidden = false;
                 } catch (e) {
-                    $("storage-notice").textContent = "No se pudo generar el respaldo: " + e.message;
+                    setProcessStatus("storage-notice", "No se pudo generar el respaldo: " + e.message);
                     $("storage-notice").hidden = false;
                 }
             }
@@ -2696,11 +2735,13 @@
                     candidate.versions = [...merged.values()];
                     await saveLoan(candidate, { restore: true });
                     await loadLoan();
-                    $("storage-notice").textContent =
-                        "Respaldo restaurado. La versión anterior se conserva en el historial.";
+                    setProcessStatus(
+                        "storage-notice",
+                        "Respaldo restaurado. La versión anterior se conserva en el historial."
+                    );
                     $("storage-notice").hidden = false;
                 } catch (e) {
-                    $("storage-notice").textContent = "No se restauró el respaldo: " + e.message;
+                    setProcessStatus("storage-notice", "No se restauró el respaldo: " + e.message);
                     $("storage-notice").hidden = false;
                 } finally {
                     $("restore-file").value = "";
@@ -2716,7 +2757,7 @@
                 $("retry-load").hidden = true;
                 $("operation-panel").open = true;
                 $("result-status").textContent = "Sin operación";
-                $("save-status").textContent = "Comprobando almacenamiento…";
+                setProcessStatus("save-status", "Comprobando almacenamiento…");
                 $("next-title").textContent = "Ingresá los datos de la operación";
                 $("next-breakdown").hidden = true;
                 try {
@@ -2733,12 +2774,15 @@
                     }
                     loaded = true;
                     stale = false;
-                    $("save-status").textContent = unexposedLoan
-                        ? "Hay un préstamo guardado. Usá Exponer préstamo para recuperarlo o completá una nueva operación."
-                        : "Completá los datos de una nueva operación o restaurá un respaldo.";
+                    setProcessStatus(
+                        "save-status",
+                        unexposedLoan
+                            ? "Hay un préstamo guardado. Usá Exponer préstamo para recuperarlo o completá una nueva operación."
+                            : "Completá los datos de una nueva operación o restaurá un respaldo."
+                    );
                 } catch (e) {
                     loaded = false;
-                    $("save-status").textContent = "No se pudo consultar el almacenamiento: " + e.message;
+                    setProcessStatus("save-status", "No se pudo consultar el almacenamiento: " + e.message);
                     $("retry-load").hidden = false;
                 } finally {
                     lock(false);
@@ -2755,8 +2799,10 @@
                             const legacy = JSON.parse(raw);
                             validateRecord(legacy);
                             data = await persistLoan(0, { ...legacy.loan, versions: legacy.loan.versions || [] });
-                            $("storage-notice").textContent =
-                                "Préstamo anterior migrado a IndexedDB. Se conservó el almacenamiento anterior como respaldo.";
+                            setProcessStatus(
+                                "storage-notice",
+                                "Préstamo anterior migrado a IndexedDB. Se conservó el almacenamiento anterior como respaldo."
+                            );
                             $("storage-notice").hidden = false;
                         }
                     }
@@ -2781,15 +2827,21 @@
                     }
                     loaded = true;
                     dirty = false;
-                    if (data.loan) render();
+                    if (data.loan) {
+                        render();
+                        $("operation-panel").open = false;
+                    }
                     $("proforma-panel").open = !confirmedAt;
                     $("history-panel").open = false;
-                    $("save-status").textContent = data.loan
-                        ? "Préstamo guardado cargado."
-                        : "No hay un préstamo guardado. Completá los datos de una nueva operación.";
+                    setProcessStatus(
+                        "save-status",
+                        data.loan
+                            ? "Préstamo guardado cargado."
+                            : "No hay un préstamo guardado. Completá los datos de una nueva operación."
+                    );
                 } catch (e) {
                     loaded = false;
-                    $("save-status").textContent = "No se pudo cargar el préstamo: " + e.message;
+                    setProcessStatus("save-status", "No se pudo cargar el préstamo: " + e.message);
                     $("retry-load").hidden = false;
                 } finally {
                     lock(false);
@@ -2824,8 +2876,10 @@
                     render();
                     $("proforma-panel").open = false;
                     $("proforma-error").hidden = true;
+                    notifyProcess("Proforma confirmada y guardada.");
                 } catch (e) {
                     $("proforma-error").textContent = e.message;
+                    notifyProcess(e.message, true);
                     $("proforma-error").hidden = false;
                 }
             });
@@ -2865,6 +2919,7 @@
                     $("payment-reference").value = "";
                 } catch (e) {
                     $("payment-error").textContent = e.message;
+                    notifyProcess(e.message, true);
                     $("payment-error").hidden = false;
                 }
             });
