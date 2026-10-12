@@ -754,9 +754,17 @@
 <style>
 [hidden]{display:none!important}
 .app-shell{height:100dvh;min-height:100dvh}
-.account-bar{padding:8px max(12px,env(safe-area-inset-right)) 8px max(12px,env(safe-area-inset-left));background:#142338;display:flex;gap:8px;align-items:center;flex-wrap:wrap;max-height:160px;opacity:1;overflow:hidden;transition:max-height .22s ease,padding .22s ease,opacity .16s ease}
-.account-bar small{flex:1;min-width:150px;overflow-wrap:anywhere}
-.account-bar .btn{white-space:nowrap;min-height:34px}
+.account-bar{flex:0 0 auto;padding:10px max(14px,env(safe-area-inset-right)) 10px max(14px,env(safe-area-inset-left));background:linear-gradient(135deg,#142942 0%,#102036 58%,#0c192a 100%);display:grid;grid-template-columns:minmax(220px,1fr) auto auto;gap:10px 14px;align-items:center;max-height:180px;opacity:1;overflow:hidden;border-bottom:1px solid #ffffff14;box-shadow:0 10px 26px #0207113d;transition:max-height .22s ease,padding .22s ease,opacity .16s ease}
+.account-identity,.account-nav,.account-actions{display:flex;align-items:center;gap:7px;min-width:0}
+.account-identity small{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#dce9f8;font-weight:600}
+.account-nav,.account-actions{justify-content:flex-end}
+.account-bar .btn{white-space:nowrap;min-height:38px;border-radius:12px;padding-inline:12px}
+.account-bar .toolbar-btn{background:#ffffff0b;border-color:#ffffff24}
+.account-bar .toolbar-btn:hover,.account-bar .toolbar-btn:focus-visible{background:#ffffff18;border-color:#ffffff42;transform:translateY(-1px)}
+.account-bar .account-home{background:#e8f1ff;color:#102238;border-color:#e8f1ff;font-weight:700}
+.account-bar .account-home:hover,.account-bar .account-home:focus-visible{background:#fff;color:#0b1c30;border-color:#fff}
+.account-bar .logout-btn{color:#ffcbcf;border-color:#ff8b953d}
+.account-bar .logout-btn:hover,.account-bar .logout-btn:focus-visible{background:#b5323d;color:#fff;border-color:#d8545e}
 .menu-peek{position:fixed;top:max(8px,env(safe-area-inset-top));right:max(10px,env(safe-area-inset-right));z-index:1035;display:none;box-shadow:0 8px 24px #0008;min-height:40px}
 .app-shell.board-menu-hidden .account-bar{max-height:0;padding-top:0;padding-bottom:0;opacity:0;pointer-events:none}
 .app-shell.board-menu-hidden .menu-peek{display:inline-flex;align-items:center}
@@ -766,7 +774,7 @@
 .admin-panel{overflow:auto;background:#0d1a2b;padding:clamp(16px,3vw,42px);overscroll-behavior:contain}
 .admin-panel.panel-view{display:block;flex:1 1 auto;min-height:0;width:100%;max-height:none}
 .app-shell.panel-mode .topbar,.app-shell.panel-mode .board-wrap,.app-shell.panel-mode #statusLine{display:none!important}
-.app-shell.panel-mode .account-bar{max-height:160px;opacity:1;padding-top:8px;padding-bottom:8px;pointer-events:auto}
+.app-shell.panel-mode .account-bar{max-height:180px;opacity:1;padding-top:10px;padding-bottom:10px;pointer-events:auto}
 .app-shell.panel-mode .menu-peek{display:none}
 .account-bar .view-active{background:#6ea8fe;color:#07111e;border-color:#8fbdff}
 .admin-row{display:flex;align-items:center;flex-wrap:wrap;gap:8px;padding:14px 10px;border-bottom:1px solid #ffffff22}
@@ -782,12 +790,34 @@
 .board-item{touch-action:auto}
 .item-header{touch-action:none}
 #statusLine{padding:6px max(12px,env(safe-area-inset-right)) 6px max(12px,env(safe-area-inset-left));font-size:.85rem;background:#142338;overflow-wrap:anywhere}
+.workspace-bar{padding:0;background:linear-gradient(90deg,#091523,#0b1a2b);border-bottom:1px solid #ffffff12;box-shadow:0 8px 24px #0207112e}
+.workspace-layout{display:grid;grid-template-columns:minmax(180px,auto) minmax(240px,1fr) auto;gap:14px;align-items:center;padding:11px clamp(14px,2.2vw,30px)}
+.workspace-brand{display:flex;align-items:center;gap:10px;min-width:0}
+.workspace-brand-copy{line-height:1.15;min-width:0}
+.workspace-brand-title{font-weight:800;letter-spacing:.01em}
+.workspace-tools{display:flex;align-items:center;justify-content:flex-end;gap:8px}
+.workspace-tools .btn{min-height:40px;border-radius:12px;padding-inline:13px}
+.workspace-bar .search-box{width:100%;max-width:680px;margin-inline:auto}
+.workspace-bar .input-group{border-radius:13px;overflow:hidden;box-shadow:0 0 0 1px #ffffff18}
+.workspace-bar .input-group-text,.workspace-bar .form-control{min-height:42px;background:#132235;border-color:transparent;color:#f4f8ff}
+.workspace-bar .form-control::placeholder{color:#a4b2c5}
 .native-dialog{max-height:90dvh;overflow:auto}
+@media(max-width:991.98px){
+  .account-bar{grid-template-columns:1fr auto}
+  .account-actions{grid-column:1/-1}
+}
 @media(max-width:767.98px){
-  .account-bar{align-items:stretch;max-height:260px;padding-top:max(8px,env(safe-area-inset-top))}
-  .account-bar small{order:-1;flex:1 0 100%;font-size:.78rem;padding:0 2px}
-  .account-bar .btn{flex:1 1 auto;min-height:42px}
-  .app-shell.panel-mode .account-bar{max-height:260px;padding-top:max(8px,env(safe-area-inset-top))}
+  .account-bar{grid-template-columns:1fr;align-items:stretch;max-height:480px;padding-top:max(10px,env(safe-area-inset-top));gap:9px}
+  .account-identity{justify-content:space-between}
+  .account-identity small{font-size:.78rem;text-align:right}
+  .account-nav,.account-actions{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px}
+  .account-actions{grid-column:auto}
+  .account-bar .btn{min-height:44px;padding:7px 8px;white-space:normal;line-height:1.1;font-size:.8rem}
+  .app-shell.panel-mode .account-bar{max-height:480px;padding-top:max(10px,env(safe-area-inset-top))}
+  .workspace-layout{grid-template-columns:1fr auto;gap:10px;padding:10px 12px}
+  .workspace-bar .search-box{grid-column:1/-1;grid-row:2}
+  .workspace-tools{gap:7px}
+  .workspace-tools .btn{min-height:42px;min-width:44px;padding-inline:10px}
   .admin-panel{padding:18px 12px max(18px,env(safe-area-inset-bottom))}
   .admin-panel h2{font-size:1.2rem}
   .admin-row{align-items:stretch;padding:14px 4px}
@@ -795,8 +825,16 @@
   .admin-row .btn{flex:1 1 145px;min-height:42px;white-space:normal}
 }
 @media(max-width:420px){
-  .account-bar{gap:6px}
-  .account-bar .btn{font-size:.78rem;padding-inline:8px}
+  .account-bar{gap:7px;padding-inline:9px}
+  .account-nav{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .account-actions{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .account-actions .logout-btn{grid-column:1/-1}
+  .account-identity{align-items:stretch;flex-direction:column}
+  .account-identity small{text-align:left;padding-inline:3px}
+  .workspace-layout{padding-inline:9px}
+  .workspace-brand-copy .small{display:none!important}
+  .workspace-brand-title{font-size:.94rem}
+  .workspace-tools .btn{padding-inline:9px}
   .menu-peek{font-size:.8rem}
   .gate-card{border-radius:18px}
 }
@@ -805,31 +843,47 @@
 
 <div id="appShell" class="app-shell">
   <button id="menuPeekBtn" class="btn btn-sm toolbar-btn menu-peek" type="button" aria-label="Mostrar menú superior"><i class="bi bi-list me-1"></i>Menú</button>
-  <div id="accountBar" class="account-bar"><a class="btn btn-sm toolbar-btn" href="https://jodahir.github.io/job/dpo/">← Asistente</a><small id="accountLabel"></small><button id="ownBoardBtn" class="btn btn-sm toolbar-btn">Mi pizarra</button><button id="sharedBtn" class="btn btn-sm toolbar-btn">Compartidas (0)</button><button id="adminBtn" class="btn btn-sm toolbar-btn" hidden>Administración</button><button id="trashBtn" class="btn btn-sm toolbar-btn">Papelera</button><button id="exportBtn" class="btn btn-sm toolbar-btn"><i class="bi bi-download me-1"></i>Exportar pizarra</button><button id="importBtn" class="btn btn-sm toolbar-btn">Importar respaldo</button><button id="logoutBtn" class="btn btn-sm toolbar-btn">Salir</button></div>
+  <div id="accountBar" class="account-bar">
+    <div class="account-identity">
+      <a class="btn btn-sm account-home" href="https://jodahir.github.io/job/dpo/"><i class="bi bi-arrow-left me-1"></i>Asistente</a>
+      <small id="accountLabel"></small>
+    </div>
+    <nav class="account-nav" aria-label="Vistas de la pizarra">
+      <button id="ownBoardBtn" class="btn btn-sm toolbar-btn"><i class="bi bi-grid-1x2 me-1"></i>Mi pizarra</button>
+      <button id="sharedBtn" class="btn btn-sm toolbar-btn"><i class="bi bi-people me-1"></i>Compartidas (0)</button>
+      <button id="adminBtn" class="btn btn-sm toolbar-btn" hidden><i class="bi bi-shield-check me-1"></i>Administración</button>
+      <button id="trashBtn" class="btn btn-sm toolbar-btn"><i class="bi bi-trash3 me-1"></i>Papelera</button>
+    </nav>
+    <div class="account-actions">
+      <button id="exportBtn" class="btn btn-sm toolbar-btn"><i class="bi bi-download me-1"></i>Exportar</button>
+      <button id="importBtn" class="btn btn-sm toolbar-btn"><i class="bi bi-upload me-1"></i>Importar</button>
+      <button id="logoutBtn" class="btn btn-sm toolbar-btn logout-btn"><i class="bi bi-box-arrow-right me-1"></i>Salir</button>
+    </div>
+  </div>
   <div id="statusLine" role="status" aria-live="polite">Esperando conexión</div><section id="adminPanel" class="admin-panel" hidden></section>
-  <header class="topbar py-2">
-    <div class="container-fluid d-flex align-items-center flex-wrap px-3 px-lg-4">
-      <div class="d-flex align-items-center gap-2 me-auto">
+  <header class="topbar workspace-bar">
+    <div class="workspace-layout">
+      <div class="workspace-brand">
         <span class="brand-dot"></span>
-        <div>
-          <div class="fw-bold">Mi Pizarra</div>
+        <div class="workspace-brand-copy">
+          <div class="workspace-brand-title">Mi Pizarra</div>
           <div class="small text-white-50 d-none d-sm-block">Firebase · Multiusuario</div>
         </div>
       </div>
 
-      <div class="search-box mx-lg-3">
+      <div class="search-box">
         <div class="input-group input-group-sm">
           <span class="input-group-text"><i class="bi bi-search"></i></span>
           <input id="searchInput" class="form-control" type="search" placeholder="Buscar en la pizarra…" aria-label="Buscar en la pizarra">
         </div>
       </div>
 
-      <div class="d-flex gap-2">
+      <div class="workspace-tools">
         <button class="btn toolbar-btn btn-sm" data-bs-toggle="modal" data-bs-target="#noteModal">
-          <i class="bi bi-sticky me-1"></i><span class="d-none d-md-inline">Nueva nota</span>
+          <i class="bi bi-sticky me-md-1"></i><span class="d-none d-md-inline">Nueva nota</span>
         </button>
         <button class="btn toolbar-btn btn-sm" id="uploadBtn">
-          <i class="bi bi-paperclip me-1"></i><span class="d-none d-md-inline">Cargar archivo</span>
+          <i class="bi bi-paperclip me-md-1"></i><span class="d-none d-md-inline">Cargar archivo</span>
         </button>
         <button class="btn toolbar-btn btn-sm" data-bs-toggle="offcanvas" data-bs-target="#helpCanvas" aria-label="Ayuda">
           <i class="bi bi-info-circle"></i>
