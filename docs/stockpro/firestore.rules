@@ -45,10 +45,26 @@ service cloud.firestore {
   function validModules(d){return d.keys().hasOnly(['enabled','roles','updatedBy','updatedAt'])&&validRoleMap(d.get('roles',{}))&&d.keys().hasAll(['enabled','updatedBy','updatedAt'])&&d.updatedBy==request.auth.uid&&d.updatedAt==request.time&&d.enabled is map&&d.enabled.keys().hasOnly(['dashboard', 'productos', 'ventas', 'clientes', 'proveedores', 'compras', 'creditos', 'facturacion', 'caja', 'movimientos', 'usuarios'])&&d.enabled.keys().hasAll(['dashboard', 'productos', 'ventas', 'clientes', 'proveedores', 'compras', 'creditos', 'facturacion', 'caja', 'movimientos', 'usuarios'])&&d.enabled.dashboard is bool&&d.enabled.productos is bool&&d.enabled.ventas is bool&&d.enabled.clientes is bool&&d.enabled.proveedores is bool&&d.enabled.compras is bool&&d.enabled.creditos is bool&&d.enabled.facturacion is bool&&d.enabled.caja is bool&&d.enabled.movimientos is bool&&d.enabled.usuarios is bool;}
   match /stockproConfig/{id}{allow read:if active();allow create,update:if id=='modules'&&superAdmin()&&validModules(request.resource.data);allow delete:if false;}
 
+  // Account requests expose only the applicant's own request until superadmin approval.
+  function requestPath(id){return /databases/$(database)/documents/stockproRequests/$(id);}
+  function accessPath(id){return /databases/$(database)/documents/stockproAccess/$(id);}
+  function validAccountRequest(d,id){return d.keys().hasOnly(['uid','email','name','status','emailVerified','createdAt','updatedAt','approvedAt','approvedBy'])&&required(d.uid,128)&&d.email==id&&required(d.email,254)&&required(d.name,200)&&d.status in ['pending','approved']&&d.emailVerified is bool&&d.createdAt is timestamp&&d.updatedAt is timestamp;}
+  function applicant(id){return request.auth!=null&&request.auth.token.email is string&&id==email();}
+  function pendingApproval(id){return !exists(requestPath(id))||get(requestPath(id)).data.status!='pending'||superAdmin()&&getAfter(requestPath(id)).data.status=='approved';}
+  match /stockproRequests/{id}{
+   allow get:if applicant(id)||superAdmin();
+   allow list:if superAdmin();
+   allow create:if applicant(id)&&!exists(accessPath(id))&&validAccountRequest(request.resource.data,id)&&request.resource.data.uid==request.auth.uid&&request.resource.data.status=='pending'&&request.resource.data.emailVerified==request.auth.token.email_verified&&request.resource.data.createdAt==request.time&&request.resource.data.updatedAt==request.time&&!('approvedAt' in request.resource.data)&&!('approvedBy' in request.resource.data);
+   allow update:if validAccountRequest(request.resource.data,id)&&resource.data.status=='pending'&&(
+    applicant(id)&&request.auth.uid==resource.data.uid&&verified()&&request.resource.data.emailVerified==true&&request.resource.data.updatedAt==request.time&&request.resource.data.diff(resource.data).affectedKeys().hasOnly(['emailVerified','updatedAt'])
+    ||superAdmin()&&enabledModule('usuarios')&&resource.data.emailVerified==true&&!exists(accessPath(id))&&request.resource.data.status=='approved'&&request.resource.data.approvedBy==request.auth.uid&&request.resource.data.approvedAt==request.time&&request.resource.data.updatedAt==request.time&&request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status','approvedBy','approvedAt','updatedAt'])&&getAfter(accessPath(id)).data.active==true&&getAfter(accessPath(id)).data.updatedBy==request.auth.uid&&getAfter(accessPath(id)).data.updatedAt==request.time);
+   allow delete:if false;
+  }
+
   match /stockproAccess/{id}{
    allow get:if verified()&&(id==email()||admin()||roleModule('usuarios')&&(!exists(/databases/$(database)/documents/stockproAccess/$(id))||operationalHere(resource.data)));
    allow list:if admin()||roleModule('usuarios')&&operationalHere(resource.data);
-   allow create:if enabledModule('usuarios')&&validAccess(request.resource.data,id)&&manageable(id,request.resource.data);
+   allow create:if enabledModule('usuarios')&&validAccess(request.resource.data,id)&&manageable(id,request.resource.data)&&pendingApproval(id);
    allow update:if enabledModule('usuarios')&&validAccess(request.resource.data,id)&&(
     manageable(id,request.resource.data)&&(admin()||operationalHere(resource.data))
     ||storeOwner()&&id!=email()&&operationalHere(resource.data)&&resource.data.active==true&&request.resource.data.active==false&&request.resource.data.diff(resource.data).affectedKeys().hasOnly(['active','updatedBy','updatedAt']));

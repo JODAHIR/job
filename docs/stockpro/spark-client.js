@@ -106,6 +106,8 @@ startCloud=async function(){
  auth.onAuthStateChanged(async user=>{
  const generation=++authGeneration;stopStoreSubscriptions();applyModulePolicy({},false);syncing=false;reading=false;conflict=false;roleBlocked=false;serverVerified=false;loginValidatedUid=null;activeOwner=user?user.uid:'local';selectedStoreId='despensa';currentStoreActor=null;availableStores=[];db=user?emptyDB():load();cart=[];effectiveRole=user?'BLOCKED':'LOCAL';renderAll();
  if(!user){setSync('local','Iniciá sesión para usar tu despensa.');return;}
+ try{await ensureAccountRequest(user);}catch(e){if(generation===authGeneration){roleBlocked=true;setSync('error','No se pudo registrar la solicitud de acceso. Revisá la conexión y volvé a iniciar sesión.');}return;}
+ if(generation!==authGeneration)return;
  if(!user.emailVerified){roleBlocked=true;effectiveRole='BLOCKED';renderAll();setSync('error','Verificá tu correo y volvé a ingresar.');return;}
  try{await connectStoreContext(user,generation);}catch(e){if(generation===authGeneration)cloudFailure(e);}
  },cloudFailure);
@@ -114,7 +116,8 @@ startCloud=async function(){
 async function registerOwnAccount(){
  const email=loginEmail.value.trim().toLowerCase(),password=loginPassword.value;if(!email||password.length<8)return toast('Ingresá tu correo y una contraseña de al menos 8 caracteres.');
  try{auth.languageCode='es';let credential;try{credential=await auth.createUserWithEmailAndPassword(email,password)}catch(e){if(e.code!=='auth/email-already-in-use')throw e;credential=await auth.signInWithEmailAndPassword(email,password)}
- if(!credential.user.emailVerified){await credential.user.sendEmailVerification();toast('Revisá tu correo (también spam), abrí el enlace de verificación y luego iniciá sesión.');await auth.signOut()}else toast('Cuenta verificada. Iniciando sesión…');
+ await ensureAccountRequest(credential.user);
+ if(!credential.user.emailVerified){await credential.user.sendEmailVerification();toast('Cuenta creada. Verificá tu correo y volvé a ingresar para completar la solicitud de aprobación.');await auth.signOut()}else toast('Cuenta verificada. Iniciando sesión…');
  }catch(e){toast(e.code==='auth/weak-password'?'La contraseña no cumple los requisitos de seguridad. Usá una contraseña más larga.':e.code==='auth/invalid-email'?'El correo electrónico no es válido.':friendlyLoginError(e))}
 }
 const sparkCanMutate=canMutate;canMutate=function(){if(activeOwner!=='local'&&envelope.queue?.some(c=>(['saveProduct','saveClient','saveSupplier','saveCredit','restore'].includes(c.action)||c.action==='finishSale'&&c.payload.pay==='Crédito'))){toast('Sincronizá el alta pendiente antes de usar ese registro.');return false}return sparkCanMutate()};
