@@ -4,6 +4,7 @@ on:
     branches: [main]
     paths:
       - 'docs/**'
+      - 'dpo-build/**'
       - 'stockpro-spark/**'
       - 'stockpro-firebase/functions/domain.js'
       - 'stockpro-firebase/tests/domain.test.js'
@@ -29,6 +30,14 @@ jobs:
           from pathlib import Path
           Path('docs/stockpro/version.json').write_text(json.dumps({'commit': os.environ['GITHUB_SHA']}))
           PY
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Construir Control Documental
+        working-directory: dpo-build
+        run: |
+          npm ci --ignore-scripts --no-audit --no-fund
+          npm run build
       - uses: actions/configure-pages@v5
       - uses: actions/jekyll-build-pages@v1
         with:
