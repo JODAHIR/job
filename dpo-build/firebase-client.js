@@ -29,6 +29,7 @@ import {
 } from "firebase/functions";
 import { initializeAppCheck, ReCaptchaV3Provider } from "firebase/app-check";
 import { empty, validate } from "../docs/dpo/cdq-v3/src/domain.js";
+import { connectAuthenticationOnly } from "./authentication-only.js";
 
 const entities = ["cacs", "remisiones", "lotes", "documentos", "observaciones"];
 export async function connectFirebase() {
@@ -41,6 +42,8 @@ export async function connectFirebase() {
       "Firebase no está configurado. Consulte DEPLOYMENT.md; los espacios locales siguen disponibles.",
     );
   const config = await response.json();
+  if (config.connectionMode === "authentication-only" && config.useEmulators === false)
+    return connectAuthenticationOnly(config);
   const emulator = config.useEmulators === true;
   if (
     emulator &&

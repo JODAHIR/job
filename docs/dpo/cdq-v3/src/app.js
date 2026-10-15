@@ -78,6 +78,7 @@ const phase3Context=()=>({db,f,mode,cloud,esc,table,render,load,repo});
 const canManage=(c)=>!cloudMode()||(c==='gerencias'?cloud?.profile?.role==='director':cloud?.profile?.role==='asistente');
 function gerenciaFor(c,row){if(c==='gerencias')return row.id;if(c==='cacs')return row.gerenciaId;if(c==='remisiones')return find('cacs',row.cacId).gerenciaId;if(c==='lotes')return gerenciaFor('remisiones',find('remisiones',row.remisionId));if(c==='documentos')return gerenciaFor('lotes',find('lotes',row.loteId));return gerenciaFor('documentos',find('documentos',row.documentId));}
 function loginView(error=''){
+  if(cloud?.authOnly){authenticationView(error);return;}
   $('#app').innerHTML=`<main class="content login-page"><section class="panel"><h1>Control Documental</h1><p>Acceso institucional · Firebase Authentication</p><form id="login-form" class="form-fields"><label>Correo<input name="email" type="email" autocomplete="username" required></label><label>Contraseña<input name="password" type="password" autocomplete="current-password" required></label><button class="primary">Ingresar</button></form><p id="login-error" role="alert">${esc(error)}</p><div class="form-actions"><button id="google-login" class="secondary">Ingresar con Google</button><button id="return-local">Volver a demostración</button>${cloud?.auth.currentUser?'<button id="logout">Cerrar sesión</button>':''}</div><p>La cuenta necesita correo verificado y un perfil operativo asignado. No hay registro público con permisos automáticos.</p></section></main>`;
   $('#login-form').onsubmit=async e=>{e.preventDefault();const b=e.submitter;b.disabled=true;const values=new FormData(e.target);try{await cloud.login(values.get('email'),values.get('password'))}catch(error){$('#login-error').textContent=error.message;b.disabled=false}};
   $('#google-login').onclick=async()=>{try{await cloud.google()}catch(error){$('#login-error').textContent=error.message}};
@@ -85,12 +86,20 @@ function loginView(error=''){
   if($('#logout'))$('#logout').onclick=()=>cloud.logout();
   if(!cloud){$('#google-login').disabled=true;$('#login-form button').disabled=true;}
 }
+function authenticationView(error=''){
+  const user=cloud.auth.currentUser;
+  $('#app').innerHTML=`<main class="content login-page"><section class="panel"><h1>Control Documental</h1><p>Acceso con Google · controldoc-385bd</p>${user?`<h2>Sesión iniciada</h2><p>${esc(user.email)}</p><p>${user.emailVerified?'Correo verificado.':'Correo pendiente de verificación.'}</p><p>La autenticación está conectada. La aprobación de accesos, los permisos administrativos y el guardado documental en Spark todavía no están habilitados.</p><button id="auth-logout" class="secondary">Cerrar sesión</button>`:'<p>Identifícate con tu cuenta de Google. Iniciar sesión no concede permisos de acceso a documentos.</p><button id="auth-google" class="primary">Ingresar con Google</button>'}<p id="auth-error" role="alert">${esc(error)}</p><button id="auth-demo" class="secondary">Volver a demostración</button></section></main>`;
+  if($('#auth-google'))$('#auth-google').onclick=async e=>{e.target.disabled=true;try{await cloud.google()}catch(err){const messages={'auth/operation-not-allowed':'El proveedor Google aún debe habilitarse en Firebase Authentication.','auth/unauthorized-domain':'Debe autorizarse jodahir.github.io en Firebase Authentication.','auth/configuration-not-found':'Firebase Authentication aún no está configurado en este proyecto.','auth/popup-blocked':'El navegador bloqueó la ventana de Google. Permite ventanas emergentes e inténtalo otra vez.','auth/popup-closed-by-user':'Se cerró el inicio de sesión antes de completarlo.'};authenticationView(messages[err.code]||err.message)}};
+  if($('#auth-logout'))$('#auth-logout').onclick=async()=>{try{await cloud.logout()}catch(err){authenticationView(err.message)}};
+  $('#auth-demo').onclick=()=>{mode='demo';sessionStorage.setItem('cdq:workspace','demo');page='dashboard';load().catch(fatal)};
+}
 async function load() {
   const token=++epoch;
   if(cloudMode()){
     $('#modal').close();$('#app').innerHTML='<main class="content"><p>Conectando con Firebase…</p></main>';db=null;
     try{
       if(!cloud){const module=await import('./firebase-client.bundle.js');cloud=await module.connectFirebase();let initial=true;stopAuth=cloud.watchAuth(()=>{if(initial){initial=false;return}if(cloudMode()){epoch++;db=null;$('#modal').close();load()}});}
+      if(cloud.authOnly){authenticationView();return}
       if(!cloud.auth.currentUser){loginView();return}
       const result=await cloud.load();if(token!==epoch||!cloudMode())return;db=result;
       if(stopProfile)stopProfile();const signature=JSON.stringify(cloud.profile);stopProfile=cloud.watchProfile(cloud.auth.currentUser.uid,p=>{if(cloudMode()&&JSON.stringify(p)!==signature){epoch++;db=null;$('#modal').close();load()}});

@@ -1,2 +1,3 @@
 src/*.bundle.js
-config/
+config/*
+!config/firebase.json

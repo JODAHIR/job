@@ -1,0 +1,12 @@
+{
+  "firebase": {
+    "apiKey": "AIzaSyAP337ZEOQuefonyfRgDCOnZMMlCI5sKyg",
+    "authDomain": "controldoc-385bd.firebaseapp.com",
+    "projectId": "controldoc-385bd",
+    "storageBucket": "controldoc-385bd.firebasestorage.app",
+    "messagingSenderId": "382685101685",
+    "appId": "1:382685101685:web:863ff468b9bd8ebcc9423c"
+  },
+  "useEmulators": false,
+  "connectionMode": "authentication-only"
+}
