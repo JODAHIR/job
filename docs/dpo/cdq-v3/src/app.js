@@ -1,9 +1,9 @@
 import { visibleModule, manageRecord, manageCacStatus } from './permissions.js';
-import {phase3Panel,bindPhase3} from './phase3-ui.js?v=remisiones-20261016';
+import {phase3Panel,bindPhase3} from './phase3-ui.js?v=actualizacion-20261016';
 import { metrics, scope, mutate, states, integer } from "./domain.js";
 import { LocalRepository } from "./repository.js";
 import { demo } from "./seed.js";
-import { cloudPanel, bindCloudPanel } from "./cloud-ui.js?v=remisiones-20261016";
+import { cloudPanel, bindCloudPanel } from "./cloud-ui.js?v=actualizacion-20261016";
 const $ = (s) => document.querySelector(s),
   esc = (v) =>
     String(v ?? "").replace(
@@ -95,19 +95,39 @@ function authenticationView(error=''){
   if($('#auth-logout'))$('#auth-logout').onclick=async()=>{try{await cloud.logout()}catch(err){authenticationView(err.message)}};
   $('#auth-demo').onclick=()=>{mode='demo';sessionStorage.setItem('cdq:workspace','demo');page='dashboard';load().catch(fatal)};
 }
+let updateNoticeTimer;
+function updateNotice(message, error = false) {
+  clearTimeout(updateNoticeTimer);
+  document.getElementById('update-notice')?.remove();
+  const notice=document.createElement('div');
+  notice.id='update-notice';notice.setAttribute('role',error?'alert':'status');
+  notice.textContent=message;
+  notice.style.cssText='position:fixed;bottom:24px;right:24px;z-index:1000;padding:12px 20px;border-radius:8px;background:'+(error?'#8c3232':'#087f83')+';color:white;box-shadow:0 4px 18px #0002;max-width:calc(100vw - 48px)';
+  document.body.append(notice);
+  updateNoticeTimer=setTimeout(()=>notice.remove(),error?8000:3500);
+}
 async function load() {
   const token=++epoch;
   if(cloudMode()){
-    $('#modal').close();$('#app').innerHTML='<main class="content"><p>Conectando con Firebase…</p></main>';db=null;
+    const refreshing=!!(db && cloud?.auth.currentUser && $('#refresh-cloud'));
+    if(!refreshing){$('#modal').close();$('#app').innerHTML='<main class="content"><p role="status">Cargando…</p></main>';db=null;}
+    else {$('#app').setAttribute('aria-busy','true');$('#refresh-cloud').disabled=true;}
+
     try{
-      if(!cloud){const module=await import('./firebase-client.bundle.js?v=remisiones-20261016');cloud=await module.connectFirebase();let initial=true;stopAuth=cloud.watchAuth(()=>{if(initial){initial=false;return}if(cloudMode()){epoch++;db=null;$('#modal').close();load()}});}
+      if(!cloud){const module=await import('./firebase-client.bundle.js?v=actualizacion-20261016');cloud=await module.connectFirebase();let initial=true;stopAuth=cloud.watchAuth(()=>{if(initial){initial=false;return}if(cloudMode()){epoch++;db=null;$('#modal').close();load()}});}
       if(cloud.authOnly){authenticationView();return}
       if(!cloud.auth.currentUser){loginView();return}
       const result=await cloud.load();if(token!==epoch||!cloudMode())return;db=result;
       if(stopProfile)stopProfile();const signature=JSON.stringify(cloud.profile);stopProfile=cloud.watchProfile(cloud.auth.currentUser.uid,p=>{if(cloudMode()&&JSON.stringify(p)!==signature){epoch++;db=null;$('#modal').close();load()}});
       if(!visibleModule(cloud.profile,page))page='dashboard';
-      render();return;
-    }catch(error){if(token===epoch){loginView(error.message)}return}
+      $('#app').removeAttribute('aria-busy');render();if(refreshing)updateNotice('Actualización realizada');return;
+    }catch(error){if(token===epoch){
+      $('#app').removeAttribute('aria-busy');
+      if(refreshing && cloud?.auth.currentUser && ['unavailable','deadline-exceeded'].includes(error.code?.replace('firestore/',''))){
+        if($('#refresh-cloud'))$('#refresh-cloud').disabled=false;
+        updateNotice('No se pudo actualizar. Inténtalo de nuevo.',true);
+      }else{db=null;loginView(error.message)}
+    }return}
   }
   if(stopProfile){stopProfile();stopProfile=null;}
   repo = new LocalRepository(mode);
