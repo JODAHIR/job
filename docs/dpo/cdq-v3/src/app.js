@@ -1,8 +1,8 @@
-import {phase3Panel,bindPhase3} from './phase3-ui.js';
+import {phase3Panel,bindPhase3} from './phase3-ui.js?v=spark-20261016';
 import { metrics, scope, mutate, states, integer } from "./domain.js";
 import { LocalRepository } from "./repository.js";
 import { demo } from "./seed.js";
-import { cloudPanel, bindCloudPanel } from "./cloud-ui.js";
+import { cloudPanel, bindCloudPanel } from "./cloud-ui.js?v=spark-20261016";
 const $ = (s) => document.querySelector(s),
   esc = (v) =>
     String(v ?? "").replace(
@@ -99,7 +99,7 @@ async function load() {
   if(cloudMode()){
     $('#modal').close();$('#app').innerHTML='<main class="content"><p>Conectando con Firebase…</p></main>';db=null;
     try{
-      if(!cloud){const module=await import('./firebase-client.bundle.js');cloud=await module.connectFirebase();let initial=true;stopAuth=cloud.watchAuth(()=>{if(initial){initial=false;return}if(cloudMode()){epoch++;db=null;$('#modal').close();load()}});}
+      if(!cloud){const module=await import('./firebase-client.bundle.js?v=spark-20261016');cloud=await module.connectFirebase();let initial=true;stopAuth=cloud.watchAuth(()=>{if(initial){initial=false;return}if(cloudMode()){epoch++;db=null;$('#modal').close();load()}});}
       if(cloud.authOnly){authenticationView();return}
       if(!cloud.auth.currentUser){loginView();return}
       const result=await cloud.load();if(token!==epoch||!cloudMode())return;db=result;
