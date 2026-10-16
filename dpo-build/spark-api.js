@@ -37,7 +37,7 @@ export function sparkAPI(api) {
    return after;
   });
   if(name==='queryAudit') {
-   const scope=input.scope;
+   const scope=input.gerenciaId ? 'g:'+input.gerenciaId : 'a:'+input.kind;
    if(typeof scope!=='string'||!scope.match(/^[ga]:[A-Za-z0-9_-]{1,128}$/)) throw Error('Ámbito inválido.');
    const path=scope.startsWith('g:')?`gerencias/${scope.slice(2)}/audit`:`administration/${scope.slice(2)}/audit`;
    const constraints=[orderBy('at'),orderBy('__name__')];
