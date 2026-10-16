@@ -1,9 +1,9 @@
 import { visibleModule, manageRecord, manageCacStatus } from './permissions.js';
-import {phase3Panel,bindPhase3} from './phase3-ui.js?v=roles-20261016';
+import {phase3Panel,bindPhase3} from './phase3-ui.js?v=remisiones-20261016';
 import { metrics, scope, mutate, states, integer } from "./domain.js";
 import { LocalRepository } from "./repository.js";
 import { demo } from "./seed.js";
-import { cloudPanel, bindCloudPanel } from "./cloud-ui.js?v=roles-20261016";
+import { cloudPanel, bindCloudPanel } from "./cloud-ui.js?v=remisiones-20261016";
 const $ = (s) => document.querySelector(s),
   esc = (v) =>
     String(v ?? "").replace(
@@ -100,7 +100,7 @@ async function load() {
   if(cloudMode()){
     $('#modal').close();$('#app').innerHTML='<main class="content"><p>Conectando con Firebase…</p></main>';db=null;
     try{
-      if(!cloud){const module=await import('./firebase-client.bundle.js?v=roles-20261016');cloud=await module.connectFirebase();let initial=true;stopAuth=cloud.watchAuth(()=>{if(initial){initial=false;return}if(cloudMode()){epoch++;db=null;$('#modal').close();load()}});}
+      if(!cloud){const module=await import('./firebase-client.bundle.js?v=remisiones-20261016');cloud=await module.connectFirebase();let initial=true;stopAuth=cloud.watchAuth(()=>{if(initial){initial=false;return}if(cloudMode()){epoch++;db=null;$('#modal').close();load()}});}
       if(cloud.authOnly){authenticationView();return}
       if(!cloud.auth.currentUser){loginView();return}
       const result=await cloud.load();if(token!==epoch||!cloudMode())return;db=result;
@@ -237,7 +237,7 @@ function collectionView() {
             esc(period({ year: +f.year, month: +f.month, half })),
             0,
             badge("Pendiente", "warn"),
-            "—",
+            canManage("remisiones") && c.active !== false ? `<button class="link" data-register-remision="${esc(c.id)}" data-half="${half}">Registrar remisión ↗</button>` : "—",
           ]);
   }
   if (page === "lotes") {
@@ -357,6 +357,7 @@ function bind() {
     $('#refresh-cloud').onclick=()=>load();
     bindCloudPanel(page,cloudContext());
   }
+  document.querySelectorAll("[data-register-remision]").forEach(el => el.onclick=()=>form("remisiones",null,{cacId:el.dataset.registerRemision,year:+f.year,month:+f.month,half:+el.dataset.half}));
   document.querySelectorAll("[data-cac-status]").forEach(el => el.onclick=()=>toggleCac(el.dataset.cacStatus));
   document.querySelectorAll("[data-nav]").forEach(
     (b) =>
@@ -416,9 +417,9 @@ async function toggleCac(id) {
  try {await cloud.call('setCacActive',{gerenciaId:c.gerenciaId,id,active:c.active===false,expectedRevision:c.revision,reason});await load();}
  catch(e){alert(e.message);}
 }
-function form(c, id) {
+function form(c, id, defaults = {}) {
   if(!canManage(c))return;
-  const row = id ? find(c, id) : {},
+  const row = id ? find(c, id) : defaults,
     field = (key, label, type = "text", value = row[key] ?? "") =>
       `<label>${label}<input name="${key}" type="${type}" value="${esc(value)}" required ${type === "number" ? 'min="0" step="1"' : ""} maxlength="${key === "description" ? 2000 : 150}"></label>`,
     pick = (key, label, rows, labeler, selected = row[key] ?? "") =>
