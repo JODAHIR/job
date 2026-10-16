@@ -1,3 +1,4 @@
+import {generateRemisiones} from './spark-remisiones.js';
 import {doc,collection,getDocFromServer,getDocsFromServer,runTransaction,serverTimestamp,query,orderBy,startAfter,limit} from 'firebase/firestore';
 import {sparkWriter} from './spark-records.js';
 import {publishSparkCalendar} from './spark-calendar.js';
@@ -14,6 +15,7 @@ export function sparkAPI(api) {
  api.spark=true;
  return async(name,input)=>{
   if(name==='publishCalendar') return publishSparkCalendar(store,auth,input);
+  if(name==='generateRemisiones') return generateRemisiones(store,auth,input);
   if(name==='saveRecord') return save(input);
   if(name==='setCacActive') {
    const snap=await getDocFromServer(doc(store,`gerencias/${input.gerenciaId}/cacs/${input.id}`));

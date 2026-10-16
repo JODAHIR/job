@@ -1,9 +1,9 @@
 import { visibleModule, manageRecord, manageCacStatus } from './permissions.js';
-import {phase3Panel,bindPhase3} from './phase3-ui.js?v=guardado-directo-20261016';
+import {phase3Panel,bindPhase3} from './phase3-ui.js?v=remisiones-datos-20261016';
 import { metrics, scope, mutate, states, integer } from "./domain.js";
 import { LocalRepository } from "./repository.js";
 import { demo } from "./seed.js";
-import { cloudPanel, bindCloudPanel } from "./cloud-ui.js?v=guardado-directo-20261016";
+import { cloudPanel, bindCloudPanel } from "./cloud-ui.js?v=remisiones-datos-20261016";
 const $ = (s) => document.querySelector(s),
   esc = (v) =>
     String(v ?? "").replace(
@@ -114,7 +114,7 @@ async function load() {
     else {$('#app').setAttribute('aria-busy','true');$('#refresh-cloud').disabled=true;}
 
     try{
-      if(!cloud){const module=await import('./firebase-client.bundle.js?v=guardado-directo-20261016');cloud=await module.connectFirebase();let initial=true;stopAuth=cloud.watchAuth(()=>{if(initial){initial=false;return}if(cloudMode()){epoch++;db=null;$('#modal').close();load()}});}
+      if(!cloud){const module=await import('./firebase-client.bundle.js?v=remisiones-datos-20261016');cloud=await module.connectFirebase();let initial=true;stopAuth=cloud.watchAuth(()=>{if(initial){initial=false;return}if(cloudMode()){epoch++;db=null;$('#modal').close();load()}});}
       if(cloud.authOnly){authenticationView();return}
       if(!cloud.auth.currentUser){loginView();return}
       const result=await cloud.load();if(token!==epoch||!cloudMode())return;db=result;
@@ -241,10 +241,11 @@ function collectionView() {
     ]);
   }
   if (page === "remisiones") {
-    headers = ["CAC / dependencia", "Período", "Lotes", "Registro", ""];
+    headers = ["CAC / dependencia", "Período", "Expediente", "Fecha de remisión", "Recepción", "Vencimiento", "Lotes", "Registro", ""];
     rows = s.rem.map((r) => [
       esc(name("cacs", r.cacId)),
       esc(period(r)),
+      esc(r.expediente ?? "—"), esc(r.remittedOn ?? "—"), esc(r.receivedOn ?? "—"), esc(r.dueOn ?? "—"),
       db.lotes.filter((l) => l.remisionId === r.id).length,
       badge("Registrada", "ok"),
       edit(page, r.id),
@@ -255,6 +256,7 @@ function collectionView() {
           rows.push([
             esc(c.name),
             esc(period({ year: +f.year, month: +f.month, half })),
+            "—", "—", "—", "—",
             0,
             badge("Pendiente", "warn"),
             canManage("remisiones") && c.active !== false ? `<button class="link" data-register-remision="${esc(c.id)}" data-half="${half}">Registrar remisión ↗</button>` : "—",
@@ -321,7 +323,7 @@ function collectionView() {
   const filtered = rows.filter((r) =>
     r.join(" ").toLowerCase().includes(esc(query.toLowerCase())),
   );
-  return `<section class="panel"><div class="section-line"><div><h2>${pages.find((p) => p[0] === page)[2]}</h2><p>${page === "gerencias" || page === "cacs" ? "Catálogo institucional · independiente del período" : "Registros del período y ámbito seleccionados"}</p></div>${canManage(collection)?`<button class="primary" data-new="${collection}">+ Nuevo registro</button>`:""}</div><input class="search" id="search" placeholder="Buscar en esta tabla…" value="${esc(query)}" aria-label="Buscar en la tabla">${table(headers, filtered)}<p class="footnote">${filtered.length} resultados · ${cloudMode()?"Persistencia en Firestore · permisos validados en servidor":"Cambios guardados únicamente en este navegador."}</p></section>`;
+  return `<section class="panel"><div class="section-line"><div><h2>${pages.find((p) => p[0] === page)[2]}</h2><p>${page === "gerencias" || page === "cacs" ? "Catálogo institucional · independiente del período" : "Registros del período y ámbito seleccionados"}</p></div>${page === "remisiones" && cloud?.spark && canManage("remisiones") ? `<button class="secondary" id="generate-remisiones">Generar remisiones de la gerencia</button>` : ""}${canManage(collection)?`<button class="primary" data-new="${collection}">+ Nuevo registro</button>`:""}</div><input class="search" id="search" placeholder="Buscar en esta tabla…" value="${esc(query)}" aria-label="Buscar en la tabla">${table(headers, filtered)}<p class="footnote">${filtered.length} resultados · ${cloudMode()?"Persistencia en Firestore · permisos validados en servidor":"Cambios guardados únicamente en este navegador."}</p></section>`;
 }
 function history() {
   const keys = [
@@ -377,6 +379,7 @@ function bind() {
     $('#refresh-cloud').onclick=()=>load();
     bindCloudPanel(page,cloudContext());
   }
+  if($("#generate-remisiones"))$("#generate-remisiones").onclick=generateRemisiones;
   document.querySelectorAll("[data-register-remision]").forEach(el => el.onclick=()=>form("remisiones",null,{cacId:el.dataset.registerRemision,year:+f.year,month:+f.month,half:+el.dataset.half}));
   document.querySelectorAll("[data-cac-status]").forEach(el => el.onclick=()=>toggleCac(el.dataset.cacStatus));
   document.querySelectorAll("[data-nav]").forEach(
@@ -437,6 +440,25 @@ async function toggleCac(id) {
  try {await cloud.call('setCacActive',{gerenciaId:c.gerenciaId,id,active:c.active===false,expectedRevision:c.revision,reason});await load();}
  catch(e){alert(e.message);}
 }
+function generateRemisiones() {
+ if(!f.gerencia || !f.half){updateNotice('Seleccione una gerencia y una quincena antes de generar.',true);return;}
+ const cacs=db.cacs.filter(c=>c.gerenciaId===f.gerencia && c.active!==false);
+ const gerenciaId=f.gerencia,year=+f.year,month=+f.month,half=+f.half;
+ $('#modal').innerHTML=`<form id="generate-form"><h2>Generar remisiones de ${esc(name('gerencias',gerenciaId))}</h2><p>${esc(period({year,month,half}))} · ${cacs.length} CAC activos. Se omiten remisiones existentes. Los siguientes datos se aplican a cada remisión nueva de esta gerencia, independientemente del filtro de CAC.</p><div class="form-fields"><label>Número de expediente<input name="expediente" required maxlength="150"></label><label>Fecha de remisión<input name="remittedOn" type="date" required></label><label>Fecha de recepción<input name="receivedOn" type="date" required></label></div><p>Se registra cada CAC por separado. Si hay un error, se informa el resultado y puede reintentar sin duplicar los registros guardados.</p><p id="generation-result" role="status"></p><div class="form-actions"><button type="button" id="generation-close">Cerrar</button><button class="primary">Generar pendientes</button></div></form>`;
+ $('#generation-close').onclick=()=>$('#modal').close();
+ $('#generate-form').onsubmit=async e=>{
+  e.preventDefault();e.submitter.disabled=true;$('#generation-close').disabled=true;
+  try {
+   const result=await cloud.call('generateRemisiones',{...Object.fromEntries(new FormData(e.target)),gerenciaId,year,month,half});
+   for(const row of result.created){const i=db.remisiones.findIndex(r=>r.id===row.id);if(i<0)db.remisiones.push(row);else db.remisiones[i]=row;}
+   render();
+   $('#generation-result').textContent=`Registradas: ${result.created.length}. Existentes: ${result.skipped.length}. Errores: ${result.failed.length}. `+result.failed.map(x=>x.name+': '+x.error).join(' | ');
+   if(!result.failed.length)updateNotice('Actualización realizada');
+  }catch(error){$('#generation-result').textContent=error.message;}
+  finally{e.submitter.disabled=false;$('#generation-close').disabled=false;}
+ };
+ $('#modal').showModal();
+}
 function form(c, id, defaults = {}) {
   if(!canManage(c))return;
   const row = id ? find(c, id) : defaults,
@@ -475,6 +497,7 @@ function form(c, id, defaults = {}) {
         (r) => r.name,
         row.half ?? f.half,
       );
+  if(c==="remisiones")fields+=field("expediente","Número de expediente")+field("remittedOn","Fecha de remisión","date");
   if(c==="remisiones"&&cloudMode())fields+=field("receivedOn","Fecha de recepción (Paraguay)","date");
   if (c === "lotes")
     fields +=

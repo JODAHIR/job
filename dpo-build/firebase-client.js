@@ -167,6 +167,7 @@ export async function connectFirebase() {
       state.audit.sort((a, b) => a.at.localeCompare(b.at));
       const cal = await getDocFromServer(doc(store, "settings", "calendar"));
       state.calendarVersion = cal.exists() ? cal.data().version : null;
+      if(state.calendarVersion){const calendar=await getDocFromServer(doc(store,'calendars',state.calendarVersion));state.calendar=calendar.exists()?calendar.data():null;}
       return validate(state);
     },
   };

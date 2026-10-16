@@ -2,7 +2,7 @@ import { doc, runTransaction, serverTimestamp } from 'firebase/firestore';
 
 const schemas = {
   gerencias: ['id','name'], cacs: ['id','name','gerenciaId','active'],
-  remisiones: ['id','cacId','year','month','half','receivedOn'],
+  remisiones: ['id','cacId','year','month','half','receivedOn','expediente','remittedOn'],
   lotes: ['id','remisionId','code','declared'],
   documentos: ['id','loteId','type','number','state'],
   observaciones: ['id','documentId','description','date','owner','status'],
@@ -11,6 +11,7 @@ export function sparkRow(entity, row) {
   if (!schemas[entity] || !row || Object.keys(row).some(k => !schemas[entity].includes(k))) throw Error('Campos no admitidos.');
   const result = {};
   for (const k of schemas[entity]) {
+    if(['expediente','remittedOn'].includes(k) && row[k] === undefined)continue;
     const v = k === 'active' ? (row[k] ?? true) : row[k];
     if (v === undefined) throw Error(`Falta ${k}.`);
     result[k] = typeof v === 'string' ? v.trim() : v;
