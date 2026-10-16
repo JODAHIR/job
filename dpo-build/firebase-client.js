@@ -126,9 +126,9 @@ export async function connectFirebase() {
           await getDocsFromServer(collection(store, "users"))
         ).docs.map((s) => ({ ...s.data(), id: s.id }));
         if (spark) state.accessRequests = (await getDocsFromServer(collection(store, "accessRequests"))).docs.map(d => d.data());
-        return state;
+        if (!spark) return state;
       }
-      if (profile.role === "director")
+      if (profile.role === "director" || (spark && profile.role === "technical"))
         state.gerencias = (
           await getDocsFromServer(collection(store, "gerencias"))
         ).docs.map((s) => s.data());
@@ -159,7 +159,7 @@ export async function connectFirebase() {
           state[entities[i]].push(...snap.docs.map((s) => s.data()));
         });
       }
-      if (profile.role === "director") {
+      if (profile.role === "director" || (spark && profile.role === "technical")) {
         state.users = (
           await getDocsFromServer(collection(store, "users"))
         ).docs.map((s) => ({ ...s.data(), id: s.id }));

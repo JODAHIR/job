@@ -56,9 +56,7 @@ export function phase3Panel(page, c) {
       mode === "cloud" &&
       ["director", "technical"].includes(cloud.profile.role)
     )
-      for (const k of cloud.profile.role === "technical"
-        ? ["profiles"]
-        : ["profiles", "assignments", "calendars"])
+      for (const k of ["profiles", "assignments", "calendars"])
         choices.push(["a:" + k, `Autorizaciones · ${k}`]);
     return `<section class="panel"><h2>${mode === "cloud" ? "Auditoría del servidor" : "Trazabilidad local"}</h2><p>${mode === "cloud" ? "Solo consulta. Cambios y autorizaciones registrados por el servidor. Seleccione una gerencia o categoría de autorización." : "Registro local informativo; no acredita identidad ni impide alteraciones del navegador."}</p><form id="audit-query" class="report-controls">${mode === "cloud" ? `<label>Ámbito<select name="scope">${opts(choices, f.gerencia ? "g:" + f.gerencia : choices[0]?.[0], esc)}</select></label>` : ""}<label>Desde (UTC)<input type="date" name="from" value="2000-01-01" required></label><label>Hasta (UTC)<input type="date" name="to" value="2100-12-31" required></label><button class="primary">Consultar</button></form><label>Buscar responsable, entidad, motivo o autorización en las filas cargadas<input id="audit-search" type="search"></label><p id="phase3-error" role="alert"></p><div id="audit-results"></div><button id="audit-more" hidden class="secondary">Cargar siguientes 50</button></section>`;
   }

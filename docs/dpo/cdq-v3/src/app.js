@@ -1,8 +1,9 @@
-import {phase3Panel,bindPhase3} from './phase3-ui.js?v=spark-20261016';
+import { visibleModule, manageRecord, manageCacStatus } from './permissions.js';
+import {phase3Panel,bindPhase3} from './phase3-ui.js?v=roles-20261016';
 import { metrics, scope, mutate, states, integer } from "./domain.js";
 import { LocalRepository } from "./repository.js";
 import { demo } from "./seed.js";
-import { cloudPanel, bindCloudPanel } from "./cloud-ui.js?v=spark-20261016";
+import { cloudPanel, bindCloudPanel } from "./cloud-ui.js?v=roles-20261016";
 const $ = (s) => document.querySelector(s),
   esc = (v) =>
     String(v ?? "").replace(
@@ -75,7 +76,7 @@ let cloud=null, stopProfile=null, stopAuth=null, epoch=0;
 const cloudMode=()=>mode==='cloud';
 const cloudContext=()=>({cloud,db,f,esc,table,badge,find,load,localRepository:LocalRepository});
 const phase3Context=()=>({db,f,mode,cloud,esc,table,render,load,repo});
-const canManage=(c)=>!cloudMode()||(c==='gerencias'?cloud?.profile?.role==='director':cloud?.profile?.role==='asistente');
+const canManage=(c)=>!cloudMode()||manageRecord(cloud?.profile,c);
 function gerenciaFor(c,row){if(c==='gerencias')return row.id;if(c==='cacs')return row.gerenciaId;if(c==='remisiones')return find('cacs',row.cacId).gerenciaId;if(c==='lotes')return gerenciaFor('remisiones',find('remisiones',row.remisionId));if(c==='documentos')return gerenciaFor('lotes',find('lotes',row.loteId));return gerenciaFor('documentos',find('documentos',row.documentId));}
 function loginView(error=''){
   if(cloud?.authOnly){authenticationView(error);return;}
@@ -99,12 +100,12 @@ async function load() {
   if(cloudMode()){
     $('#modal').close();$('#app').innerHTML='<main class="content"><p>Conectando con Firebase…</p></main>';db=null;
     try{
-      if(!cloud){const module=await import('./firebase-client.bundle.js?v=spark-20261016');cloud=await module.connectFirebase();let initial=true;stopAuth=cloud.watchAuth(()=>{if(initial){initial=false;return}if(cloudMode()){epoch++;db=null;$('#modal').close();load()}});}
+      if(!cloud){const module=await import('./firebase-client.bundle.js?v=roles-20261016');cloud=await module.connectFirebase();let initial=true;stopAuth=cloud.watchAuth(()=>{if(initial){initial=false;return}if(cloudMode()){epoch++;db=null;$('#modal').close();load()}});}
       if(cloud.authOnly){authenticationView();return}
       if(!cloud.auth.currentUser){loginView();return}
       const result=await cloud.load();if(token!==epoch||!cloudMode())return;db=result;
       if(stopProfile)stopProfile();const signature=JSON.stringify(cloud.profile);stopProfile=cloud.watchProfile(cloud.auth.currentUser.uid,p=>{if(cloudMode()&&JSON.stringify(p)!==signature){epoch++;db=null;$('#modal').close();load()}});
-      if(cloud.profile.role==='technical'&&page!=='audit')page='access';
+      if(!visibleModule(cloud.profile,page))page='dashboard';
       render();return;
     }catch(error){if(token===epoch){loginView(error.message)}return}
   }
@@ -158,7 +159,7 @@ function table(headers, rows) {
   return `<div class="table-scroll"><table><thead><tr>${headers.map((h) => `<th>${h}</th>`).join("")}</tr></thead><tbody>${rows.length ? rows.map((r) => `<tr>${r.map((c) => `<td>${c}</td>`).join("")}</tr>`).join("") : `<tr><td colspan="${headers.length}" class="empty">No hay registros para esta selección.</td></tr>`}</tbody></table></div>`;
 }
 const edit = (c, id) =>
-  (cloudMode() && cloud?.profile?.role!=="asistente") ? "—" : `<button class="link" data-edit="${c}" data-id="${esc(id)}">Editar ↗</button>`;
+  (!canManage(c)) ? "—" : `<button class="link" data-edit="${c}" data-id="${esc(id)}">Editar ↗</button>`;
 function lotRows(lots) {
   const counts=new Map();for(const d of db.documentos)counts.set(d.loteId,(counts.get(d.loteId)||0)+1);
   return lots.map((l) => {
@@ -193,7 +194,7 @@ function dashboard() {
     ["Documentos faltantes", m.missing, "Declarados sin individualizar"],
     ["Lotes con diferencias", m.differences, "Requieren conciliación"],
   ];
-  return `<div class="section-line"><div><h2>Resumen del período</h2><p>Una visión integral de la recepción y revisión documental.</p></div>${badge(cloudMode()?"Datos consultados en Firestore":"Actualizado con datos locales", "neutral")}</div><div class="stats">${cards.map(([label, n, sub], i) => `<article class="stat ${i === 3 ? "featured" : ""}"><span>${label}</span><strong>${n}</strong><small>${sub}</small></article>`).join("")}</div><div class="progress-card"><div><span class="eyebrow">AVANCE DOCUMENTAL</span><h2>${m.progress === null ? "Sin documentos para verificar" : `${m.progress.toFixed(1)} % revisado`}</h2><p>${m.reviewed} de ${m.individual} documentos individualizados · Los faltantes se informan por separado.</p></div><div class="progress-track"><div style="width:${m.progress ?? 0}%"></div></div></div><section class="panel"><div class="section-line"><div><h2>Control de lotes</h2><p>Cantidad declarada frente a documentos individualizados</p></div><button data-nav="lotes" class="secondary">Ver lotes →</button></div>${table(["Lote", "CAC / dependencia", "Período", "Declarados", "Individualizados", "Conciliación", ""], lotRows(m.lots))}</section>`;
+  return `<div class="section-line"><div><h2>Resumen del período</h2><p>Una visión integral de la recepción y revisión documental.</p></div>${badge(cloudMode()?"Datos consultados en Firestore":"Actualizado con datos locales", "neutral")}</div><div class="stats">${cards.map(([label, n, sub], i) => `<article class="stat ${i === 3 ? "featured" : ""}"><span>${label}</span><strong>${n}</strong><small>${sub}</small></article>`).join("")}</div><div class="progress-card"><div><span class="eyebrow">AVANCE DOCUMENTAL</span><h2>${m.progress === null ? "Sin documentos para verificar" : `${m.progress.toFixed(1)} % revisado`}</h2><p>${m.reviewed} de ${m.individual} documentos individualizados · Los faltantes se informan por separado.</p></div><div class="progress-track"><div style="width:${m.progress ?? 0}%"></div></div></div><section class="panel"><div class="section-line"><div><h2>Control de lotes</h2><p>Cantidad declarada frente a documentos individualizados</p></div>${!cloudMode() || visibleModule(cloud.profile,"lotes") ? '<button data-nav="lotes" class="secondary">Ver lotes →</button>' : ""}</div>${table(["Lote", "CAC / dependencia", "Período", "Declarados", "Individualizados", "Conciliación", ""], lotRows(m.lots))}</section>`;
 }
 function collectionView() {
   const s = scope(db, f);
@@ -211,11 +212,12 @@ function collectionView() {
       ]);
   }
   if (page === "cacs") {
-    headers = ["CAC / dependencia", "Gerencia", ""];
+    headers = ["CAC / dependencia", "Gerencia", "Estado", ""];
     rows = s.cacs.map((c) => [
       esc(c.name),
       esc(name("gerencias", c.gerenciaId)),
-      edit(page, c.id),
+      c.active === false ? "Inactivo" : "Activo",
+      edit(page, c.id) + (cloudMode() && manageCacStatus(cloud.profile) ? `<button class="link" data-cac-status="${esc(c.id)}">${c.active === false ? "Activar" : "Deshabilitar"}</button>` : ""),
     ]);
   }
   if (page === "remisiones") {
@@ -341,9 +343,10 @@ function audit() {
   )}</section>`;
 }
 function render() {
+  if(cloudMode() && !visibleModule(cloud?.profile,page))page="dashboard";
   const current = pages.find((p) => p[0] === page);
   $("#app").innerHTML =
-    `<aside><div class="brand"><span class="brand-icon">D<span>O</span></span><div>Dirección de<br><strong>Operaciones</strong></div></div><div class="nav-label">CONTROL DOCUMENTAL</div><nav>${pages.filter(([id])=>cloudMode() ? (cloud?.profile?.role==="technical"?["access","audit"].includes(id):((id!=="bulk"||cloud?.profile?.role==="asistente")&&(!["access","migration"].includes(id)||cloud?.profile?.role==="director"))) : !["access","migration","deadlines"].includes(id)).map(([id, icon, label]) => `<button class="${page === id ? "active" : ""}" data-nav="${id}"><span>${icon}</span>${label}</button>`).join("")}</nav><div class="sidebar-bottom"><span class="status-dot"></span> Fase 3 · ${cloudMode()?"Firebase":"Local"}<br><small>Gestión documental quincenal</small></div></aside><main><header><div class="breadcrumb">Dirección de Operaciones <span>/</span> Control documental</div><div class="local-chip">${cloudMode()?"◉ Firebase" : "◉ Almacenamiento local"}</div></header><div class="content"><div class="title-row"><div><span class="eyebrow">SISTEMA DE CONTROL DOCUMENTAL</span><h1>${current[2]}</h1><p>Seguimiento quincenal · Dirección de Operaciones</p></div><label class="mode-label">Espacio de trabajo<select id="mode"><option value="demo" ${mode === "demo" ? "selected" : ""}>Demostración</option><option value="local" ${mode === "local" ? "selected" : ""}>Mis registros locales</option><option value="cloud" ${cloudMode()?"selected":""}>Firebase institucional</option></select></label></div>${cloudMode()?`<div class="session-bar"><span>${esc(cloud.auth.currentUser.email)} · ${esc(cloud.profile.role)} · ${cloud.emulator?"Emuladores locales":"Conectado"}</span><button id="refresh-cloud" class="secondary">Actualizar</button><button id="logout" class="secondary">Cerrar sesión</button></div>`:""}${mode==="local"?`<div class="session-bar"><button id="export-local" class="secondary">Descargar respaldo para migración</button></div>`:""}<div class="notice">${cloudMode()?"<strong>Espacio Firebase.</strong> Se muestran únicamente las gerencias autorizadas. Registro individual habilitado; importación masiva, migración y excepciones aún pendientes en Spark.":mode === "demo" ? "<strong>Datos ficticios.</strong> Estás trabajando en un espacio de demostración separado." : "<strong>Mis registros locales.</strong> Datos ingresados por el usuario, separados de la demostración."} ${cloudMode()?"":"Sin sincronización multiusuario ni seguridad de producción."}</div>${!["audit","access","migration"].includes(page) ? filters() : ""}${page === "dashboard" ? dashboard() : page === "history" ? history() : ["audit","reports","bulk"].includes(page) ? phase3Panel(page,phase3Context()) : ["access","deadlines","migration"].includes(page)?cloudPanel(page,cloudContext()):collectionView()}<footer>Dirección de Operaciones <span>Control Documental Quincenal · v3.0</span></footer></div></main>`;
+    `<aside><div class="brand"><span class="brand-icon">D<span>O</span></span><div>Dirección de<br><strong>Operaciones</strong></div></div><div class="nav-label">CONTROL DOCUMENTAL</div><nav>${pages.filter(([id])=>cloudMode() ? visibleModule(cloud?.profile,id) : !["access","migration","deadlines"].includes(id)).map(([id, icon, label]) => `<button class="${page === id ? "active" : ""}" data-nav="${id}"><span>${icon}</span>${label}</button>`).join("")}</nav><div class="sidebar-bottom"><span class="status-dot"></span> Fase 3 · ${cloudMode()?"Firebase":"Local"}<br><small>Gestión documental quincenal</small></div></aside><main><header><div class="breadcrumb">Dirección de Operaciones <span>/</span> Control documental</div><div class="local-chip">${cloudMode()?"◉ Firebase" : "◉ Almacenamiento local"}</div></header><div class="content"><div class="title-row"><div><span class="eyebrow">SISTEMA DE CONTROL DOCUMENTAL</span><h1>${current[2]}</h1><p>Seguimiento quincenal · Dirección de Operaciones</p></div><label class="mode-label">Espacio de trabajo<select id="mode"><option value="demo" ${mode === "demo" ? "selected" : ""}>Demostración</option><option value="local" ${mode === "local" ? "selected" : ""}>Mis registros locales</option><option value="cloud" ${cloudMode()?"selected":""}>Firebase institucional</option></select></label></div>${cloudMode()?`<div class="session-bar"><span>${esc(cloud.auth.currentUser.email)} · ${esc(cloud.profile.role)} · ${cloud.emulator?"Emuladores locales":"Conectado"}</span><button id="refresh-cloud" class="secondary">Actualizar</button><button id="logout" class="secondary">Cerrar sesión</button></div>`:""}${mode==="local"?`<div class="session-bar"><button id="export-local" class="secondary">Descargar respaldo para migración</button></div>`:""}<div class="notice">${cloudMode()?"<strong>Espacio Firebase.</strong> Se muestran únicamente las gerencias autorizadas. Registro individual habilitado; importación masiva, migración y excepciones aún pendientes en Spark.":mode === "demo" ? "<strong>Datos ficticios.</strong> Estás trabajando en un espacio de demostración separado." : "<strong>Mis registros locales.</strong> Datos ingresados por el usuario, separados de la demostración."} ${cloudMode()?"":"Sin sincronización multiusuario ni seguridad de producción."}</div>${!["audit","access","migration"].includes(page) ? filters() : ""}${page === "dashboard" ? dashboard() : page === "history" ? history() : ["audit","reports","bulk"].includes(page) ? phase3Panel(page,phase3Context()) : ["access","deadlines","migration"].includes(page)?cloudPanel(page,cloudContext()):collectionView()}<footer>Dirección de Operaciones <span>Control Documental Quincenal · v3.0</span></footer></div></main>`;
   bind();
 }
 function bind() {
@@ -354,6 +357,7 @@ function bind() {
     $('#refresh-cloud').onclick=()=>load();
     bindCloudPanel(page,cloudContext());
   }
+  document.querySelectorAll("[data-cac-status]").forEach(el => el.onclick=()=>toggleCac(el.dataset.cacStatus));
   document.querySelectorAll("[data-nav]").forEach(
     (b) =>
       (b.onclick = () => {
@@ -405,8 +409,15 @@ function bind() {
       $("#search").setSelectionRange(start, start);
     };
 }
+async function toggleCac(id) {
+ const c=find('cacs',id);
+ const reason=prompt('Motivo del cambio de estado del CAC:');
+ if(!reason?.trim())return;
+ try {await cloud.call('setCacActive',{gerenciaId:c.gerenciaId,id,active:c.active===false,expectedRevision:c.revision,reason});await load();}
+ catch(e){alert(e.message);}
+}
 function form(c, id) {
-  if(cloudMode()&&!(cloud?.profile?.role==="asistente"||(c==="gerencias"&&!id&&cloud?.profile?.role==="director")))return;
+  if(!canManage(c))return;
   const row = id ? find(c, id) : {},
     field = (key, label, type = "text", value = row[key] ?? "") =>
       `<label>${label}<input name="${key}" type="${type}" value="${esc(value)}" required ${type === "number" ? 'min="0" step="1"' : ""} maxlength="${key === "description" ? 2000 : 150}"></label>`,
@@ -421,7 +432,7 @@ function form(c, id) {
       pick(
         "cacId",
         "CAC / dependencia",
-        db.cacs,
+        db.cacs.filter(c => c.active !== false || c.id === row.cacId),
         (r) => r.name,
         row.cacId || f.cac,
       ) +

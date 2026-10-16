@@ -15,6 +15,12 @@ export function sparkAPI(api) {
  return async(name,input)=>{
   if(name==='publishCalendar') return publishSparkCalendar(store,auth,input);
   if(name==='saveRecord') return save(input);
+  if(name==='setCacActive') {
+   const snap=await getDocFromServer(doc(store,`gerencias/${input.gerenciaId}/cacs/${input.id}`));
+   if(!snap.exists() || typeof input.active!=='boolean' || !input.reason?.trim())throw Error('CAC, estado y motivo obligatorios.');
+   const c=snap.data();
+   return save({gerenciaId:input.gerenciaId,collection:'cacs',row:{id:c.id,name:c.name,gerenciaId:c.gerenciaId,active:input.active},expectedRevision:input.expectedRevision,reason:input.reason});
+  }
   if(name==='createGerencia') return save({gerenciaId:input.id,collection:'gerencias',row:{id:input.id,name:input.name}});
   if(name==='report') return makeReport(await api.load(),input.filters,{...input.options,source:'Firestore · datos autorizados'});
   if(name==='provisionUser'||name==='assignAssistant') return runTransaction(store,async tx=>{
@@ -28,7 +34,7 @@ export function sparkAPI(api) {
    } else {
     const req=await tx.get(doc(store,'accessRequests',input.uid));
     if(!req.exists()) throw Error('El usuario debe ingresar con Google y solicitar acceso primero.');
-    after={id:input.uid,role:input.role,active:input.active,gerenciaId:input.role==='gerente'?input.gerenciaId:null,
+    after={id:input.uid,role:input.role,secondaryRole:input.role==='technical'?(input.secondaryRole||null):null,active:input.active,gerenciaId:input.role==='gerente'?input.gerenciaId:null,
       gerencias:input.role==='asistente'&&before?.role==='asistente'?before.gerencias:[],revision:(before?.revision??0)+1};
    }
    tx.set(ref,after);
