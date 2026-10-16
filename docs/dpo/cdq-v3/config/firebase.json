@@ -8,5 +8,5 @@
     "appId": "1:382685101685:web:863ff468b9bd8ebcc9423c"
   },
   "useEmulators": false,
-  "connectionMode": "authentication-only"
+  "connectionMode": "spark"
 }

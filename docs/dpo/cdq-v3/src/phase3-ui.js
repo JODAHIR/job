@@ -36,6 +36,7 @@ export function phase3Panel(page, c) {
       r.rows.slice(0, 100).map((row) => row.map(esc)),
     )}${r.rows.length > 100 ? "<p>Vista previa limitada a 100 filas.</p>" : ""}</section>`;
   }
+  if (page === "bulk" && cloud?.spark) return `<section class="panel"><h2>Importación masiva</h2><p>La importación masiva aún no está habilitada en el espacio Firebase Spark. Puede registrar documentos individualmente. No se realizará una importación parcial.</p></section>`;
   if (page === "bulk") {
     const rem = db.remisiones.filter((r) => {
       const cac = db.cacs.find((c) => c.id === r.cacId);
@@ -64,6 +65,7 @@ export function phase3Panel(page, c) {
 }
 export function bindPhase3(page, c) {
   const { db, f, mode, cloud, esc, table, render, load, repo } = c;
+  if(page === "bulk" && cloud?.spark) return;
   const fail = (e) => {
     if ($("#phase3-error")) $("#phase3-error").textContent = e.message;
   };

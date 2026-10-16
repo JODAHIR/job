@@ -29,6 +29,7 @@ import {
 } from "firebase/functions";
 import { initializeAppCheck, ReCaptchaV3Provider } from "firebase/app-check";
 import { empty, validate } from "../docs/dpo/cdq-v3/src/domain.js";
+import { sparkAPI } from "./spark-api.js";
 import { connectAuthenticationOnly } from "./authentication-only.js";
 
 const entities = ["cacs", "remisiones", "lotes", "documentos", "observaciones"];
@@ -45,6 +46,7 @@ export async function connectFirebase() {
   if (config.connectionMode === "authentication-only" && config.useEmulators === false)
     return connectAuthenticationOnly(config);
   const emulator = config.useEmulators === true;
+  const spark = config.connectionMode === "spark";
   if (
     emulator &&
     (!["127.0.0.1", "localhost"].includes(location.hostname) ||
@@ -54,14 +56,14 @@ export async function connectFirebase() {
       "Los emuladores solo se permiten en localhost y con un proyecto demo-.",
     );
   if (
-    !emulator &&
+    !emulator && !spark &&
     (!config.appCheckSiteKey || config.firebase.projectId.startsWith("demo-"))
   )
     throw Error(
       "Complete la configuración real y App Check antes de conectar.",
     );
   const app = initializeApp(config.firebase, "cdq");
-  if (!emulator)
+  if (!emulator && config.appCheckSiteKey)
     initializeAppCheck(app, {
       provider: new ReCaptchaV3Provider(config.appCheckSiteKey),
       isTokenAutoRefreshEnabled: true,
@@ -123,6 +125,7 @@ export async function connectFirebase() {
         state.users = (
           await getDocsFromServer(collection(store, "users"))
         ).docs.map((s) => ({ ...s.data(), id: s.id }));
+        if (spark) state.accessRequests = (await getDocsFromServer(collection(store, "accessRequests"))).docs.map(d => d.data());
         return state;
       }
       if (profile.role === "director")
@@ -167,5 +170,6 @@ export async function connectFirebase() {
       return validate(state);
     },
   };
+  if (spark) api.call = sparkAPI(api);
   return api;
 }
