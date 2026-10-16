@@ -78,7 +78,8 @@ export function sparkWriter(store, auth) {
       if (before?.uniqueKey && before.uniqueKey !== key) tx.delete(doc(store,'sparkKeys',before.uniqueKey));
       writeAudit(entity,before,after);
       if (related) { tx.set(related.ref,related.after); writeAudit('documentos',related.before,related.after); }
-      return {id:row.id,revision:after.revision};
+      const view = value => {const {updatedAt,...record}=value;return record;};
+      return {id:row.id,revision:after.revision,saved:view(after),related:related?view(related.after):null};
     });
   };
 }

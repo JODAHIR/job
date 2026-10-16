@@ -1,9 +1,9 @@
 import { visibleModule, manageRecord, manageCacStatus } from './permissions.js';
-import {phase3Panel,bindPhase3} from './phase3-ui.js?v=actualizacion-20261016';
+import {phase3Panel,bindPhase3} from './phase3-ui.js?v=guardado-directo-20261016';
 import { metrics, scope, mutate, states, integer } from "./domain.js";
 import { LocalRepository } from "./repository.js";
 import { demo } from "./seed.js";
-import { cloudPanel, bindCloudPanel } from "./cloud-ui.js?v=actualizacion-20261016";
+import { cloudPanel, bindCloudPanel } from "./cloud-ui.js?v=guardado-directo-20261016";
 const $ = (s) => document.querySelector(s),
   esc = (v) =>
     String(v ?? "").replace(
@@ -114,7 +114,7 @@ async function load() {
     else {$('#app').setAttribute('aria-busy','true');$('#refresh-cloud').disabled=true;}
 
     try{
-      if(!cloud){const module=await import('./firebase-client.bundle.js?v=actualizacion-20261016');cloud=await module.connectFirebase();let initial=true;stopAuth=cloud.watchAuth(()=>{if(initial){initial=false;return}if(cloudMode()){epoch++;db=null;$('#modal').close();load()}});}
+      if(!cloud){const module=await import('./firebase-client.bundle.js?v=guardado-directo-20261016');cloud=await module.connectFirebase();let initial=true;stopAuth=cloud.watchAuth(()=>{if(initial){initial=false;return}if(cloudMode()){epoch++;db=null;$('#modal').close();load()}});}
       if(cloud.authOnly){authenticationView();return}
       if(!cloud.auth.currentUser){loginView();return}
       const result=await cloud.load();if(token!==epoch||!cloudMode())return;db=result;
@@ -544,9 +544,16 @@ function form(c, id, defaults = {}) {
         data.declared = integer(data.declared, "Cantidad declarada");
       if(cloudMode()){
         const cloudRow={...data,id:id||crypto.randomUUID()};
-        if(c==='gerencias'&&!id)await cloud.call('createGerencia',{...cloudRow,reason:'Alta de catálogo por Director'});
-        else await cloud.call('saveRecord',{gerenciaId:gerenciaFor(c,cloudRow),collection:c,row:cloudRow,expectedRevision:row.revision??0});
-        $('#modal').close();await load();return;
+        const result=c==='gerencias'&&!id
+          ? await cloud.call('createGerencia',{...cloudRow,reason:'Alta de catálogo'})
+          : await cloud.call('saveRecord',{gerenciaId:gerenciaFor(c,cloudRow),collection:c,row:cloudRow,expectedRevision:row.revision??0});
+        $('#modal').close();
+        if(cloud.spark && result.saved){
+          const upsert=(entity,record)=>{const index=db[entity].findIndex(r=>r.id===record.id);if(index<0)db[entity].push(record);else db[entity][index]=record;};
+          upsert(c,result.saved);if(result.related)upsert('documentos',result.related);
+          render();updateNotice('Actualización realizada');
+        }else await load();
+        return;
       }
       const next = mutate(
         db,
