@@ -1,9 +1,9 @@
 import { visibleModule, manageRecord, manageCacStatus } from './permissions.js';
-import {phase3Panel,bindPhase3} from './phase3-ui.js?v=remisiones-datos-20261016';
+import {phase3Panel,bindPhase3} from './phase3-ui.js?v=remisiones-datos-20261017';
 import { metrics, scope, mutate, states, integer } from "./domain.js";
 import { LocalRepository } from "./repository.js";
 import { demo } from "./seed.js";
-import { cloudPanel, bindCloudPanel } from "./cloud-ui.js?v=remisiones-datos-20261016";
+import { cloudPanel, bindCloudPanel } from "./cloud-ui.js?v=remisiones-datos-20261017";
 const $ = (s) => document.querySelector(s),
   esc = (v) =>
     String(v ?? "").replace(
@@ -114,7 +114,7 @@ async function load() {
     else {$('#app').setAttribute('aria-busy','true');$('#refresh-cloud').disabled=true;}
 
     try{
-      if(!cloud){const module=await import('./firebase-client.bundle.js?v=remisiones-datos-20261016');cloud=await module.connectFirebase();let initial=true;stopAuth=cloud.watchAuth(()=>{if(initial){initial=false;return}if(cloudMode()){epoch++;db=null;$('#modal').close();load()}});}
+      if(!cloud){const module=await import('./firebase-client.bundle.js?v=remisiones-datos-20261017');cloud=await module.connectFirebase();let initial=true;stopAuth=cloud.watchAuth(()=>{if(initial){initial=false;return}if(cloudMode()){epoch++;db=null;$('#modal').close();load()}});}
       if(cloud.authOnly){authenticationView();return}
       if(!cloud.auth.currentUser){loginView();return}
       const result=await cloud.load();if(token!==epoch||!cloudMode())return;db=result;
