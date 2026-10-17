@@ -1,13 +1,13 @@
 import {pages,resolveRoute,routeFor} from './navigation.js';
-import {navigationMarkup,bindNavigation,breadcrumb} from './navigation-ui.js?v=cah-usuarios-20261017';
+import {navigationMarkup,bindNavigation,breadcrumb} from './navigation-ui.js?v=cah-login-20261017';
 import {installTables} from './tables.js';
 import {validateResponsables} from './gerencia-contacts.js';
 import { visibleModule, manageRecord, manageCacStatus } from './permissions.js';
-import {phase3Panel,bindPhase3} from './phase3-ui.js?v=cah-usuarios-20261017';
+import {phase3Panel,bindPhase3} from './phase3-ui.js?v=cah-login-20261017';
 import { metrics, scope, deadlineStatus, mutate, states, integer } from "./domain.js";
 import { LocalRepository } from "./repository.js";
 import { demo } from "./seed.js";
-import { cloudPanel, bindCloudPanel } from "./cloud-ui.js?v=cah-usuarios-20261017";
+import { cloudPanel, bindCloudPanel } from "./cloud-ui.js?v=cah-login-20261017";
 const $ = (s) => document.querySelector(s),
   esc = (v) =>
     String(v ?? "").replace(
@@ -35,7 +35,7 @@ const months = [
   "Noviembre",
   "Diciembre",
 ];
-let mode = sessionStorage.getItem("cdq:workspace")==="cloud" ? "cloud" : "demo",
+let mode = "cloud",
   repo,
   db,
   page = "dashboard",
@@ -67,21 +67,21 @@ const phase3Context=()=>({db,f,mode,cloud,esc,table,render,load,repo});
 const canManage=(c)=>!cloudMode()||manageRecord(cloud?.profile,c);
 function gerenciaFor(c,row){if(c==='gerencias')return row.id;if(c==='cacs')return row.gerenciaId;if(c==='remisiones')return find('cacs',row.cacId).gerenciaId;if(c==='lotes')return gerenciaFor('remisiones',find('remisiones',row.remisionId));if(c==='documentos')return gerenciaFor('lotes',find('lotes',row.loteId));return gerenciaFor('documentos',find('documentos',row.documentId));}
 function loginView(error=''){
+  hidePrivateShell();
   if(cloud?.authOnly){authenticationView(error);return;}
-  $('#app').innerHTML=`<main class="content login-page"><section class="panel"><h1>Control Documental</h1><p>Acceso institucional · Firebase Authentication</p><form id="login-form" class="form-fields"><label>Correo<input name="email" type="email" autocomplete="username" required></label><label>Contraseña<input name="password" type="password" autocomplete="current-password" required></label><button class="primary">Ingresar</button></form><p id="login-error" role="alert">${esc(error)}</p><div class="form-actions"><button id="google-login" class="secondary">Ingresar con Google</button><button id="return-local">Volver a demostración</button>${cloud?.auth.currentUser?'<button id="logout">Cerrar sesión</button>':''}</div><p>La cuenta necesita correo verificado y un perfil operativo asignado. No hay registro público con permisos automáticos.</p></section></main>`;
+  $('#app').innerHTML=`<main class="content login-page"><section class="panel"><h1>CONTROL DOCUMENTO — CAH</h1><p>Inicia sesión para acceder al sistema.</p><form id="login-form" class="form-fields"><label>Correo<input name="email" type="email" autocomplete="username" required></label><label>Contraseña<input name="password" type="password" autocomplete="current-password" required></label><button class="primary">Ingresar</button></form><p id="login-error" role="alert">${esc(error)}</p><div class="form-actions"><button id="google-login" class="secondary">Ingresar con Google</button>${cloud?.auth.currentUser?'<button id="logout">Cerrar sesión</button>':''}</div><p>La cuenta necesita correo verificado y un perfil operativo asignado. No hay registro público con permisos automáticos.</p></section></main>`;
   $('#login-form').onsubmit=async e=>{e.preventDefault();const b=e.submitter;b.disabled=true;const values=new FormData(e.target);try{await cloud.login(values.get('email'),values.get('password'))}catch(error){$('#login-error').textContent=error.message;b.disabled=false}};
   $('#google-login').onclick=async()=>{try{await cloud.google()}catch(error){$('#login-error').textContent=error.message}};
-  $('#return-local').onclick=()=>{mode='demo';sessionStorage.setItem('cdq:workspace','demo');page='dashboard';load().catch(fatal)};
   if($('#logout'))$('#logout').onclick=()=>cloud.logout();
   if(cloud?.spark && cloud.auth.currentUser){const button=document.createElement('button');button.textContent='Solicitar acceso';button.className='primary';button.onclick=async()=>{button.disabled=true;try{await cloud.requestAccess();$('#login-error').textContent='Solicitud registrada. El administrador debe asignar su perfil.';}catch(e){$('#login-error').textContent=e.message;button.disabled=false}};$('.login-page .panel').append(button);}
   if(!cloud){$('#google-login').disabled=true;$('#login-form button').disabled=true;}
 }
 function authenticationView(error=''){
+  hidePrivateShell();
   const user=cloud.auth.currentUser;
-  $('#app').innerHTML=`<main class="content login-page"><section class="panel"><h1>Control Documental</h1><p>Acceso con Google · controldoc-385bd</p>${user?`<h2>Sesión iniciada</h2><p>${esc(user.email)}</p><p>${user.emailVerified?'Correo verificado.':'Correo pendiente de verificación.'}</p><p>La autenticación está conectada. La aprobación de accesos, los permisos administrativos y el guardado documental en Spark todavía no están habilitados.</p><button id="auth-logout" class="secondary">Cerrar sesión</button>`:'<p>Identifícate con tu cuenta de Google. Iniciar sesión no concede permisos de acceso a documentos.</p><button id="auth-google" class="primary">Ingresar con Google</button>'}<p id="auth-error" role="alert">${esc(error)}</p><button id="auth-demo" class="secondary">Volver a demostración</button></section></main>`;
+  $('#app').innerHTML=`<main class="content login-page"><section class="panel"><h1>Control Documental</h1><p>Acceso con Google · controldoc-385bd</p>${user?`<h2>Sesión iniciada</h2><p>${esc(user.email)}</p><p>${user.emailVerified?'Correo verificado.':'Correo pendiente de verificación.'}</p><p>La autenticación está conectada. La aprobación de accesos, los permisos administrativos y el guardado documental en Spark todavía no están habilitados.</p><button id="auth-logout" class="secondary">Cerrar sesión</button>`:'<p>Identifícate con tu cuenta de Google. Iniciar sesión no concede permisos de acceso a documentos.</p><button id="auth-google" class="primary">Ingresar con Google</button>'}<p id="auth-error" role="alert">${esc(error)}</p></section></main>`;
   if($('#auth-google'))$('#auth-google').onclick=async e=>{e.target.disabled=true;try{await cloud.google()}catch(err){const messages={'auth/operation-not-allowed':'El proveedor Google aún debe habilitarse en Firebase Authentication.','auth/unauthorized-domain':'Debe autorizarse jodahir.github.io en Firebase Authentication.','auth/configuration-not-found':'Firebase Authentication aún no está configurado en este proyecto.','auth/popup-blocked':'El navegador bloqueó la ventana de Google. Permite ventanas emergentes e inténtalo otra vez.','auth/popup-closed-by-user':'Se cerró el inicio de sesión antes de completarlo.'};authenticationView(messages[err.code]||err.message)}};
   if($('#auth-logout'))$('#auth-logout').onclick=async()=>{try{await cloud.logout()}catch(err){authenticationView(err.message)}};
-  $('#auth-demo').onclick=()=>{mode='demo';sessionStorage.setItem('cdq:workspace','demo');page='dashboard';load().catch(fatal)};
 }
 let updateNoticeTimer;
 function updateNotice(message, error = false) {
@@ -102,7 +102,7 @@ async function load() {
     else {$('#app').setAttribute('aria-busy','true');$('#refresh-cloud').disabled=true;}
 
     try{
-      if(!cloud){const module=await import('./firebase-client.bundle.js?v=cah-usuarios-20261017');cloud=await module.connectFirebase();let initial=true;stopAuth=cloud.watchAuth(()=>{if(initial){initial=false;return}if(cloudMode()){epoch++;db=null;page="dashboard";functionId="list";window.history.replaceState(null,"",routeFor(page));$('#modal').close();load()}});}
+      if(!cloud){const module=await import('./firebase-client.bundle.js?v=cah-login-20261017');cloud=await module.connectFirebase();let initial=true;stopAuth=cloud.watchAuth(()=>{if(initial){initial=false;return}if(cloudMode()||!cloud.auth.currentUser){mode='cloud';epoch++;db=null;page="dashboard";functionId="list";window.history.replaceState(null,"",routeFor(page));$('#modal').close();load()}});}
       if(cloud.authOnly){authenticationView();return}
       if(!cloud.auth.currentUser){loginView();return}
       const result=await cloud.load();if(token!==epoch||!cloudMode())return;db=result;
@@ -117,6 +117,7 @@ async function load() {
       }else{db=null;loginView(error.message)}
     }return}
   }
+  if(!cloud?.auth.currentUser||cloud.profile?.role!=='technical'||!cloud.profile?.active){mode='cloud';return load();}
   if(stopProfile){stopProfile();stopProfile=null;}
   repo = new LocalRepository(mode);
   db = await repo.load();
@@ -404,7 +405,14 @@ function activateNavigationFunction(fn){
 }
 window.addEventListener('hashchange',()=>{if(db)navigate(location.hash,true)});
 
+function hidePrivateShell(){
+  db=null;document.body.classList.remove('nav-open');$('#modal').close();
+  const note=document.querySelector('.publication-note');if(note)note.hidden=true;
+}
 function render() {
+  if(!cloud?.auth.currentUser||!cloud.profile?.active){loginView();return;}
+  const note=document.querySelector('.publication-note');if(note)note.hidden=false;
+
   if(!routeReady){const route=resolveRoute(location.hash,navigationContext());page=route.page;functionId=route.functionId;routeReady=true;window.history.replaceState(null,'',routeFor(page,functionId));if(route.error)setTimeout(()=>updateNotice(route.error,true),0);else if(route.fn&&!route.fn.click)setTimeout(()=>activateNavigationFunction(route.fn),0);}
 
   if(resolveRoute(routeFor(page,functionId),navigationContext()).error){page="dashboard";functionId="list";window.history.replaceState(null,"",routeFor(page));}
