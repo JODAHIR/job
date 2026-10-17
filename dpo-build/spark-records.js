@@ -1,7 +1,8 @@
+import {validateResponsables} from './gerencia-contacts.js';
 import { doc, runTransaction, serverTimestamp } from 'firebase/firestore';
 
 const schemas = {
-  gerencias: ['id','name'], cacs: ['id','name','gerenciaId','active'],
+  gerencias: ['id','name','responsables'], cacs: ['id','name','gerenciaId','active'],
   remisiones: ['id','cacId','year','month','half','receivedOn','expediente','remittedOn'],
   lotes: ['id','remisionId','code','declared'],
   documentos: ['id','loteId','type','number','state'],
@@ -18,6 +19,7 @@ export function sparkRow(entity, row) {
   }
   if (!/^[A-Za-z0-9_-]{1,128}$/.test(result.id)) throw Error('Identificador inválido.');
   for (const [k,v] of Object.entries(result)) if (typeof v === 'string' && (!v || v.length > (k === 'description' ? 2000 : 150))) throw Error(`Valor inválido: ${k}.`);
+  if(entity==='gerencias')result.responsables=validateResponsables(result.responsables);
   return result;
 }
 export function sparkKey(entity, r) {

@@ -23,7 +23,7 @@ export function sparkAPI(api) {
    const c=snap.data();
    return save({gerenciaId:input.gerenciaId,collection:'cacs',row:{id:c.id,name:c.name,gerenciaId:c.gerenciaId,active:input.active},expectedRevision:input.expectedRevision,reason:input.reason});
   }
-  if(name==='createGerencia') return save({gerenciaId:input.id,collection:'gerencias',row:{id:input.id,name:input.name}});
+  if(name==='createGerencia') return save({gerenciaId:input.id,collection:'gerencias',row:{id:input.id,name:input.name,responsables:input.responsables}});
   if(name==='report') return makeReport(await api.load(),input.filters,{...input.options,source:'Firestore · datos autorizados'});
   if(name==='provisionUser'||name==='assignAssistant') return runTransaction(store,async tx=>{
    if(!/^[A-Za-z0-9_-]{1,128}$/.test(input.uid)||!input.reason?.trim()) throw Error('Usuario y motivo obligatorios.');

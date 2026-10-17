@@ -1,9 +1,10 @@
+import {validateResponsables} from './gerencia-contacts.js';
 import { visibleModule, manageRecord, manageCacStatus } from './permissions.js';
-import {phase3Panel,bindPhase3} from './phase3-ui.js?v=remisiones-datos-20261017';
+import {phase3Panel,bindPhase3} from './phase3-ui.js?v=responsables-20261017';
 import { metrics, scope, mutate, states, integer } from "./domain.js";
 import { LocalRepository } from "./repository.js";
 import { demo } from "./seed.js";
-import { cloudPanel, bindCloudPanel } from "./cloud-ui.js?v=remisiones-datos-20261017";
+import { cloudPanel, bindCloudPanel } from "./cloud-ui.js?v=responsables-20261017";
 const $ = (s) => document.querySelector(s),
   esc = (v) =>
     String(v ?? "").replace(
@@ -114,7 +115,7 @@ async function load() {
     else {$('#app').setAttribute('aria-busy','true');$('#refresh-cloud').disabled=true;}
 
     try{
-      if(!cloud){const module=await import('./firebase-client.bundle.js?v=remisiones-datos-20261017');cloud=await module.connectFirebase();let initial=true;stopAuth=cloud.watchAuth(()=>{if(initial){initial=false;return}if(cloudMode()){epoch++;db=null;$('#modal').close();load()}});}
+      if(!cloud){const module=await import('./firebase-client.bundle.js?v=responsables-20261017');cloud=await module.connectFirebase();let initial=true;stopAuth=cloud.watchAuth(()=>{if(initial){initial=false;return}if(cloudMode()){epoch++;db=null;$('#modal').close();load()}});}
       if(cloud.authOnly){authenticationView();return}
       if(!cloud.auth.currentUser){loginView();return}
       const result=await cloud.load();if(token!==epoch||!cloudMode())return;db=result;
@@ -222,11 +223,12 @@ function collectionView() {
     headers = [],
     collection = page;
   if (page === "gerencias") {
-    headers = ["Gerencia", "CAC asociados", ""];
+    headers = ["Gerencia", "Responsable 1", "Responsable 2", "CAC asociados", ""];
     rows = db.gerencias
       .filter((g) => !f.gerencia || g.id === f.gerencia)
       .map((g) => [
         esc(g.name),
+        ...[0,1].map(i=>{const c=g.responsables?.[i];return c?`${esc(c.nombre)} · ${esc(c.cargo)}<br>${esc(c.correo)}<br>Interno: ${esc(c.interno)} · Celular: ${esc(c.celular)}`:'Pendiente de completar';}),
         db.cacs.filter((c) => c.gerenciaId === g.id).length,
         edit(page, g.id),
       ]);
@@ -468,6 +470,15 @@ function form(c, id, defaults = {}) {
       `<label>${label}<select name="${key}" required><option value="">Seleccionar…</option>${options(rows, (r) => r.id, labeler, selected)}</select></label>`;
   let fields = "";
   if (c === "gerencias" || c === "cacs") fields += field("name", "Nombre");
+  if(c === "gerencias"){
+    fields+='<p>Dos contactos responsables de la gerencia. Registrar estos datos no crea cuentas ni concede permisos de acceso.</p>';
+    for(let i=0;i<2;i++){
+      fields+=`<fieldset><legend>Responsable ${i+1}</legend>`;
+      for(const [key,label,type] of [['nombre','Nombre','text'],['cargo','Cargo','text'],['correo','Correo','email'],['interno','Interno','tel'],['celular','Celular','tel']])
+        fields+=field(`contact_${i}_${key}`,label,type,row.responsables?.[i]?.[key]??'');
+      fields+='</fieldset>';
+    }
+  }
   if (c === "cacs")
     fields += pick("gerenciaId", "Gerencia", db.gerencias, (r) => r.name);
   if (c === "remisiones")
@@ -561,6 +572,10 @@ function form(c, id, defaults = {}) {
       const actor = cloudMode()?cloud.auth.currentUser.uid:data.actor.trim();
       delete data.actor;
       for (const k in data) data[k] = data[k].trim();
+      if(c==='gerencias'){
+        const contactos=[0,1].map(i=>Object.fromEntries(['nombre','cargo','correo','interno','celular'].map(k=>{const key=`contact_${i}_${k}`,value=data[key];delete data[key];return [k,value];})));
+        data.responsables=validateResponsables(contactos);
+      }
       if (c === "remisiones")
         for (const k of ["year", "month", "half"]) data[k] = Number(data[k]);
       if (c === "lotes")
