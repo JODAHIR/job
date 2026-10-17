@@ -44,7 +44,7 @@ export function makeReport(
     ls = map("lotes"),
     counts = new Map(),
     obs = new Map();
-  for (const d of s.docs) counts.set(d.loteId, (counts.get(d.loteId) || 0) + 1);
+  for (const d of db.documentos) counts.set(d.loteId, (counts.get(d.loteId) || 0) + 1);
   for (const o of db.observaciones) {
     const a = obs.get(o.documentId) || [];
     a.push(o);
@@ -115,7 +115,7 @@ export function makeReport(
       })
       .filter((r) => (type === "faltantes" ? r[7] > 0 : r[6] !== 0));
     note =
-      "Los faltantes son cantidades sin identidad documental; no se inventan números. Los sobrantes no compensan faltantes de otro lote. El estado documental no aplica a este reporte.";
+      "Los faltantes son cantidades sin identidad documental; no se inventan números. Los sobrantes no compensan faltantes de otro lote. Las cantidades se calculan con todos los documentos de cada lote seleccionado.";
   }
   if (type === "plazos") {
     headers = [
@@ -152,7 +152,7 @@ export function makeReport(
         ];
       })
       .filter((r) => r[5] === "" || r[5] <= horizon);
-    note = `Fecha de corte: ${today} (Paraguay). Ventana: ${horizon} días calendario. El vencimiento proviene del cálculo de días hábiles del servidor. No existe cierre administrativo de remisión: se informa vencimiento aunque los documentos estén revisados. Estado documental no aplica.`;
+    note = `Fecha de corte: ${today} (Paraguay). Ventana: ${horizon} días calendario. El vencimiento proviene del cálculo de días hábiles del servidor. No existe cierre administrativo de remisión: se informa vencimiento aunque los documentos estén revisados. Los filtros avanzados delimitan las remisiones seleccionadas.`;
   }
   if (type === "comparativo") {
     if (!["quincena", "mes", "año"].includes(comparison))
@@ -215,7 +215,7 @@ export function makeReport(
       ];
     });
     note =
-      "Mismo ámbito de gerencia y CAC. Mes: meses completos; año: años completos; quincena: seleccionada contra anterior (ambas: Q2 contra Q1). Estado documental no aplica a indicadores integrales. Porcentajes sobre documentos individualizados.";
+      "Mismo ámbito de gerencia y CAC. Mes: meses completos; año: años completos; quincena: seleccionada contra anterior (ambas: Q2 contra Q1). Los filtros avanzados se aplican a ambos períodos. Porcentajes sobre documentos individualizados.";
   }
   return {
     title: reportTypes[type],
@@ -225,6 +225,6 @@ export function makeReport(
     generatedAt: new Date().toISOString(),
     source,
     filters: { ...f, state, comparison, horizon },
-    scopeLabel: `Año ${f.year}; mes ${f.month}; quincena ${f.half || "ambas"}; gerencia ${f.gerencia ? gs.get(f.gerencia)?.name || f.gerencia : "todas las autorizadas"}; CAC ${f.cac ? cs.get(f.cac)?.name || f.cac : "todos los autorizados"}; estado ${state || "todos"}`,
+    scopeLabel: `Año ${f.year}; mes ${f.month}; quincena ${f.half || "ambas"}; gerencia ${f.gerencia ? gs.get(f.gerencia)?.name || f.gerencia : "todas las autorizadas"}; CAC ${f.cac ? cs.get(f.cac)?.name || f.cac : "todos los autorizados"}; estado ${state || "todos"}; remisión ${f.remission || "todas"}; conciliación ${f.reconciliation || "todas"}; verificación ${f.verification || "todas"}; observación ${f.observation || "todas"}; plazo ${f.deadline || "todos"}`,
   };
 }

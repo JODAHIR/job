@@ -25,52 +25,51 @@ export function matches(period, f) {
     (!f.half || period.half === +f.half)
   );
 }
-export function scope(db, f) {
-  const cacs = db.cacs.filter(
-    (c) =>
-      (!f.gerencia || c.gerenciaId === f.gerencia) &&
-      (!f.cac || c.id === f.cac),
-  );
-  const ids = new Set(cacs.map((c) => c.id));
-  const rem = db.remisiones.filter((r) => ids.has(r.cacId) && matches(r, f));
-  const rids = new Set(rem.map((r) => r.id));
-  const lots = db.lotes.filter((l) => rids.has(l.remisionId));
-  const lids = new Set(lots.map((l) => l.id));
-  return {
-    cacs,
-    rem,
-    lots,
-    docs: db.documentos.filter((d) => lids.has(d.loteId)),
-  };
+export function deadlineStatus(r, today = new Intl.DateTimeFormat('en-CA', {timeZone:'America/Asuncion'}).format(new Date())) {
+  if (!r.dueOn) return 'Sin plazo';
+  const days = Math.round((Date.parse(r.dueOn)-Date.parse(today))/86400000);
+  return days < 0 ? 'Vencido' : days <= 5 ? 'Próximo' : 'En plazo';
 }
-export function metrics(db, f) {
-  const s = scope(db, f);
-  let missing = 0,
-    differences = 0;
-  const counts = new Map();
-  for (const d of s.docs) counts.set(d.loteId, (counts.get(d.loteId) || 0) + 1);
-  for (const l of s.lots) {
-    const n = counts.get(l.id) || 0;
-    missing += Math.max(0, l.declared - n);
-    if (n !== l.declared) differences++;
+export function scope(db, f) {
+  const cacs=db.cacs.filter(c=>(!f.gerencia||c.gerenciaId===f.gerencia)&&(!f.cac||c.id===f.cac));
+  const ids=new Set(cacs.map(c=>c.id));
+  const baseRem=db.remisiones.filter(r=>ids.has(r.cacId)&&matches(r,f));
+  const counts=new Map();
+  for(const d of db.documentos)counts.set(d.loteId,(counts.get(d.loteId)||0)+1);
+  let rem=baseRem.filter(r=>f.remission!=='Pendiente'&&(!f.deadline||deadlineStatus(r,f.today)===f.deadline));
+  let rids=new Set(rem.map(r=>r.id));
+  let lots=db.lotes.filter(l=>rids.has(l.remisionId)&&(!f.reconciliation||(f.reconciliation==='Conciliado')===((counts.get(l.id)||0)===l.declared)));
+  let lids=new Set(lots.map(l=>l.id));
+  let docs=db.documentos.filter(d=>lids.has(d.loteId)&&(!f.verification||d.state===f.verification)&&(!f.observation||db.observaciones.some(o=>o.documentId===d.id&&o.status===f.observation)));
+  if(f.verification||f.observation){lids=new Set(docs.map(d=>d.loteId));lots=lots.filter(l=>lids.has(l.id));}
+  if(f.reconciliation||f.verification||f.observation){rids=new Set(lots.map(l=>l.remisionId));rem=rem.filter(r=>rids.has(r.id));}
+  const dids=new Set(docs.map(d=>d.id));
+  const observations=db.observaciones.filter(o=>dids.has(o.documentId)&&(!f.observation||o.status===f.observation));
+  const expectedRows=[];
+  const months=f.month?[+f.month]:Array.from({length:12},(_,i)=>i+1);
+  for(const c of cacs)for(const month of months)for(const half of f.half?[+f.half]:[1,2]){
+    const existing=baseRem.find(r=>r.cacId===c.id&&r.month===month&&r.half===half);
+    if(c.active!==false||existing)expectedRows.push({cacId:c.id,year:+f.year,month,half,existing});
   }
-  const reviewed = s.docs.filter((d) => d.state !== "Pendiente").length;
-  const expected = s.cacs.length * (f.half ? 1 : 2);
-  return {
-    ...s,
-    gerencias: new Set(s.cacs.map((c) => c.gerenciaId)).size,
-    registered: s.rem.length,
-    pendingRem: Math.max(0, expected - s.rem.length),
-    declared: s.lots.reduce((n, l) => n + l.declared, 0),
-    individual: s.docs.length,
-    reviewed,
-    pending: s.docs.length - reviewed,
-    observed: s.docs.filter((d) => d.state === "Verificado con observación")
-      .length,
-    missing,
-    differences,
-    progress: s.docs.length ? (reviewed / s.docs.length) * 100 : null,
-  };
+  const pendingRows=expectedRows.filter(r=>!r.existing&&!f.deadline&&!f.reconciliation&&!f.verification&&!f.observation&&f.remission!=='Registrada');
+  return {cacs,rem,lots,docs,observations,counts,expectedRows,pendingRows};
+}
+export function metrics(db,f){
+ const s=scope(db,f), reviewed=s.docs.filter(d=>d.state!=='Pendiente').length;
+ const differences=s.lots.filter(l=>(s.counts.get(l.id)||0)!==l.declared).length;
+ return {...s,gerencias:new Set(s.cacs.map(c=>c.gerenciaId)).size,
+ expected:s.expectedRows.length,registered:s.rem.length,pendingRem:s.pendingRows.length,
+ declared:s.lots.reduce((n,l)=>n+l.declared,0),individual:s.docs.length,reviewed,
+ verified:s.docs.filter(d=>d.state==='Verificado').length,pending:s.docs.length-reviewed,
+ observed:s.docs.filter(d=>d.state==='Verificado con observación').length,
+ missing:s.lots.reduce((n,l)=>n+Math.max(0,l.declared-(s.counts.get(l.id)||0)),0),differences,
+ reconciled:s.lots.length-differences,
+ open:s.observations.filter(o=>o.status==='Pendiente').length,
+ inProgress:s.observations.filter(o=>o.status==='En proceso').length,
+ regularized:s.observations.filter(o=>o.status==='Regularizada').length,
+ dueSoon:s.rem.filter(r=>deadlineStatus(r,f.today)==='Próximo').length,
+ overdue:s.rem.filter(r=>deadlineStatus(r,f.today)==='Vencido').length,
+ progress:s.docs.length?reviewed/s.docs.length*100:null};
 }
 export function validate(db) {
   if (
@@ -174,7 +173,7 @@ export function validate(db) {
       Number.isNaN(Date.parse(o.date)) ||
       (!Number.isNaN(Date.parse(o.date)) &&
         new Date(o.date).toISOString().slice(0, 10) !== o.date) ||
-      !["Pendiente", "Regularizada"].includes(o.status)
+      !["Pendiente", "En proceso", "Regularizada"].includes(o.status)
     )
       throw Error(
         "Complete descripción, fecha, responsable y estado de la observación.",

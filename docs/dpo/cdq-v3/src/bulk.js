@@ -119,7 +119,7 @@ export function prepareBulk(db, input) {
         Number.isNaN(Date.parse(r.fecha)) ||
         (!Number.isNaN(Date.parse(r.fecha)) &&
           new Date(r.fecha).toISOString().slice(0, 10) !== r.fecha) ||
-        !["Pendiente", "Regularizada"].includes(r.regularizacion)
+        !["Pendiente", "En proceso", "Regularizada"].includes(r.regularizacion)
       )
         error("complete fecha válida, responsable y regularización.");
       observations.push({

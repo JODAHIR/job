@@ -1,10 +1,11 @@
+import {installTables} from './tables.js';
 import {validateResponsables} from './gerencia-contacts.js';
 import { visibleModule, manageRecord, manageCacStatus } from './permissions.js';
-import {phase3Panel,bindPhase3} from './phase3-ui.js?v=responsables-20261017';
-import { metrics, scope, mutate, states, integer } from "./domain.js";
+import {phase3Panel,bindPhase3} from './phase3-ui.js?v=dashboard-20261017';
+import { metrics, scope, deadlineStatus, mutate, states, integer } from "./domain.js";
 import { LocalRepository } from "./repository.js";
 import { demo } from "./seed.js";
-import { cloudPanel, bindCloudPanel } from "./cloud-ui.js?v=responsables-20261017";
+import { cloudPanel, bindCloudPanel } from "./cloud-ui.js?v=dashboard-20261017";
 const $ = (s) => document.querySelector(s),
   esc = (v) =>
     String(v ?? "").replace(
@@ -115,7 +116,7 @@ async function load() {
     else {$('#app').setAttribute('aria-busy','true');$('#refresh-cloud').disabled=true;}
 
     try{
-      if(!cloud){const module=await import('./firebase-client.bundle.js?v=responsables-20261017');cloud=await module.connectFirebase();let initial=true;stopAuth=cloud.watchAuth(()=>{if(initial){initial=false;return}if(cloudMode()){epoch++;db=null;$('#modal').close();load()}});}
+      if(!cloud){const module=await import('./firebase-client.bundle.js?v=dashboard-20261017');cloud=await module.connectFirebase();let initial=true;stopAuth=cloud.watchAuth(()=>{if(initial){initial=false;return}if(cloudMode()){epoch++;db=null;$('#modal').close();load()}});}
       if(cloud.authOnly){authenticationView();return}
       if(!cloud.auth.currentUser){loginView();return}
       const result=await cloud.load();if(token!==epoch||!cloudMode())return;db=result;
@@ -174,7 +175,7 @@ function filters() {
     db.cacs.filter((c) => !f.gerencia || c.gerenciaId === f.gerencia),
     f.cac,
     "Todos los CAC",
-  )}</section>`;
+  )}${[['remission','Estado de remisión',['Registrada','Pendiente']],['reconciliation','Conciliación',['Conciliado','Con diferencias']],['verification','Verificación',states],['observation','Observación',['Pendiente','En proceso','Regularizada']],['deadline','Situación del plazo',['En plazo','Próximo','Vencido','Sin plazo']]].map(([key,label,values])=>select(key,label,values.map(id=>({id,name:id})),f[key],'Todos')).join('')}<button id="clear-filters" class="secondary">Limpiar filtros</button></section>`;
 }
 function table(headers, rows) {
   return `<div class="table-scroll"><table><thead><tr>${headers.map((h) => `<th>${h}</th>`).join("")}</tr></thead><tbody>${rows.length ? rows.map((r) => `<tr>${r.map((c) => `<td>${c}</td>`).join("")}</tr>`).join("") : `<tr><td colspan="${headers.length}" class="empty">No hay registros para esta selección.</td></tr>`}</tbody></table></div>`;
@@ -209,13 +210,23 @@ function dashboard() {
     ["Remisiones registradas", m.registered, `${m.pendingRem} pendientes`],
     ["Documentos declarados", m.declared, "Según los lotes recibidos"],
     ["Individualizados", m.individual, "Con registro individual"],
-    ["Documentos verificados", m.reviewed, "Incluye los observados"],
+    ["Total revisado", m.reviewed, "Incluye los observados"],
     ["Pendientes de verificación", m.pending, "Individualizados sin revisar"],
     ["Documentos observados", m.observed, "Incluye regularizados"],
     ["Documentos faltantes", m.missing, "Declarados sin individualizar"],
     ["Lotes con diferencias", m.differences, "Requieren conciliación"],
+    ["Verificados correctamente",m.verified,"Sin observaciones"],
+    ["Remisiones esperadas",m.expected,"Base del período: CAC activos e históricos"],
+    ["Remisiones pendientes",m.pendingRem,"Sin registro"],
+    ["Lotes registrados",m.lots.length,"En la selección"],
+    ["Lotes conciliados",m.reconciled,"Cantidades coincidentes"],
+    ["Observaciones abiertas",m.open,"Pendientes"],
+    ["Observaciones en proceso",m.inProgress,"En regularización"],
+    ["Observaciones regularizadas",m.regularized,"Conservan su trazabilidad"],
+    ["Remisiones próximas a vencer",m.dueSoon,"Hoy y próximos 5 días calendario"],
+    ["Remisiones vencidas",m.overdue,"Según vencimiento registrado"],
   ];
-  return `<div class="section-line"><div><h2>Resumen del período</h2><p>Una visión integral de la recepción y revisión documental.</p></div>${badge(cloudMode()?"Datos consultados en Firestore":"Actualizado con datos locales", "neutral")}</div><div class="stats">${cards.map(([label, n, sub], i) => `<article class="stat ${i === 3 ? "featured" : ""}"><span>${label}</span><strong>${n}</strong><small>${sub}</small></article>`).join("")}</div><div class="progress-card"><div><span class="eyebrow">AVANCE DOCUMENTAL</span><h2>${m.progress === null ? "Sin documentos para verificar" : `${m.progress.toFixed(1)} % revisado`}</h2><p>${m.reviewed} de ${m.individual} documentos individualizados · Los faltantes se informan por separado.</p></div><div class="progress-track"><div style="width:${m.progress ?? 0}%"></div></div></div><section class="panel"><div class="section-line"><div><h2>Control de lotes</h2><p>Cantidad declarada frente a documentos individualizados</p></div>${!cloudMode() || visibleModule(cloud.profile,"lotes") ? '<button data-nav="lotes" class="secondary">Ver lotes →</button>' : ""}</div>${table(["Lote", "CAC / dependencia", "Período", "Declarados", "Individualizados", "Conciliación", ""], lotRows(m.lots))}</section>`;
+  return `<div class="section-line"><div><h2>Resumen del período</h2><p>Una visión integral de la recepción y revisión documental.</p></div>${badge(cloudMode()?"Datos consultados en Firestore":"Actualizado con datos locales", "neutral")}</div><div class="stats">${cards.map(([label, n, sub], i) => `<article class="stat ${i === 3 ? "featured" : ""}"><button class="link" data-indicator="${i}">Ver detalle →</button><span>${label}</span><strong>${n}</strong><small>${sub}</small></article>`).join("")}</div><div class="progress-card"><div><span class="eyebrow">AVANCE DOCUMENTAL</span><h2>${m.progress === null ? "Sin documentos para verificar" : `${m.progress.toFixed(1)} % revisado`}</h2><p>${m.reviewed} de ${m.individual} documentos individualizados · Los faltantes se informan por separado.</p></div><div class="progress-track"><div style="width:${m.progress ?? 0}%"></div></div></div><section class="panel"><div class="section-line"><div><h2>Control de lotes</h2><p>Cantidad declarada frente a documentos individualizados</p></div>${!cloudMode() || visibleModule(cloud.profile,"lotes") ? '<button data-nav="lotes" class="secondary">Ver lotes →</button>' : ""}</div>${table(["Lote", "CAC / dependencia", "Período", "Declarados", "Individualizados", "Conciliación", ""], lotRows(m.lots))}</section>`;
 }
 function collectionView() {
   const s = scope(db, f);
@@ -252,9 +263,8 @@ function collectionView() {
       badge("Registrada", "ok"),
       edit(page, r.id),
     ]);
-    for (const c of s.cacs)
-      for (const half of f.half ? [+f.half] : [1, 2])
-        if (!s.rem.some((r) => r.cacId === c.id && r.half === half))
+    for (const pending of s.pendingRows)
+        { const c=find("cacs",pending.cacId),half=pending.half;
           rows.push([
             esc(c.name),
             esc(period({ year: +f.year, month: +f.month, half })),
@@ -262,7 +272,7 @@ function collectionView() {
             0,
             badge("Pendiente", "warn"),
             canManage("remisiones") && c.active !== false ? `<button class="link" data-register-remision="${esc(c.id)}" data-half="${half}">Registrar remisión ↗</button>` : "—",
-          ]);
+          ]); }
   }
   if (page === "lotes") {
     headers = [
@@ -312,7 +322,7 @@ function collectionView() {
     ];
     const ids = new Set(s.docs.map((d) => d.id));
     rows = db.observaciones
-      .filter((o) => ids.has(o.documentId))
+      .filter((o) => ids.has(o.documentId) && (!f.observation || o.status===f.observation))
       .map((o) => [
         esc(find("documentos", o.documentId).number),
         esc(o.description),
@@ -372,8 +382,12 @@ function render() {
   $("#app").innerHTML =
     `<aside><div class="brand"><span class="brand-icon">D<span>O</span></span><div>Dirección de<br><strong>Operaciones</strong></div></div><div class="nav-label">CONTROL DOCUMENTAL</div><nav>${pages.filter(([id])=>cloudMode() ? visibleModule(cloud?.profile,id) : !["access","migration","deadlines"].includes(id)).map(([id, icon, label]) => `<button class="${page === id ? "active" : ""}" data-nav="${id}"><span>${icon}</span>${label}</button>`).join("")}</nav><div class="sidebar-bottom"><span class="status-dot"></span> Fase 3 · ${cloudMode()?"Firebase":"Local"}<br><small>Gestión documental quincenal</small></div></aside><main><header><div class="breadcrumb">Dirección de Operaciones <span>/</span> Control documental</div><div class="local-chip">${cloudMode()?"◉ Firebase" : "◉ Almacenamiento local"}</div></header><div class="content"><div class="title-row"><div><span class="eyebrow">SISTEMA DE CONTROL DOCUMENTAL</span><h1>${current[2]}</h1><p>Seguimiento quincenal · Dirección de Operaciones</p></div><label class="mode-label">Espacio de trabajo<select id="mode"><option value="demo" ${mode === "demo" ? "selected" : ""}>Demostración</option><option value="local" ${mode === "local" ? "selected" : ""}>Mis registros locales</option><option value="cloud" ${cloudMode()?"selected":""}>Firebase institucional</option></select></label></div>${cloudMode()?`<div class="session-bar"><span>${esc(cloud.auth.currentUser.email)} · ${esc(cloud.profile.role)} · ${cloud.emulator?"Emuladores locales":"Conectado"}</span><button id="refresh-cloud" class="secondary">Actualizar</button><button id="logout" class="secondary">Cerrar sesión</button></div>`:""}${mode==="local"?`<div class="session-bar"><button id="export-local" class="secondary">Descargar respaldo para migración</button></div>`:""}<div class="notice">${cloudMode()?"<strong>Espacio Firebase.</strong> Se muestran únicamente las gerencias autorizadas. Registro individual habilitado; importación masiva, migración y excepciones aún pendientes en Spark.":mode === "demo" ? "<strong>Datos ficticios.</strong> Estás trabajando en un espacio de demostración separado." : "<strong>Mis registros locales.</strong> Datos ingresados por el usuario, separados de la demostración."} ${cloudMode()?"":"Sin sincronización multiusuario ni seguridad de producción."}</div>${!["audit","access","migration"].includes(page) ? filters() : ""}${page === "dashboard" ? dashboard() : page === "history" ? history() : ["audit","reports","bulk"].includes(page) ? phase3Panel(page,phase3Context()) : ["access","deadlines","migration"].includes(page)?cloudPanel(page,cloudContext()):collectionView()}<footer>Dirección de Operaciones <span>Control Documental Quincenal · v3.0</span></footer></div></main>`;
   bind();
+  installTables();
 }
 function bind() {
+  if($('#clear-filters'))$('#clear-filters').onclick=()=>{const now=new Date(),parts=new Intl.DateTimeFormat('en-CA',{timeZone:'America/Asuncion',year:'numeric',month:'2-digit',day:'2-digit'}).format(now).split('-');f={year:+parts[0],month:+parts[1],half:+parts[2]<=15?'1':'2',gerencia:cloudMode()&&cloud.profile.role==='gerente'?cloud.profile.gerenciaId:'',cac:''};query='';render();};
+  document.querySelectorAll('[data-indicator]').forEach(b=>b.onclick=()=>indicatorDetail(+b.dataset.indicator));
+
   if(["audit","reports","bulk"].includes(page))bindPhase3(page,phase3Context());
   if($('#export-local'))$('#export-local').onclick=()=>{const blob=new Blob([JSON.stringify({source:'local-user',snapshot:db},null,2)],{type:'application/json'});const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='control-documental-local.json';a.click();URL.revokeObjectURL(url)};
   if(cloudMode()){
@@ -556,7 +570,7 @@ function form(c, id, defaults = {}) {
       pick(
         "status",
         "Regularización",
-        [{ id: "Pendiente" }, { id: "Regularizada" }],
+        [{ id: "Pendiente" }, { id: "En proceso" }, { id: "Regularizada" }],
         (r) => r.id,
         row.status ?? "Pendiente",
       );
@@ -621,3 +635,26 @@ window.addEventListener("storage", (e) => {
   }
 });
 load().catch(fatal);
+
+function showDetail(title,headers,rows){
+ $('#modal').innerHTML=`<h2>${esc(title)}</h2>${table(headers,rows)}<button id="detail-close" class="secondary">Cerrar</button>`;
+ $('#detail-close').onclick=()=>$('#modal').close();
+ $('#modal').querySelectorAll('[data-sheet]').forEach(b=>b.onclick=()=>dependencySheet(b.dataset.sheet,b.dataset.id));
+ installTables($('#modal'));if(!$('#modal').open)$('#modal').showModal();
+}
+function dependencySheet(kind,id){
+ const selection={...f,gerencia:kind==='gerencias'?id:find('cacs',id).gerenciaId,cac:kind==='cacs'?id:''};
+ const m=metrics(db,selection);
+ const rows=m.cacs.map(c=>{const x=metrics(db,{...selection,cac:c.id});return [esc(c.name),x.registered+'/'+x.expected,x.individual,x.progress===null?'Sin documentos para verificar':x.progress.toFixed(1)+' %',x.rem.map(r=>esc(r.receivedOn||'Sin recepción')).join('<br>')||'Sin recepción',x.rem.map(r=>esc(r.dueOn||'Sin plazo')).join('<br>')||'Sin plazo',`<button class="link" data-sheet="cacs" data-id="${esc(c.id)}">Ver ficha</button>`]});
+ showDetail(name(kind,id),['Dependencia','Recepción general (registradas/esperadas)','Individualizados','Avance','Recepción','Vencimiento',''],rows);
+ const detail=document.createElement('div');detail.innerHTML=`<h3>Remisiones del período</h3>${table(['CAC','Período','Expediente','Recepción','Vencimiento'],m.rem.map(r=>[esc(name('cacs',r.cacId)),esc(period(r)),esc(r.expediente||'—'),esc(r.receivedOn||'—'),esc(r.dueOn||'—')]))}`;$('#detail-close').before(detail);installTables($('#modal'));
+}
+function indicatorDetail(index){
+ const m=metrics(db,f),docRows=ds=>ds.map(d=>[esc(d.type),esc(d.number),esc(d.state),esc(name('lotes',d.loteId)||find('lotes',d.loteId).code)]);
+ if(index===0||index===1){const kind=index===0?'gerencias':'cacs',ids=new Set(m.cacs.map(c=>index===0?c.gerenciaId:c.id));return showDetail('Fichas consolidadas',['Nombre','Detalle'],db[kind].filter(x=>ids.has(x.id)).map(x=>[esc(x.name),`<button class="link" data-sheet="${kind}" data-id="${esc(x.id)}">Abrir ficha</button>`]));}
+ if([2,11,12,18,19].includes(index)){const rows=index===11?m.expectedRows:index===12?m.pendingRows:m.rem.filter(r=>index===18?deadlineStatus(r)==='Próximo':index===19?deadlineStatus(r)==='Vencido':true);return showDetail('Detalle de remisiones',['CAC','Período','Expediente','Recepción','Vencimiento'],rows.map(item=>{const r=item.existing||item;return [esc(name('cacs',r.cacId)),esc(period(r)),esc(r.expediente||'—'),esc(r.receivedOn||'Sin recepción'),esc(r.dueOn||'Sin plazo')]}));}
+ if([3,8,9,13,14].includes(index)){const lots=m.lots.filter(l=>index===8?l.declared>(m.counts.get(l.id)||0):index===9?l.declared!==(m.counts.get(l.id)||0):index===14?l.declared===(m.counts.get(l.id)||0):true);return showDetail('Detalle de lotes',['Lote','CAC','Período','Declarados','Individualizados','Conciliación'],lotRows(lots).map(r=>r.slice(0,6)));}
+ if([15,16,17].includes(index)){const status=['Pendiente','En proceso','Regularizada'][index-15];return showDetail('Observaciones '+status,['Documento','Descripción','Fecha','Responsable','Estado'],m.observations.filter(o=>o.status===status).map(o=>[esc(find('documentos',o.documentId).number),esc(o.description),esc(o.date),esc(o.owner),esc(o.status)]));}
+ const docs=m.docs.filter(d=>index===5?d.state!=='Pendiente':index===6?d.state==='Pendiente':index===7?d.state==='Verificado con observación':index===10?d.state==='Verificado':true);
+ showDetail('Detalle de documentos',['Tipo','Número','Estado','Lote'],docRows(docs));
+}
