@@ -35,8 +35,10 @@ export function sparkAPI(api) {
     after={...before,gerencias:[...new Set(input.gerencias)],revision:before.revision+1};
    } else {
     const req=await tx.get(doc(store,'accessRequests',input.uid));
-    if(!req.exists()) throw Error('El usuario debe ingresar con Google y solicitar acceso primero.');
-    after={id:input.uid,role:input.role,secondaryRole:input.role==='technical'?(input.secondaryRole||null):null,active:input.active,gerenciaId:input.role==='gerente'?input.gerenciaId:null,
+    if(!before&&!req.exists()) throw Error('El usuario debe ingresar con Google y solicitar acceso primero.');
+    const description=input.description===undefined?(before?.description??''):input.description;
+    if(typeof description!=='string'||description.length>500)throw Error('La descripción debe ser texto de hasta 500 caracteres.');
+    after={id:input.uid,description:description.trim(),role:input.role,secondaryRole:input.role==='technical'?(input.secondaryRole||null):null,active:input.active,gerenciaId:input.role==='gerente'?input.gerenciaId:null,
       gerencias:input.role==='asistente'&&before?.role==='asistente'?before.gerencias:[],revision:(before?.revision??0)+1};
    }
    tx.set(ref,after);

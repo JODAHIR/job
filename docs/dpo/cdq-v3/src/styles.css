@@ -620,3 +620,53 @@ header {gap:16px;flex-wrap:wrap;height:auto;min-height:78px}
 .header-session button {padding:8px 10px;font-size:12px}
 .stat.featured .link {color:#fff}
 @media(max-width:750px){.header-account{width:100%;margin-left:0;justify-content:flex-start}.header-session{justify-content:flex-start}.brand-title strong{font-size:16px}}
+
+/* Navegación CAH: estado independiente del contenido */
+#institution-nav{width:270px;position:fixed;inset:0 auto 0 0;background:#112844;padding:24px 14px;overflow-y:auto;z-index:40;display:block}
+#institution-nav nav{display:block;overflow:visible}
+#institution-nav button{min-height:44px;width:100%;display:flex;align-items:center;gap:10px;white-space:normal;text-align:left;color:#dce6f4;border-radius:7px;padding:10px;font-size:13px}
+#institution-nav svg{width:20px;height:20px;flex:0 0 20px}
+#institution-nav button:hover{background:#243e60}
+#institution-nav button:focus-visible{outline:3px solid #91c9ff;outline-offset:-3px}
+#institution-nav button[aria-current=page]{background:#245caa;color:#fff;box-shadow:inset 3px 0 #a1d3ff}
+#institution-nav button:disabled{opacity:.55;cursor:not-allowed}
+.nav-brand{display:flex;align-items:center;gap:12px;color:#fff;margin:0 8px 22px}
+.nav-brand strong{font-size:24px;letter-spacing:1px;border-bottom:3px solid #6ab4f4}
+.nav-brand span{font-size:11px;letter-spacing:1px;line-height:1.5}
+.nav-group{border-top:1px solid #ffffff20;margin-top:12px;padding-top:10px}
+.nav-group.is-active>button{color:#9aceff!important}
+.nav-module{margin-left:10px}
+.nav-module.is-active>button{font-weight:700;color:#b7dcff!important}
+.nav-module>div{margin-left:24px;border-left:1px solid #45617f;padding-left:6px}
+.chevron{margin-left:auto;transition:transform .15s}
+[aria-expanded=true]>.chevron{transform:rotate(180deg)}
+#institution-nav [hidden]{display:none!important}
+#institution-nav+main{margin-left:270px;min-width:0}
+#nav-mobile,.nav-backdrop{display:none}
+.header-heading>strong{font-size:14px;color:#173b65}
+.header-heading .breadcrumb{margin-top:6px;line-height:1.5}
+.header-heading .breadcrumb button{padding:0;font-size:inherit;min-height:28px}
+body.nav-compact #institution-nav{width:76px;padding:20px 8px}
+body.nav-compact #institution-nav+main{margin-left:76px}
+body.nav-compact .nav-text,body.nav-compact .nav-brand span,body.nav-compact .chevron,body.nav-compact .nav-group>div{display:none}
+body.nav-compact .nav-brand{margin:0 0 16px;justify-content:center}
+body.nav-compact .nav-brand strong{font-size:19px}
+body.nav-compact #institution-nav button{justify-content:center}
+@media(max-width:750px){
+ #institution-nav,body.nav-compact #institution-nav{width:min(310px,86vw);transform:translateX(-100%);transition:transform .18s ease;box-shadow:4px 0 24px #0003}
+ #institution-nav+main,body.nav-compact #institution-nav+main{margin-left:0;width:100%}
+ #nav-mobile{display:block;min-width:44px;min-height:44px;font-size:22px}
+ body.nav-open{overflow:hidden}
+ body.nav-open #institution-nav{transform:translateX(0)}
+ body.nav-open .nav-backdrop{display:block;position:fixed;inset:0;background:#0007;z-index:39;border-radius:0}
+ body.nav-compact .nav-text,body.nav-compact .nav-brand span,body.nav-compact .chevron{display:inline}
+ body.nav-compact .nav-group>div:not([hidden]){display:block}
+ body.nav-compact #institution-nav button{justify-content:flex-start}
+ .header-heading{flex:1;min-width:0}.header-heading>strong{font-size:13px}
+}
+@media(prefers-reduced-motion:reduce){#institution-nav,.chevron{transition:none!important}}
+#institution-nav button span{width:auto;font-size:inherit;text-align:left}
+#institution-nav .nav-text{flex:1}
+#institution-nav .nav-group>div:not([hidden]),#institution-nav .nav-module>div:not([hidden]){animation:nav-reveal .12s ease-out}
+@keyframes nav-reveal{from{opacity:.5}to{opacity:1}}
+@media(prefers-reduced-motion:reduce){#institution-nav *{animation:none!important}}

@@ -14,18 +14,20 @@ export function cloudPanel(page, ctx) {
     const users = db.users ?? [];
     const rows = users.map((u) => [
       esc(u.id),
+      esc(u.description || "—"),
       esc((roles[u.role] ?? u.role) + (u.secondaryRole ? " + " + roles[u.secondaryRole] : "")),
       u.active ? "Activo" : "Inactivo",
       esc(u.gerenciaId ?? (u.gerencias ?? []).join(", ")),
       String(u.revision ?? 0),
+      technical && u.id!==cloud.auth.currentUser.uid ? `<button class="link" data-profile-edit="${esc(u.id)}">Editar perfil</button>` : "—",
     ]);
     const choose = `<label>Usuario<select name="uid" required>${users
       .filter((u) => u.role === "asistente" && u.active)
       .map((u) => `<option value="${esc(u.id)}">${esc(u.id)}</option>`)
       .join("")}</select></label>`;
-    return `<section class="panel"><h2>Usuarios y permisos</h2><p>Las asignaciones se verifican nuevamente en cada operación del servidor.</p>${table(["UID", "Rol", "Estado", "Gerencias", "Revisión"], rows)}${cloud.spark && technical ? `<h2>Solicitudes de acceso</h2>${table(["UID", "Correo"], (db.accessRequests ?? []).map(r => [esc(r.id), esc(r.email)]))}` : ""}${
+    return `<section class="panel"><h2>Usuarios y permisos</h2><p>Las asignaciones se verifican nuevamente en cada operación del servidor.</p>${table(["UID", "Descripción", "Rol", "Estado", "Gerencias", "Revisión", ""], rows)}${cloud.spark && technical ? `<h2 id="access-requests">Solicitudes de acceso</h2>${table(["UID", "Correo"], (db.accessRequests ?? []).map(r => [esc(r.id), esc(r.email)]))}` : ""}${
       director
-        ? `<form id="assignment-form" class="form-fields"><h2>Asignar o retirar gerencias a un asistente</h2>${choose}<fieldset><legend>Asignación completa que reemplazará la actual</legend>${db.gerencias.map((g) => `<label class="check-label"><input type="checkbox" name="gerencias" value="${esc(g.id)}">${esc(g.name)}</label>`).join("")}</fieldset>${input("reason", "Motivo")}<button class="primary">Guardar asignación completa</button></form>` : ""}${technical ? `<form id="profile-form" class="form-fields"><h2>Provisionar perfil</h2><p>El UID debe corresponder a una cuenta creada en Firebase Authentication. El administrador tiene acceso operativo global. El segundo rol es opcional y no reduce sus permisos. No puede modificar su propio perfil.</p>${input("uid", "UID de Firebase Authentication")}<label>Rol<select name="role">${Object.entries(
+        ? `<form id="assignment-form" class="form-fields"><h2>Asignar o retirar gerencias a un asistente</h2>${choose}<fieldset><legend>Asignación completa que reemplazará la actual</legend>${db.gerencias.map((g) => `<label class="check-label"><input type="checkbox" name="gerencias" value="${esc(g.id)}">${esc(g.name)}</label>`).join("")}</fieldset>${input("reason", "Motivo")}<button class="primary">Guardar asignación completa</button></form>` : ""}${technical ? `<form id="profile-form" class="form-fields"><h2>Provisionar perfil</h2><p>El UID debe corresponder a una cuenta creada en Firebase Authentication. El administrador tiene acceso operativo global. El segundo rol es opcional y no reduce sus permisos. No puede modificar su propio perfil.</p>${input("uid", "UID de Firebase Authentication")}<label>Descripción del usuario (opcional)<textarea name="description" maxlength="500" rows="3" placeholder="Nombre de referencia, función o información del usuario"></textarea></label><label>Rol<select name="role">${Object.entries(
             roles,
           )
             .map(([id, label]) => `<option value="${id}">${label}</option>`)
@@ -63,8 +65,8 @@ export function cloudPanel(page, ctx) {
         ),
       ]);
     const calendar = db.calendar;
-    const calendarView = calendar ? `<section class="panel"><h2>Calendario registrado</h2><p>Versión: ${esc(calendar.version)} · Cobertura: ${esc(calendar.coverageStart)} a ${esc(calendar.coverageEnd)}</p><p>Feriados guardados; sábados y domingos se excluyen automáticamente. Este calendario es general y no depende del filtro de gerencia.</p>${calendar.holidays.length ? table(["Fecha de feriado"], [...calendar.holidays].sort().map(date=>[esc(date)])) : '<p role="alert">Este calendario está guardado sin feriados. Los plazos calculados con esta versión solo excluyen sábados y domingos. Revise y apruebe una nueva versión con los feriados correspondientes.</p>'}</section>` : `<section class="panel"><h2>Calendario registrado</h2><p>No se encontró un calendario aprobado guardado en Firebase.</p></section>`;
-    return `${calendarView}<section class="panel"><h2>Plazo general · diez días hábiles</h2><p>Desde el día siguiente a la recepción, con calendario oficial aprobado. Las verificaciones y observaciones no reinician ni suspenden el plazo. Fecha civil de Paraguay; vencimiento al finalizar el día indicado.</p>${table(["Remisión", "CAC", "Expediente", "Fecha de remisión", "Recepción", "Vencimiento original", "Vencimiento vigente", "Calendario", "Autorización"], rows)}${director ? `<form id="exception-form" class="form-fields"><h2>Autorizar excepción</h2><label>Remisión<select name="remisionId" required>${db.remisiones.map((r) => `<option value="${esc(r.id)}">${esc(r.id)} · ${esc(ctx.find("cacs", r.cacId)?.name)}</option>`).join("")}</select></label>${input("dueOn", "Nuevo vencimiento autorizado", "date")}${input("authorization", "Referencia de resolución/autorización")}${input("reason", "Motivo")}<button class="primary">Autorizar y registrar auditoría</button></form><form id="calendar-form" class="form-fields"><h2>Aprobar calendario oficial</h2><p>Versión activa: ${esc(db.calendarVersion ?? "ninguna")}. Cargue JSON con version, coverageStart, coverageEnd, holidays, sources y approved: true. Cada versión es inmutable; no cambia plazos ya calculados.</p><label>Calendario revisado<textarea name="calendar" rows="9" required></textarea></label>${input("reason", "Motivo y referencia de revisión")}<button class="primary">Aprobar nueva versión</button></form>` : ""}<p id="cloud-message" role="status"></p></section>`;
+    const calendarView = calendar ? `<section class="panel" id="calendar-view"><h2>Calendario registrado</h2><p>Versión: ${esc(calendar.version)} · Cobertura: ${esc(calendar.coverageStart)} a ${esc(calendar.coverageEnd)}</p><p>Feriados guardados; sábados y domingos se excluyen automáticamente. Este calendario es general y no depende del filtro de gerencia.</p>${calendar.holidays.length ? table(["Fecha de feriado"], [...calendar.holidays].sort().map(date=>[esc(date)])) : '<p role="alert">Este calendario está guardado sin feriados. Los plazos calculados con esta versión solo excluyen sábados y domingos. Revise y apruebe una nueva versión con los feriados correspondientes.</p>'}</section>` : `<section class="panel" id="calendar-view"><h2>Calendario registrado</h2><p>No se encontró un calendario aprobado guardado en Firebase.</p></section>`;
+    return `${calendarView}<section class="panel" id="deadline-list"><h2>Plazo general · diez días hábiles</h2><p>Desde el día siguiente a la recepción, con calendario oficial aprobado. Las verificaciones y observaciones no reinician ni suspenden el plazo. Fecha civil de Paraguay; vencimiento al finalizar el día indicado.</p>${table(["Remisión", "CAC", "Expediente", "Fecha de remisión", "Recepción", "Vencimiento original", "Vencimiento vigente", "Calendario", "Autorización"], rows)}${director ? `${cloud.spark?'<p>La autorización de excepciones está pendiente en Spark.</p>':`<form id="exception-form" class="form-fields"><h2>Autorizar excepción</h2><label>Remisión<select name="remisionId" required>${db.remisiones.map((r) => `<option value="${esc(r.id)}">${esc(r.id)} · ${esc(ctx.find("cacs", r.cacId)?.name)}</option>`).join("")}</select></label>${input("dueOn", "Nuevo vencimiento autorizado", "date")}${input("authorization", "Referencia de resolución/autorización")}${input("reason", "Motivo")}<button class="primary">Autorizar y registrar auditoría</button></form>`}<form id="calendar-form" class="form-fields"><h2>Aprobar calendario oficial</h2><p>Versión activa: ${esc(db.calendarVersion ?? "ninguna")}. Cargue JSON con version, coverageStart, coverageEnd, holidays, sources y approved: true. Cada versión es inmutable; no cambia plazos ya calculados.</p><label>Calendario revisado<textarea name="calendar" rows="9" required></textarea></label>${input("reason", "Motivo y referencia de revisión")}<button class="primary">Aprobar nueva versión</button></form>` : ""}<p id="cloud-message" role="status"></p></section>`;
   }
   if (page === "migration" && cloud.spark) return `<section class="panel"><h2>Migración local</h2><p>La migración al espacio Spark aún no está habilitada. Conserve su respaldo local; no se importarán registros parcialmente.</p></section>`;
   if (page === "migration")
@@ -115,6 +117,15 @@ export function bindCloudPanel(page, ctx) {
       reason: data.get("reason"),
       expectedRevision: u.revision,
     });
+  });
+  document.querySelectorAll('[data-profile-edit]').forEach(button=>button.onclick=()=>{
+    const user=db.users.find(u=>u.id===button.dataset.profileEdit),form=document.querySelector('#profile-form');
+    if(!user||!form)return;
+    for(const key of ['uid','description','role','secondaryRole','active','gerenciaId','expectedRevision']){
+      const value=key==='uid'?user.id:key==='expectedRevision'?user.revision:user[key];
+      form.elements[key].value=value??'';
+    }
+    form.scrollIntoView({block:'start'});form.elements.description.focus();
   });
   handler("#profile-form", async (data) => {
     const payload = Object.fromEntries(data);

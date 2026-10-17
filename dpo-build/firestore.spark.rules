@@ -1,0 +1,151 @@
+rules_version = '2';
+// Spark prototype: normalized records; no deletions; each write has an atomic audit.
+// deadlineDays is published by a trusted administrative calendar procedure, not by clients.
+service cloud.firestore {
+ match /databases/{database}/documents {
+  function signed() { return request.auth != null && request.auth.token.email_verified == true; }
+  function profile() { return get(/databases/$(database)/documents/users/$(request.auth.uid)).data; }
+  function role(r) { return signed() && profile().active == true && profile().role == r; }
+  function readScope(g) { return signed() && profile().active == true && (profile().role in ['director','technical'] || (profile().role == 'asistente' && g in profile().gerencias) || (profile().role == 'gerente' && profile().gerenciaId == g)); }
+  function writeScope(g) { return role('technical') || (role('asistente') && g in profile().gerencias); }
+  function ident(v) { return v is string && v.matches('^[A-Za-z0-9_-]{1,128}$'); }
+  function text(v,n) { return v is string && v.size() > 0 && v.size() <= n; }
+  function part(v) { return v.matches('^\\S(.*\\S)?$') && text(v,150) && !v.matches('.*[/|].*'); }
+  function civil(v) { let a=v.split('-'); let t=timestamp.date(int(a[0]),int(a[1]),int(a[2])); return v.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$') && t.year() >= 2000 && t.year() <= 2100 && t.month() == int(a[1]) && t.day() == int(a[2]); }
+  function parent(g,c,id) { return get(/databases/$(database)/documents/gerencias/$(g)/$(c)/$(id)).data; }
+  function existsParent(g,c,id) { return ident(id) && exists(/databases/$(database)/documents/gerencias/$(g)/$(c)/$(id)); }
+  function key(c,r) {
+   return c == 'gerencias' ? c+'|'+r.name.lower()
+    : c == 'cacs' ? c+'|'+r.gerenciaId+'|'+r.name.lower()
+    : c == 'remisiones' ? c+'|'+r.cacId+'|'+string(r.year)+'|'+string(r.month)+'|'+string(r.half)
+    : c == 'lotes' ? c+'|'+r.remisionId+'|'+r.code.lower()
+    : c == 'documentos' ? c+'|'+r.loteId+'|'+r.type.lower()+'|'+r.number.lower()
+    : c+'|'+r.id;
+  }
+  function locked(g,c,r,path) { return r.uniqueKey == key(c,r) && getAfter(/databases/$(database)/documents/sparkKeys/$(r.uniqueKey)).data == { 'path':path,'gerenciaId':g,'entity':c,'recordId':r.id }; }
+  function audited(g,c,id,r) {
+   let a = getAfter(/databases/$(database)/documents/gerencias/$(g)/audit/$(c+'_'+id+'_'+string(r.revision))).data;
+   return a.actor == request.auth.uid && a.at == request.time && a.after == r;
+  }
+  function basic(g,c,id,r,path) {
+   return ident(id) && r.id == id && r.revision is int && r.revision > 0 && r.updatedAt == request.time
+     && locked(g,c,r,path) && audited(g,c,id,r) && getAfter(/databases/$(database)/documents/sparkIds/$(c+'_'+id)).data.gerenciaId == g;
+  }
+  function schema(g,c,r) {
+   return c == 'cacs' ? r.keys().hasOnly(['id','name','gerenciaId','active','revision','updatedAt','uniqueKey']) && r.get('active',true) is bool && part(r.name) && r.gerenciaId == g
+    : c == 'remisiones' ? r.keys().hasOnly(['id','cacId','year','month','half','receivedOn','expediente','remittedOn','originalDueOn','dueOn','calendarVersion','businessDays','timeZone','revision','updatedAt','uniqueKey'])
+       && existsParent(g,'cacs',r.cacId) && r.year is int && r.year >= 2000 && r.year <= 2100 && r.month is int && r.month >= 1 && r.month <= 12 && r.half in [1,2]
+       && ((!('expediente' in r) && !('remittedOn' in r)) || text(r.expediente,150) && civil(r.remittedOn) && r.remittedOn <= r.receivedOn)
+       && text(r.receivedOn,10) && text(r.dueOn,10) && text(r.originalDueOn,10) && ident(r.calendarVersion) && r.businessDays == 10 && r.timeZone == 'America/Asuncion'
+    : c == 'lotes' ? r.keys().hasOnly(['id','remisionId','code','declared','revision','updatedAt','uniqueKey']) && existsParent(g,'remisiones',r.remisionId) && part(r.code) && r.declared is int && r.declared >= 0 && r.declared <= 1000000
+    : c == 'documentos' ? r.keys().hasOnly(['id','loteId','type','number','state','firstObservationId','revision','updatedAt','uniqueKey']) && existsParent(g,'lotes',r.loteId) && part(r.type) && part(r.number)
+      && r.state in ['Pendiente','Verificado','Verificado con observación'] && r.firstObservationId is string && r.firstObservationId.size() <= 128
+      && (r.firstObservationId == '' ? r.state != 'Verificado con observación' : ident(r.firstObservationId) && r.state == 'Verificado con observación' && getAfter(/databases/$(database)/documents/gerencias/$(g)/observaciones/$(r.firstObservationId)).data.documentId == r.id)
+    : c == 'observaciones' && r.keys().hasOnly(['id','documentId','description','date','owner','status','revision','updatedAt','uniqueKey']) && existsParent(g,'documentos',r.documentId)
+       && text(r.description,2000) && text(r.owner,150) && r.date is string && civil(r.date) && r.status in ['Pendiente','En proceso','Regularizada']
+       && getAfter(/databases/$(database)/documents/gerencias/$(g)/documentos/$(r.documentId)).data.state == 'Verificado con observación';
+  }
+  function stable(c,r,b) {
+   return c == 'cacs' ? r.gerenciaId == b.gerenciaId
+    : c == 'remisiones' ? r.cacId == b.cacId && r.year == b.year && r.month == b.month && r.half == b.half && r.receivedOn == b.receivedOn && r.dueOn == b.dueOn && r.originalDueOn == b.originalDueOn && r.calendarVersion == b.calendarVersion
+    : c == 'lotes' ? r.remisionId == b.remisionId
+    : c == 'documentos' ? r.loteId == b.loteId && (b.firstObservationId == '' || r.firstObservationId == b.firstObservationId)
+    : r.documentId == b.documentId;
+  }
+  function receipt(r) {
+   let d = get(/databases/$(database)/documents/deadlineDays/$(r.calendarVersion+'_'+r.receivedOn)).data;
+   return r.calendarVersion == get(/databases/$(database)/documents/settings/calendar).data.version && r.originalDueOn == d.originalDueOn && r.dueOn == d.dueOn && r.receivedOn <= string(request.time.year())+'-'+(request.time.month()<10?'0':'')+string(request.time.month())+'-'+(request.time.day()<10?'0':'')+string(request.time.day());
+  }
+  function contact(c) {
+   return c is map && c.keys().hasAll(['nombre','cargo','correo','interno','celular']) && c.keys().hasOnly(['nombre','cargo','correo','interno','celular'])
+    && text(c.nombre,150) && text(c.cargo,150) && text(c.correo,254) && c.correo.matches('^[^ @]+@[^ @]+[.][^ @]+$')
+    && c.interno is string && c.interno.matches('^[0-9 +().-]{1,20}$') && c.interno.matches('.*[0-9].*')
+    && c.celular is string && c.celular.matches('^[0-9 +().-]{6,30}$') && c.celular.matches('.*[0-9].*');
+  }
+  function contacts(r) {return r.responsables is list && r.responsables.size()==2 && contact(r.responsables[0]) && contact(r.responsables[1]) && r.responsables[0].correo.lower()!=r.responsables[1].correo.lower();}
+  match /gerencias/{g} {
+   allow read: if readScope(g);
+   allow create, update: if role('technical') && request.resource.data.keys().hasOnly(['id','name','responsables','revision','scopeRevision','updatedAt','uniqueKey'])
+    && part(request.resource.data.name) && contacts(request.resource.data) && request.resource.data.scopeRevision == 0
+    && basic(g,'gerencias',g,request.resource.data,'gerencias/'+g)
+    && (resource == null ? request.resource.data.revision == 1 : request.resource.data.revision == resource.data.revision + 1);
+   match /{c}/{id} {
+    allow read: if c in ['cacs','remisiones','lotes','documentos','observaciones','audit'] && readScope(g) && exists(/databases/$(database)/documents/gerencias/$(g));
+    allow create: if c in ['cacs','remisiones','lotes','documentos','observaciones'] && writeScope(g) && (c != 'cacs' || role('technical')) && exists(/databases/$(database)/documents/gerencias/$(g))
+      && basic(g,c,id,request.resource.data,'gerencias/'+g+'/'+c+'/'+id) && schema(g,c,request.resource.data) && request.resource.data.revision == 1
+      && (c != 'remisiones' || receipt(request.resource.data) && get(/databases/$(database)/documents/gerencias/$(g)/cacs/$(request.resource.data.cacId)).data.get('active',true) == true);
+    allow update: if c in ['cacs','remisiones','lotes','documentos','observaciones'] && (writeScope(g) && (c != 'cacs' || role('technical')) || role('director') && c == 'cacs' && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['active','revision','updatedAt'])) && exists(/databases/$(database)/documents/gerencias/$(g))
+      && basic(g,c,id,request.resource.data,'gerencias/'+g+'/'+c+'/'+id) && schema(g,c,request.resource.data) && request.resource.data.revision == resource.data.revision + 1 && stable(c,request.resource.data,resource.data);
+   }
+   match /audit/{event} {
+    function validAudit() {
+     let a = request.resource.data;
+     let p = a.collection == 'gerencias' ? /databases/$(database)/documents/gerencias/$(g) : /databases/$(database)/documents/gerencias/$(g)/$(a.collection)/$(a.recordId);
+     return a.keys().hasOnly(['id','actor','collection','recordId','at','before','after','reason']) && a.id == event && a.actor == request.auth.uid && a.at == request.time
+       && a.collection in ['gerencias','cacs','remisiones','lotes','documentos','observaciones'] && ident(a.recordId) && text(a.reason,2000)
+       && event == a.collection+'_'+a.recordId+'_'+string(a.after.revision) && a.after == getAfter(p).data && (exists(p) ? a.before == get(p).data && a.after.revision == a.before.revision+1 : a.before == null && a.after.revision == 1);
+    }
+    allow create: if (role('director') || writeScope(g)) && validAudit();
+   }
+  }
+  match /sparkIds/{k} {
+   allow get: if signed() && profile().active == true;
+   allow create: if (role('director') || writeScope(request.resource.data.gerenciaId)) && request.resource.data.keys().hasOnly(['gerenciaId','entity','recordId']) && ident(request.resource.data.gerenciaId) && ident(request.resource.data.recordId) && request.resource.data.entity in ['gerencias','cacs','remisiones','lotes','documentos','observaciones'] && k == request.resource.data.entity+'_'+request.resource.data.recordId
+    && getAfter(path('/databases/'+database+'/documents/gerencias/'+request.resource.data.gerenciaId+(request.resource.data.entity == 'gerencias' ? '' : '/'+request.resource.data.entity+'/'+request.resource.data.recordId))).data.id == request.resource.data.recordId;
+   allow update: if signed() && profile().active == true && request.resource.data == resource.data;
+  }
+  match /sparkKeys/{k} {
+   allow get: if signed() && profile().active == true && (resource == null || role('director') || readScope(resource.data.gerenciaId));
+   allow create, update: if (role('director') || writeScope(request.resource.data.gerenciaId))
+     && request.resource.data.keys().hasOnly(['path','gerenciaId','entity','recordId']) && ident(request.resource.data.gerenciaId) && ident(request.resource.data.recordId)
+     && request.resource.data.entity in ['gerencias','cacs','remisiones','lotes','documentos','observaciones']
+     && request.resource.data.path == (request.resource.data.entity == 'gerencias' ? 'gerencias/'+request.resource.data.gerenciaId : 'gerencias/'+request.resource.data.gerenciaId+'/'+request.resource.data.entity+'/'+request.resource.data.recordId)
+     && getAfter(path('/databases/'+database+'/documents/'+request.resource.data.path)).data.uniqueKey == k
+     && (resource == null || resource.data == request.resource.data);
+   allow delete: if (role('director') || writeScope(resource.data.gerenciaId)) && getAfter(path('/databases/'+database+'/documents/'+resource.data.path)).data.uniqueKey != k;
+  }
+  match /users/{uid} {
+   allow get: if signed() && (request.auth.uid == uid || role('technical') || role('director'));
+   allow list: if role('technical') || role('director');
+   function validProfile(r) {
+    return r.keys().hasOnly(['id','role','secondaryRole','description','active','gerencias','gerenciaId','revision']) && r.get('description','') is string && r.get('description','').size() <= 500 && r.id == uid && ident(uid) && r.role in ['director','gerente','asistente','technical'] && (r.role == 'technical' ? r.get('secondaryRole',null) in [null,'director','gerente','asistente'] : r.get('secondaryRole',null) == null) && r.active is bool && r.gerencias is list && r.gerencias.size() <= 20 && r.revision is int && r.revision > 0
+     && (r.role == 'gerente' ? ident(r.gerenciaId) && exists(/databases/$(database)/documents/gerencias/$(r.gerenciaId)) : r.gerenciaId == null)
+     && (r.role == 'asistente' || r.gerencias.size() == 0);
+   }
+   function profileAudit(r,kind) { let a = getAfter(/databases/$(database)/documents/administration/$(kind)/audit/$(uid+'_'+string(r.revision))).data; return a.actor == request.auth.uid && a.at == request.time && a.after == r; }
+   allow create: if role('technical') && uid != request.auth.uid && exists(/databases/$(database)/documents/accessRequests/$(uid)) && validProfile(request.resource.data) && request.resource.data.revision == 1 && request.resource.data.gerencias.size() == 0 && profileAudit(request.resource.data,'profiles');
+   allow update: if uid != request.auth.uid && validProfile(request.resource.data) && request.resource.data.revision == resource.data.revision + 1 && (
+    role('technical') && request.resource.data.gerencias == (request.resource.data.role == 'asistente' && resource.data.role == 'asistente' ? resource.data.gerencias : []) && profileAudit(request.resource.data,'profiles')
+    || (role('director') || role('technical')) && resource.data.role == 'asistente' && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['gerencias','revision']) && profileAudit(request.resource.data,'assignments'));
+
+  }
+  match /accessRequests/{uid} {
+   allow get: if signed() && (request.auth.uid == uid || role('technical'));
+   allow list: if role('technical');
+   allow create: if signed() && request.auth.uid == uid && request.resource.data.keys().hasOnly(['id','email','at']) && request.resource.data.id == uid && request.resource.data.email == request.auth.token.email && text(request.resource.data.email,254) && request.resource.data.at == request.time;
+  }
+  match /settings/{id} {
+   allow get: if signed() && profile().active == true && id == 'calendar';
+   allow create, update: if (role('director') || role('technical')) && id == 'calendar' && request.resource.data.keys().hasOnly(['version']) && ident(request.resource.data.version) && getAfter(/databases/$(database)/documents/calendars/$(request.resource.data.version)).data.createdAt == request.time;
+  }
+  match /deadlineDays/{day} {
+   allow get: if signed() && profile().active == true;
+   // El Director es la autoridad que aprueba la tabla de plazos del calendario.
+   allow create: if (role('director') || role('technical')) && request.resource.data.keys().hasOnly(['originalDueOn','dueOn','calendarVersion','businessDays','timeZone']) && ident(request.resource.data.calendarVersion) && civil(request.resource.data.dueOn) && request.resource.data.dueOn == request.resource.data.originalDueOn && request.resource.data.businessDays == 10 && request.resource.data.timeZone == 'America/Asuncion' && day.matches(request.resource.data.calendarVersion+'_[0-9]{4}-[0-9]{2}-[0-9]{2}') && getAfter(/databases/$(database)/documents/calendars/$(request.resource.data.calendarVersion)).data.createdAt == request.time;
+  }
+  match /calendars/{version} {
+   allow get: if signed() && profile().active == true;
+   allow create: if (role('director') || role('technical')) && ident(version) && request.resource.data.keys().hasOnly(['version','coverageStart','coverageEnd','approved','holidays','sources','createdAt']) && request.resource.data.version == version && request.resource.data.approved == true && request.resource.data.createdAt == request.time && civil(request.resource.data.coverageStart) && civil(request.resource.data.coverageEnd) && request.resource.data.holidays is list && request.resource.data.holidays.size() <= 400 && request.resource.data.sources is list && request.resource.data.sources.size() > 0 && request.resource.data.sources.size() <= 30 && getAfter(/databases/$(database)/documents/administration/calendars/audit/$(version)).data.after == request.resource.data;
+  }
+  match /administration/{kind}/audit/{id} {
+   allow read: if role('director') || role('technical');
+   allow create: if kind == 'calendars' && (role('director') || role('technical')) && request.resource.data.keys().hasOnly(['id','actor','collection','recordId','at','before','after','reason']) && request.resource.data.id == id && request.resource.data.actor == request.auth.uid && request.resource.data.at == request.time && request.resource.data.collection == 'calendars' && request.resource.data.recordId == id && request.resource.data.before == null && text(request.resource.data.reason,2000) && request.resource.data.after == getAfter(/databases/$(database)/documents/calendars/$(id)).data && !exists(/databases/$(database)/documents/calendars/$(id));
+   allow create: if (kind == 'profiles' && role('technical') || kind == 'assignments' && (role('director') || role('technical'))) && adminAudit();
+   function adminAudit() { let a=request.resource.data; let p=/databases/$(database)/documents/users/$(a.recordId);
+    return a.keys().hasOnly(['id','actor','collection','recordId','at','before','after','reason']) && a.id == id && a.collection == 'users' && ident(a.recordId) && a.actor == request.auth.uid && a.at == request.time && text(a.reason,2000)
+     && id == a.recordId+'_'+string(a.after.revision) && a.after == getAfter(p).data && (exists(p) ? a.before == get(p).data && a.after.revision == a.before.revision+1 : a.before == null && a.after.revision == 1);
+   }
+  }
+  match /{path=**} { allow read,write: if false; }
+ }
+}
