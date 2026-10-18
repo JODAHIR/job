@@ -35,7 +35,7 @@ service cloud.firestore {
      && locked(g,c,r,path) && audited(g,c,id,r) && getAfter(/databases/$(database)/documents/sparkIds/$(c+'_'+id)).data.gerenciaId == g;
   }
   function schema(g,c,r) {
-   return c == 'cacs' ? r.keys().hasOnly(['id','name','gerenciaId','active','revision','updatedAt','uniqueKey']) && r.get('active',true) is bool && part(r.name) && r.gerenciaId == g
+   return c == 'cacs' ? r.keys().hasOnly(['id','name','gerenciaId','active','contacto','revision','updatedAt','uniqueKey']) && r.get('active',true) is bool && part(r.name) && r.gerenciaId == g && (!('contacto' in r) || contact(r.contacto))
     : c == 'remisiones' ? r.keys().hasOnly(['id','cacId','year','month','half','receivedOn','expediente','remittedOn','originalDueOn','dueOn','calendarVersion','businessDays','timeZone','revision','updatedAt','uniqueKey','origin','annulment'])
        && r.get('origin','unknown') in ['unknown','manual','automatic']
        && existsParent(g,'cacs',r.cacId) && r.year is int && r.year >= 2000 && r.year <= 2100 && r.month is int && r.month >= 1 && r.month <= 12 && r.half in [1,2]

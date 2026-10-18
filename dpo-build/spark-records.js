@@ -1,9 +1,9 @@
 import {lifecycleFence} from './spark-lifecycle.js';
-import {validateResponsables} from './gerencia-contacts.js';
+import {validateResponsables,validateContact} from './gerencia-contacts.js';
 import { doc, runTransaction, serverTimestamp } from 'firebase/firestore';
 
 const schemas = {
-  gerencias: ['id','name','responsables'], cacs: ['id','name','gerenciaId','active'],
+  gerencias: ['id','name','responsables'], cacs: ['id','name','gerenciaId','active','contacto'],
   remisiones: ['id','cacId','year','month','half','receivedOn','expediente','remittedOn','origin'],
   lotes: ['id','remisionId','code','declared'],
   documentos: ['id','loteId','type','number','state'],
@@ -13,7 +13,7 @@ export function sparkRow(entity, row) {
   if (!schemas[entity] || !row || Object.keys(row).some(k => !schemas[entity].includes(k))) throw Error('Campos no admitidos.');
   const result = {};
   for (const k of schemas[entity]) {
-    if(['expediente','remittedOn','origin'].includes(k) && row[k] === undefined)continue;
+    if(['expediente','remittedOn','origin','contacto'].includes(k) && row[k] === undefined)continue;
     const v = k === 'active' ? (row[k] ?? true) : row[k];
     if (v === undefined) throw Error(`Falta ${k}.`);
     result[k] = typeof v === 'string' ? v.trim() : v;
@@ -21,6 +21,7 @@ export function sparkRow(entity, row) {
   if (!/^[A-Za-z0-9_-]{1,128}$/.test(result.id)) throw Error('Identificador inválido.');
   for (const [k,v] of Object.entries(result)) if (typeof v === 'string' && (!v || v.length > (k === 'description' ? 2000 : 150))) throw Error(`Valor inválido: ${k}.`);
   if(entity==='gerencias')result.responsables=validateResponsables(result.responsables);
+  if(entity==='cacs' && result.contacto!==undefined)result.contacto=validateContact(result.contacto);
   return result;
 }
 export function sparkKey(entity, r) {

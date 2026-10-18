@@ -1,3 +1,4 @@
+import {userDescription} from './gerencia-contacts.js?v=cah-cac-contactos-20261018';
 const roles = {
   director: "Director de Operaciones",
   gerente: "Gerente Departamental",
@@ -27,7 +28,7 @@ export function cloudPanel(page, ctx) {
     ]);
     const choose = `<label>Usuario<select name="uid" required>${users
       .filter((u) => u.role === "asistente" && u.active)
-      .map((u) => `<option value="${esc(u.id)}">${esc(u.id)}</option>`)
+      .map((u) => `<option value="${esc(u.id)}">${esc(userDescription(u))}</option>`)
       .join("")}</select></label>`;
     return `<section class="panel"><h2>Usuarios y permisos</h2><p>Las asignaciones se verifican nuevamente en cada operación del servidor.</p>${table(["UID", "Descripción", "Rol", "Estado", "Gerencias", "Revisión", ""], rows)}${cloud.spark && technical ? `<details id="access-requests" class="access-section" ${pending ? "open" : ""}><summary>Solicitudes de acceso · ${pending} pendientes</summary>${table(["UID", "Correo", "Estado"], requests.map(r => [esc(r.id), esc(r.email), registered.has(r.id) ? "Perfil registrado" : "Pendiente"]))}</details>` : ""}${
       director

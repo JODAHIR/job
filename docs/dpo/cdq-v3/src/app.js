@@ -1,14 +1,14 @@
-import {annulPanel,bindAnnulPanel} from './remision-annul-ui.js?v=cah-anulaciones-20261018';
-import {pages,resolveRoute,routeFor} from './navigation.js?v=cah-anulaciones-20261018';
-import {navigationMarkup,bindNavigation,breadcrumb} from './navigation-ui.js?v=cah-anulaciones-20261018';
-import {installTables} from './tables.js?v=cah-anulaciones-20261018';
-import {validateResponsables} from './gerencia-contacts.js?v=cah-anulaciones-20261018';
-import { visibleModule, manageRecord, manageCacStatus } from './permissions.js?v=cah-anulaciones-20261018';
-import {phase3Panel,bindPhase3} from './phase3-ui.js?v=cah-anulaciones-20261018';
-import { metrics, scope, deadlineStatus, mutate, states, integer } from "./domain.js?v=cah-anulaciones-20261018";
-import { LocalRepository } from "./repository.js?v=cah-anulaciones-20261018";
-import { demo } from "./seed.js?v=cah-anulaciones-20261018";
-import { cloudPanel, bindCloudPanel } from "./cloud-ui.js?v=cah-anulaciones-20261018";
+import {annulPanel,bindAnnulPanel} from './remision-annul-ui.js?v=cah-cac-contactos-20261018';
+import {pages,resolveRoute,routeFor} from './navigation.js?v=cah-cac-contactos-20261018';
+import {navigationMarkup,bindNavigation,breadcrumb} from './navigation-ui.js?v=cah-cac-contactos-20261018';
+import {installTables} from './tables.js?v=cah-cac-contactos-20261018';
+import {validateResponsables,validateContact,assignedUsers,userDescription} from './gerencia-contacts.js?v=cah-cac-contactos-20261018';
+import { visibleModule, manageRecord, manageCacStatus } from './permissions.js?v=cah-cac-contactos-20261018';
+import {phase3Panel,bindPhase3} from './phase3-ui.js?v=cah-cac-contactos-20261018';
+import { metrics, scope, deadlineStatus, mutate, states, integer } from "./domain.js?v=cah-cac-contactos-20261018";
+import { LocalRepository } from "./repository.js?v=cah-cac-contactos-20261018";
+import { demo } from "./seed.js?v=cah-cac-contactos-20261018";
+import { cloudPanel, bindCloudPanel } from "./cloud-ui.js?v=cah-cac-contactos-20261018";
 const $ = (s) => document.querySelector(s),
   esc = (v) =>
     String(v ?? "").replace(
@@ -119,7 +119,7 @@ async function load() {
     else {$('#app').setAttribute('aria-busy','true');$('#refresh-cloud').disabled=true;}
 
     try{
-      if(!cloud){const module=await import('./firebase-client.bundle.js?v=cah-anulaciones-20261018');cloud=await module.connectFirebase();let initial=true;stopAuth=cloud.watchAuth(()=>{if(initial){initial=false;return}if(cloudMode()||!cloud.auth.currentUser){mode='cloud';epoch++;db=null;page="dashboard";functionId="list";window.history.replaceState(null,"",routeFor(page));$('#modal').close();load()}});}
+      if(!cloud){const module=await import('./firebase-client.bundle.js?v=cah-cac-contactos-20261018');cloud=await module.connectFirebase();let initial=true;stopAuth=cloud.watchAuth(()=>{if(initial){initial=false;return}if(cloudMode()||!cloud.auth.currentUser){mode='cloud';epoch++;db=null;page="dashboard";functionId="list";window.history.replaceState(null,"",routeFor(page));$('#modal').close();load()}});}
       if(cloud.authOnly){authenticationView();return}
       if(!cloud.auth.currentUser){loginView();return}
       const result=await cloud.load();if(token!==epoch||!cloudMode())return;db=result;
@@ -286,10 +286,11 @@ function collectionView() {
       ]);
   }
   if (page === "cacs") {
-    headers = ["CAC / dependencia", "Gerencia", "Estado", ""];
+    headers = ["CAC / dependencia", "Gerencia", "Contacto", "Estado", ""];
     rows = s.cacs.map((c) => [
       esc(c.name),
       esc(name("gerencias", c.gerenciaId)),
+      c.contacto ? [c.contacto.nombre,c.contacto.cargo,c.contacto.correo,`Interno: ${c.contacto.interno}`,`Celular: ${c.contacto.celular}`].map(esc).join("<br>") : "Pendiente de completar",
       c.active === false ? "Inactivo" : "Activo",
       edit(page, c.id) + (cloudMode() && manageCacStatus(cloud.profile) ? `<button class="link" data-cac-status="${esc(c.id)}">${c.active === false ? "Activar" : "Deshabilitar"}</button>` : ""),
     ]);
@@ -571,8 +572,13 @@ function form(c, id, defaults = {}) {
       fields+='</fieldset>';
     }
   }
-  if (c === "cacs")
+  if (c === "cacs") {
     fields += pick("gerenciaId", "Gerencia", db.gerencias, (r) => r.name);
+    fields += '<p id="cac-assigned-users" role="status"></p><fieldset><legend>Contacto del CAC</legend>';
+    for(const [key,label,type] of [['nombre','Nombre','text'],['cargo','Cargo','text'],['correo','Correo','email'],['interno','Interno','tel'],['celular','Celular','tel']])
+      fields+=field(`cac_${key}`,label,type,row.contacto?.[key]??'');
+    fields+='</fieldset>';
+  }
   if (c === "remisiones")
     fields +=
       pick(
@@ -655,6 +661,14 @@ function form(c, id, defaults = {}) {
   $("#modal").innerHTML =
     `<form id="record-form"><div class="section-line"><h2>${id ? "Editar" : "Nuevo"} registro</h2><button type="button" id="close" aria-label="Cerrar">✕</button></div><p>${pages.find((p) => p[0] === c)[2]} · ${cloudMode()?"Firebase institucional":mode === "demo" ? "Demostración" : "Mis registros locales"}</p><div class="form-fields">${fields}${cloudMode()?"<p>Responsable: identidad de la sesión autenticada.</p>":field("actor", "Responsable de este registro")}</div><p id="form-error" role="alert"></p><div class="form-actions"><button type="button" id="cancel" class="secondary">Cancelar</button><button class="primary" type="submit">Guardar registro</button></div></form>`;
   $("#close").onclick = $("#cancel").onclick = () => $("#modal").close();
+  if(c==='cacs'){
+    const select=$('#record-form').elements.gerenciaId;
+    const refreshAssigned=()=>{
+      const users=assignedUsers(db.users,select.value);
+      $('#cac-assigned-users').textContent=!select.value?'Seleccione una gerencia para consultar sus encargados.':users.length?'Encargados de la gerencia: '+users.map(userDescription).join(' · '):'Sin usuarios encargados asignados a esta gerencia.';
+    };
+    select.onchange=refreshAssigned;refreshAssigned();
+  }
   $("#record-form").onsubmit = async (e) => {
     e.preventDefault();
     const submit = e.submitter;
@@ -664,6 +678,9 @@ function form(c, id, defaults = {}) {
       const actor = cloudMode()?cloud.auth.currentUser.uid:data.actor.trim();
       delete data.actor;
       for (const k in data) data[k] = data[k].trim();
+      if(c==='cacs'){
+        data.contacto=validateContact(Object.fromEntries(['nombre','cargo','correo','interno','celular'].map(k=>{const key='cac_'+k,value=data[key];delete data[key];return [k,value];})));
+      }
       if(c==='gerencias'){
         const contactos=[0,1].map(i=>Object.fromEntries(['nombre','cargo','correo','interno','celular'].map(k=>{const key=`contact_${i}_${k}`,value=data[key];delete data[key];return [k,value];})));
         data.responsables=validateResponsables(contactos);
