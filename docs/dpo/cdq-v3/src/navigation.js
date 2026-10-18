@@ -11,7 +11,7 @@ export const groups=[
  {id:'informes',label:'INFORMES',modules:[{id:'history',label:'Períodos históricos',functions:[]},{id:'reports',label:'Reportes y comparativos',functions:[{id:'list',label:'Reportes documentales',report:'documentos'},{id:'differences',label:'Diferencias y faltantes',report:'diferencias'},{id:'deadlines',label:'Plazos',report:'plazos'},{id:'comparison',label:'Comparativos',report:'comparativo'}]}]}
 ];
 export const modules=groups.flatMap(g=>g.modules.map(m=>({...m,group:g.id,groupLabel:g.label})));
-export const pages=[['dashboard','◫','Dashboard'],...modules.map(m=>[m.id,'▤',m.label]),['migration','⇧','Migración local']];
+export const pages=[['dashboard','◫','Inicio'],...modules.map(m=>[m.id,'▤',m.label]),['migration','⇧','Migración local']];
 export const allowed=(page,ctx)=>ctx.mode==='cloud'?visibleModule(ctx.profile,page):!['access','deadlines','migration'].includes(page);
 export function functionsFor(module,ctx){return module.functions.filter(fn=>(!fn.admin||ctx.profile?.role==='technical')&&(!fn.write||ctx.mode!=='cloud'||manageRecord(ctx.profile,fn.write))&&(!fn.cloudOnly||ctx.mode==='cloud')&&(!fn.sparkOnly||ctx.spark)&&(!fn.page||allowed(fn.page,ctx)));}
 export function resolveRoute(hash,ctx){
