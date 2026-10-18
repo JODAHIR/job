@@ -1,13 +1,14 @@
-import {pages,resolveRoute,routeFor} from './navigation.js';
-import {navigationMarkup,bindNavigation,breadcrumb} from './navigation-ui.js?v=cah-acordeones-20261017';
-import {installTables} from './tables.js';
-import {validateResponsables} from './gerencia-contacts.js';
-import { visibleModule, manageRecord, manageCacStatus } from './permissions.js';
-import {phase3Panel,bindPhase3} from './phase3-ui.js?v=cah-acordeones-20261017';
-import { metrics, scope, deadlineStatus, mutate, states, integer } from "./domain.js";
-import { LocalRepository } from "./repository.js";
-import { demo } from "./seed.js";
-import { cloudPanel, bindCloudPanel } from "./cloud-ui.js?v=cah-acordeones-20261017";
+import {annulPanel,bindAnnulPanel} from './remision-annul-ui.js?v=cah-anulaciones-20261018';
+import {pages,resolveRoute,routeFor} from './navigation.js?v=cah-anulaciones-20261018';
+import {navigationMarkup,bindNavigation,breadcrumb} from './navigation-ui.js?v=cah-anulaciones-20261018';
+import {installTables} from './tables.js?v=cah-anulaciones-20261018';
+import {validateResponsables} from './gerencia-contacts.js?v=cah-anulaciones-20261018';
+import { visibleModule, manageRecord, manageCacStatus } from './permissions.js?v=cah-anulaciones-20261018';
+import {phase3Panel,bindPhase3} from './phase3-ui.js?v=cah-anulaciones-20261018';
+import { metrics, scope, deadlineStatus, mutate, states, integer } from "./domain.js?v=cah-anulaciones-20261018";
+import { LocalRepository } from "./repository.js?v=cah-anulaciones-20261018";
+import { demo } from "./seed.js?v=cah-anulaciones-20261018";
+import { cloudPanel, bindCloudPanel } from "./cloud-ui.js?v=cah-anulaciones-20261018";
 const $ = (s) => document.querySelector(s),
   esc = (v) =>
     String(v ?? "").replace(
@@ -68,8 +69,8 @@ const canManage=(c)=>!cloudMode()||manageRecord(cloud?.profile,c);
 function gerenciaFor(c,row){if(c==='gerencias')return row.id;if(c==='cacs')return row.gerenciaId;if(c==='remisiones')return find('cacs',row.cacId).gerenciaId;if(c==='lotes')return gerenciaFor('remisiones',find('remisiones',row.remisionId));if(c==='documentos')return gerenciaFor('lotes',find('lotes',row.loteId));return gerenciaFor('documentos',find('documentos',row.documentId));}
 function loginView(error=''){  hidePrivateShell();
   if(cloud?.authOnly){authenticationView(error);return;}
-  $('#app').innerHTML=`<main class="content login-page"><section class="panel"><h1>CONTROL DOCUMENTO</h1><p>Para acceder al sistema debes ser funcionario de la Dirección de Operaciones</p></p><form id="login-form" class="form-fields"><label>Correo<input name="email" type="email" autocomplete="username" required></label><label>Contraseña<input name="password" type="password" autocomplete="current-password" required></label>
-</form>
+  $('#app').innerHTML=`<main class="content login-page"><section class="panel"><h1>CONTROL DOCUMENTO</h1><p>Para acceder al sistema debes ser funcionario de la Dirección de Operaciones</p><form id="login-form" class="form-fields"><label>Correo<input name="email" type="email" autocomplete="username" required></label><label>Contraseña<input name="password" type="password" autocomplete="current-password" required></label>
+<button class="primary">Ingresar</button></form>
 <p id="login-error" role="alert">${esc(error)}</p>
 <div class="form-actions">
   <button id="google-login" class="primary" type="button">Ingresar con Google</button>
@@ -118,7 +119,7 @@ async function load() {
     else {$('#app').setAttribute('aria-busy','true');$('#refresh-cloud').disabled=true;}
 
     try{
-      if(!cloud){const module=await import('./firebase-client.bundle.js?v=cah-acordeones-20261017');cloud=await module.connectFirebase();let initial=true;stopAuth=cloud.watchAuth(()=>{if(initial){initial=false;return}if(cloudMode()||!cloud.auth.currentUser){mode='cloud';epoch++;db=null;page="dashboard";functionId="list";window.history.replaceState(null,"",routeFor(page));$('#modal').close();load()}});}
+      if(!cloud){const module=await import('./firebase-client.bundle.js?v=cah-anulaciones-20261018');cloud=await module.connectFirebase();let initial=true;stopAuth=cloud.watchAuth(()=>{if(initial){initial=false;return}if(cloudMode()||!cloud.auth.currentUser){mode='cloud';epoch++;db=null;page="dashboard";functionId="list";window.history.replaceState(null,"",routeFor(page));$('#modal').close();load()}});}
       if(cloud.authOnly){authenticationView();return}
       if(!cloud.auth.currentUser){loginView();return}
       const result=await cloud.load();if(token!==epoch||!cloudMode())return;db=result;
@@ -178,13 +179,14 @@ function filters() {
     db.cacs.filter((c) => !f.gerencia || c.gerenciaId === f.gerencia),
     f.cac,
     "Todos los CAC",
-  )}${[['remission','Estado de remisión',['Registrada','Pendiente']],['reconciliation','Conciliación',['Conciliado','Con diferencias']],['verification','Verificación',states],['observation','Observación',['Pendiente','En proceso','Regularizada']],['deadline','Situación del plazo',['En plazo','Próximo','Vencido','Sin plazo']]].map(([key,label,values])=>select(key,label,values.map(id=>({id,name:id})),f[key],'Todos')).join('')}<button id="clear-filters" class="secondary">Limpiar filtros</button></section>`;
+  )}${[['remission','Estado de remisión',['Registrada','Pendiente']],['reconciliation','Conciliación',['Conciliado','Con diferencias']],['verification','Verificación',states],['observation','Observación',['Pendiente','En proceso','Regularizada']],['deadline','Situación del plazo',['En plazo','Próximo','Vencido','Sin plazo']]].map(([key,label,values])=>select(key,label,values.map(id=>({id,name:id})),f[key],'Todos')).join('')}<label>Estado administrativo<select data-filter="lifecycle"><option value="" ${!f.lifecycle?'selected':''}>Vigentes</option><option value="annulled" ${f.lifecycle==='annulled'?'selected':''}>Anuladas (histórico)</option><option value="all" ${f.lifecycle==='all'?'selected':''}>Todas (incluye anuladas)</option></select></label><button id="clear-filters" class="secondary">Limpiar filtros</button></section>`;
 }
 function table(headers, rows) {
   return `<div class="table-scroll"><table><thead><tr>${headers.map((h) => `<th>${h}</th>`).join("")}</tr></thead><tbody>${rows.length ? rows.map((r) => `<tr>${r.map((c) => `<td>${c}</td>`).join("")}</tr>`).join("") : `<tr><td colspan="${headers.length}" class="empty">No hay registros para esta selección.</td></tr>`}</tbody></table></div>`;
 }
+function recordAnnulled(c,id){let row=find(c,id);if(c==='observaciones'){row=find('documentos',row.documentId);c='documentos';}if(c==='documentos'){row=find('lotes',row.loteId);c='lotes';}if(c==='lotes'){row=find('remisiones',row.remisionId);c='remisiones';}return c==='remisiones'&&!!row?.annulment;}
 const edit = (c, id) =>
-  (canManage(c)?`<button class="link" data-edit="${c}" data-id="${esc(id)}">Editar ↗</button>`:'')+contextLink(c,id);
+  (canManage(c)&&!recordAnnulled(c,id)?`<button class="link" data-edit="${c}" data-id="${esc(id)}">Editar ↗</button>`:'')+contextLink(c,id);
 const childEntity={gerencias:'cacs',cacs:'remisiones',remisiones:'lotes',lotes:'documentos',documentos:'observaciones'};
 let contextFilter=null;
 function contextLink(entity,id){const child=childEntity[entity];return child&&(!cloudMode()||visibleModule(cloud.profile,child))?` <button class="link" data-related="${entity}" data-id="${esc(id)}">Ver ${esc(pages.find(p=>p[0]===child)[2])} →</button>`:'';}
@@ -260,7 +262,7 @@ function dashboard() {
     ["Remisiones próximas a vencer",m.dueSoon,"Hoy y próximos 5 días calendario"],
     ["Remisiones vencidas",m.overdue,"Según vencimiento registrado"],
   ];
-  return `<div class="section-line"><div><h2>Resumen del período</h2><p>Una visión integral de la recepción y revisión documental.</p></div>${cloudMode()?"":badge("Actualizado con datos locales", "neutral")}</div><div class="stats">${cards.map(([label, n, sub], i) => `<article class="stat ${i === 3 ? "featured" : ""}"><button class="link" data-indicator="${i}">Ver detalle →</button><span>${label}</span><strong>${n}</strong><small>${sub}</small></article>`).join("")}</div><div class="progress-card"><div><span class="eyebrow">AVANCE DOCUMENTAL</span><h2>${m.progress === null ? "Sin documentos para verificar" : `${m.progress.toFixed(1)} % revisado`}</h2><p>${m.reviewed} de ${m.individual} documentos individualizados · Los faltantes se informan por separado.</p></div><div class="progress-track"><div style="width:${m.progress ?? 0}%"></div></div></div><section class="panel"><div class="section-line"><div><h2>Control de lotes</h2><p>Cantidad declarada frente a documentos individualizados</p></div>${!cloudMode() || visibleModule(cloud.profile,"lotes") ? '<button data-nav="lotes" class="secondary">Ver lotes →</button>' : ""}</div>${groupedLots(m.lots)}</section>`;
+  return `<div class="section-line"><div><h2>Resumen del período</h2><p>Una visión integral de la recepción y revisión documental.</p></div>${cloudMode()?"":badge("Actualizado con datos locales", "neutral")}</div><div class="stats">${cards.map(([label, n, sub], i) => `<article class="stat ${i === 3 ? "featured" : ""}"><button class="link" data-indicator="${i}">Ver detalle →</button><span>${label}</span><strong>${n}</strong><small>${sub}</small></article>`).join("")}</div><div class="progress-card"><div><span class="eyebrow">AVANCE DOCUMENTAL</span><h2>${m.progress === null ? "Sin documentos para verificar" : `${m.progress.toFixed(1)} % revisado`}</h2><p>${m.reviewed} de ${m.individual} documentos individualizados · Los faltantes se informan por separado.</p></div><div class="progress-track"><div style="width:${m.progress ?? 0}%"></div></div></div><section class="panel"><div class="section-line"><div><h2>Control de lotes</h2><p>Cantidad declarada frente a documentos individualizados · Las anuladas solo se incluyen al seleccionarlas en el filtro administrativo</p></div>${!cloudMode() || visibleModule(cloud.profile,"lotes") ? '<button data-nav="lotes" class="secondary">Ver lotes →</button>' : ""}</div>${groupedLots(m.lots)}</section>`;
 }
 function collectionView() {
   const s = scope(db, f);
@@ -299,7 +301,7 @@ function collectionView() {
       esc(period(r)),
       esc(r.expediente ?? "—"), esc(r.remittedOn ?? "—"), esc(r.receivedOn ?? "—"), esc(r.dueOn ?? "—"),
       db.lotes.filter((l) => l.remisionId === r.id).length,
-      badge("Registrada", "ok"),
+      badge(r.annulment ? "Anulada" : "Registrada", r.annulment ? "warn" : "ok"),
       edit(page, r.id),
     ]);
     for (const pending of s.pendingRows)
@@ -374,7 +376,7 @@ function collectionView() {
   const filtered = rows.filter((r) =>
     r.join(" ").toLowerCase().includes(esc(query.toLowerCase())),
   );
-  return `<section class="panel">${contextFilter?.child===page?'<p>Mostrando registros vinculados. <button id="clear-context" class="link">Ver todos los registros del período</button></p>':""}<div class="section-line"><div><h2>${pages.find((p) => p[0] === page)[2]}</h2><p>${page === "gerencias" || page === "cacs" ? "Catálogo institucional · independiente del período" : "Registros del período y ámbito seleccionados"}</p></div>${page === "remisiones" && cloud?.spark && canManage("remisiones") ? `<button class="secondary" id="generate-remisiones">Generar remisiones de la gerencia</button>` : ""}${canManage(collection)?`<button class="primary" data-new="${collection}">+ Nuevo registro</button>`:""}</div><input class="search" id="search" placeholder="Buscar en esta tabla…" value="${esc(query)}" aria-label="Buscar en la tabla">${table(headers, filtered)}<p class="footnote">${filtered.length} resultados · ${cloudMode()?"Persistencia en Firestore · permisos validados en servidor":"Cambios guardados únicamente en este navegador."}</p></section>`;
+  return `${page==='remisiones'&&cloudMode()?annulPanel({...cloudContext(),render}):''}<section class="panel">${contextFilter?.child===page?'<p>Mostrando registros vinculados. <button id="clear-context" class="link">Ver todos los registros del período</button></p>':""}<div class="section-line"><div><h2>${pages.find((p) => p[0] === page)[2]}</h2><p>${page === "gerencias" || page === "cacs" ? "Catálogo institucional · independiente del período" : "Registros del período y ámbito seleccionados"}</p></div>${page === "remisiones" && cloud?.spark && canManage("remisiones") ? `<button class="secondary" id="generate-remisiones">Generar remisiones de la gerencia</button>` : ""}${canManage(collection)?`<button class="primary" data-new="${collection}">+ Nuevo registro</button>`:""}</div><input class="search" id="search" placeholder="Buscar en esta tabla…" value="${esc(query)}" aria-label="Buscar en la tabla">${table(headers, filtered)}<p class="footnote">${filtered.length} resultados · ${cloudMode()?"Persistencia en Firestore · permisos validados en servidor":"Cambios guardados únicamente en este navegador."}</p></section>`;
 }
 function history() {
   const keys = [
@@ -384,7 +386,7 @@ function history() {
       y = b.split("-").map(Number);
     return y[0] - x[0] || y[1] - x[1] || y[2] - x[2];
   });
-  return `<section class="panel"><h2>Períodos registrados</h2><p>Consulta todos los períodos guardados, respetando los filtros de gerencia y CAC.</p>${table(
+  return `<section class="panel"><h2>Períodos registrados</h2><p>Consulta todos los períodos guardados, respetando los filtros de gerencia y CAC. Use Estado administrativo para incluir anuladas; sus documentos se conservan.</p>${table(
     ["Período", "Remisiones", "Declarados", "Individualizados", "Avance", ""],
     keys.map((k) => {
       const [year, month, half] = k.split("-").map(Number),
@@ -457,6 +459,7 @@ function render() {
   installTables();
 }
 function bind() {
+  if(page==='remisiones'&&cloudMode())bindAnnulPanel({...cloudContext(),render});
   bindNavigation(hash=>{contextFilter=null;navigate(hash)});
   formBaseline=formSnapshot();
   if($('#clear-context'))$('#clear-context').onclick=()=>{contextFilter=null;render()};
@@ -541,6 +544,7 @@ function generateRemisiones() {
   try {
    const result=await cloud.call('generateRemisiones',{...Object.fromEntries(new FormData(e.target)),gerenciaId,year,month,half});
    for(const row of result.created){const i=db.remisiones.findIndex(r=>r.id===row.id);if(i<0)db.remisiones.push(row);else db.remisiones[i]=row;}
+   for(const c of result.controls||[]){db.remisionControls??=[];const i=db.remisionControls.findIndex(x=>x.id===c.id);if(i<0)db.remisionControls.push(c);else db.remisionControls[i]=c;}
    render();
    $('#generation-result').textContent=`Registradas: ${result.created.length}. Existentes: ${result.skipped.length}. Errores: ${result.failed.length}. `+result.failed.map(x=>x.name+': '+x.error).join(' | ');
    if(!result.failed.length)updateNotice('Actualización realizada');
@@ -550,7 +554,7 @@ function generateRemisiones() {
  $('#modal').showModal();
 }
 function form(c, id, defaults = {}) {
-  if(!canManage(c))return;
+  if(!canManage(c)||id&&recordAnnulled(c,id))return;
   const row = id ? find(c, id) : defaults,
     field = (key, label, type = "text", value = row[key] ?? "") =>
       `<label>${label}<input name="${key}" type="${type}" value="${esc(value)}" required ${type === "number" ? 'min="0" step="1"' : ""} maxlength="${key === "description" ? 2000 : 150}"></label>`,
@@ -603,14 +607,14 @@ function form(c, id, defaults = {}) {
       pick(
         "remisionId",
         "Remisión · CAC y período",
-        db.remisiones,
+        db.remisiones.filter(r=>!r.annulment),
         (r) => `${name("cacs", r.cacId)} · ${period(r)}`,
       ) +
       field("code", "Identificador del lote") +
       field("declared", "Cantidad declarada", "number");
   if (c === "documentos")
     fields +=
-      pick("loteId", "Lote · CAC y período", db.lotes, (l) => {
+      pick("loteId", "Lote · CAC y período", db.lotes.filter(l=>!recordAnnulled('lotes',l.id)), (l) => {
         const r = find("remisiones", l.remisionId);
         return `${l.code} · ${name("cacs", r.cacId)} · ${period(r)}`;
       }) +
@@ -629,7 +633,7 @@ function form(c, id, defaults = {}) {
       pick(
         "documentId",
         "Documento",
-        db.documentos,
+        db.documentos.filter(d=>!recordAnnulled('documentos',d.id)),
         (d) => `${d.type} ${d.number} · ${find("lotes", d.loteId).code}`,
       ) +
       field("description", "Descripción") +
@@ -670,12 +674,14 @@ function form(c, id, defaults = {}) {
         data.declared = integer(data.declared, "Cantidad declarada");
       if(cloudMode()){
         const cloudRow={...data,id:id||crypto.randomUUID()};
+        if(c==='remisiones'&&!id)cloudRow.origin='manual';
         const result=c==='gerencias'&&!id
           ? await cloud.call('createGerencia',{...cloudRow,reason:'Alta de catálogo'})
           : await cloud.call('saveRecord',{gerenciaId:gerenciaFor(c,cloudRow),collection:c,row:cloudRow,expectedRevision:row.revision??0});
         $('#modal').close();
         if(cloud.spark && result.saved){
           const upsert=(entity,record)=>{const index=db[entity].findIndex(r=>r.id===record.id);if(index<0)db[entity].push(record);else db[entity][index]=record;};
+          if(result.control){db.remisionControls??=[];upsert('remisionControls',result.control);}
           upsert(c,result.saved);if(result.related)upsert('documentos',result.related);
           render();updateNotice('Actualización realizada');
         }else await load();

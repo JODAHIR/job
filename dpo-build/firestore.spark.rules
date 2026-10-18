@@ -1,5 +1,8 @@
 rules_version = '2';
-// Spark prototype: normalized records; no deletions; each write has an atomic audit.
+// Spark: no physical deletions. Annulment preserves all sibling records.
+// remisionControls/{id}: version/counts integers, collection/recordId/revision describe the fenced write.
+// annulOperations/{id}: immutable actor/role/time/reason, 1–2 confirmed ids and omitted results.
+// Legacy controls: trusted technical initialization while dependent writes are frozen.
 // deadlineDays is published by a trusted administrative calendar procedure, not by clients.
 service cloud.firestore {
  match /databases/{database}/documents {
@@ -33,7 +36,8 @@ service cloud.firestore {
   }
   function schema(g,c,r) {
    return c == 'cacs' ? r.keys().hasOnly(['id','name','gerenciaId','active','revision','updatedAt','uniqueKey']) && r.get('active',true) is bool && part(r.name) && r.gerenciaId == g
-    : c == 'remisiones' ? r.keys().hasOnly(['id','cacId','year','month','half','receivedOn','expediente','remittedOn','originalDueOn','dueOn','calendarVersion','businessDays','timeZone','revision','updatedAt','uniqueKey'])
+    : c == 'remisiones' ? r.keys().hasOnly(['id','cacId','year','month','half','receivedOn','expediente','remittedOn','originalDueOn','dueOn','calendarVersion','businessDays','timeZone','revision','updatedAt','uniqueKey','origin','annulment'])
+       && r.get('origin','unknown') in ['unknown','manual','automatic']
        && existsParent(g,'cacs',r.cacId) && r.year is int && r.year >= 2000 && r.year <= 2100 && r.month is int && r.month >= 1 && r.month <= 12 && r.half in [1,2]
        && ((!('expediente' in r) && !('remittedOn' in r)) || text(r.expediente,150) && civil(r.remittedOn) && r.remittedOn <= r.receivedOn)
        && text(r.receivedOn,10) && text(r.dueOn,10) && text(r.originalDueOn,10) && ident(r.calendarVersion) && r.businessDays == 10 && r.timeZone == 'America/Asuncion'
@@ -47,10 +51,50 @@ service cloud.firestore {
   }
   function stable(c,r,b) {
    return c == 'cacs' ? r.gerenciaId == b.gerenciaId
-    : c == 'remisiones' ? r.cacId == b.cacId && r.year == b.year && r.month == b.month && r.half == b.half && r.receivedOn == b.receivedOn && r.dueOn == b.dueOn && r.originalDueOn == b.originalDueOn && r.calendarVersion == b.calendarVersion
+    : c == 'remisiones' ? r.cacId == b.cacId && r.year == b.year && r.month == b.month && r.half == b.half && r.receivedOn == b.receivedOn && r.dueOn == b.dueOn && r.originalDueOn == b.originalDueOn && r.calendarVersion == b.calendarVersion && r.get('origin','unknown') == b.get('origin','unknown')
     : c == 'lotes' ? r.remisionId == b.remisionId
     : c == 'documentos' ? r.loteId == b.loteId && (b.firstObservationId == '' || r.firstObservationId == b.firstObservationId)
     : r.documentId == b.documentId;
+  }
+
+  function controlPath(g,r) { return /databases/$(database)/documents/gerencias/$(g)/remisionControls/$(r); }
+  function rootId(g,c,r) {
+    return c == 'remisiones' ? r.id : c == 'lotes' ? r.remisionId
+      : c == 'documentos' ? parent(g,'lotes',r.loteId).remisionId
+      : parent(g,'lotes',parent(g,'documentos',r.documentId).loteId).remisionId;
+  }
+  function fenced(g,c,r,creating) {
+    let rid=rootId(g,c,r);
+    let cp=controlPath(g,rid);
+    let next=getAfter(cp).data;
+    return (c == 'remisiones' && creating ? next.version == 1 : next.version == get(cp).data.version + 1)
+      && (c == 'remisiones' && creating || parent(g,'remisiones',rid).get('annulment',null) == null)
+      && getAfter(/databases/$(database)/documents/gerencias/$(g)/remisiones/$(rid)).data.get('annulment',null) == null
+      && (!creating || next.collection == c && next.recordId == r.id);
+  }
+  function operational(g,c,r,creating) {
+    return c == 'cacs' || fenced(g,c,r,creating) && (c != 'remisiones' || r.get('annulment',null) == null);
+  }
+  function canAnnul(g,control) {
+    return role('technical') || control.lots == 0 && (role('director') || role('gerente') && profile().gerenciaId == g);
+  }
+  function annulChange(g,id,r,b) {
+    let a=r.annulment;
+    let cp=controlPath(g,id);
+    let control=get(cp).data;
+    let next=getAfter(cp).data;
+    let op=getAfter(/databases/$(database)/documents/gerencias/$(g)/annulOperations/$(a.operationId)).data;
+    let preview=get(/databases/$(database)/documents/gerencias/$(g)/annulPreviews/$(a.operationId)).data;
+    return b.get('annulment',null) == null && canAnnul(g,control)
+      && preview.actor == request.auth.uid && request.time <= preview.at + duration.value(5,'m')
+      && preview.versions[id].revision == b.revision && preview.versions[id].controlVersion == control.version
+      && r.diff(b).affectedKeys().hasOnly(['annulment','revision','updatedAt'])
+      && a.keys().hasAll(['operationId','actor','role','at','reason','lots','documents','observations'])
+      && a.keys().hasOnly(['operationId','actor','role','at','reason','lots','documents','observations'])
+      && ident(a.operationId) && a.actor == request.auth.uid && a.role == profile().role && a.at == request.time && text(a.reason,2000)
+      && a.lots == control.lots && a.documents == control.documents && a.observations == control.observations
+      && next.version == control.version + 1 && next.collection == 'annulment' && next.recordId == id
+      && id in op.ids && op.actor == request.auth.uid && op.at == request.time && op.reason == a.reason;
   }
   function receipt(r) {
    let d = get(/databases/$(database)/documents/deadlineDays/$(r.calendarVersion+'_'+r.receivedOn)).data;
@@ -72,10 +116,77 @@ service cloud.firestore {
    match /{c}/{id} {
     allow read: if c in ['cacs','remisiones','lotes','documentos','observaciones','audit'] && readScope(g) && exists(/databases/$(database)/documents/gerencias/$(g));
     allow create: if c in ['cacs','remisiones','lotes','documentos','observaciones'] && writeScope(g) && (c != 'cacs' || role('technical')) && exists(/databases/$(database)/documents/gerencias/$(g))
-      && basic(g,c,id,request.resource.data,'gerencias/'+g+'/'+c+'/'+id) && schema(g,c,request.resource.data) && request.resource.data.revision == 1
+      && operational(g,c,request.resource.data,true) && basic(g,c,id,request.resource.data,'gerencias/'+g+'/'+c+'/'+id) && schema(g,c,request.resource.data) && request.resource.data.revision == 1
       && (c != 'remisiones' || receipt(request.resource.data) && get(/databases/$(database)/documents/gerencias/$(g)/cacs/$(request.resource.data.cacId)).data.get('active',true) == true);
     allow update: if c in ['cacs','remisiones','lotes','documentos','observaciones'] && (writeScope(g) && (c != 'cacs' || role('technical')) || role('director') && c == 'cacs' && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['active','revision','updatedAt'])) && exists(/databases/$(database)/documents/gerencias/$(g))
-      && basic(g,c,id,request.resource.data,'gerencias/'+g+'/'+c+'/'+id) && schema(g,c,request.resource.data) && request.resource.data.revision == resource.data.revision + 1 && stable(c,request.resource.data,resource.data);
+      && operational(g,c,request.resource.data,false) && basic(g,c,id,request.resource.data,'gerencias/'+g+'/'+c+'/'+id) && schema(g,c,request.resource.data) && request.resource.data.revision == resource.data.revision + 1 && stable(c,request.resource.data,resource.data);
+   }
+   match /remisiones/{id} {
+    allow update: if readScope(g) && annulChange(g,id,request.resource.data,resource.data)
+      && request.resource.data.revision == resource.data.revision + 1
+      && request.resource.data.updatedAt == request.time && audited(g,'remisiones',id,request.resource.data);
+   }
+   match /remisionControls/{id} {
+    allow read: if readScope(g);
+    function validControl(r) {
+      return r.keys().hasAll(['version','lots','documents','observations','collection','recordId','revision','updatedAt'])
+       && r.keys().hasOnly(['version','lots','documents','observations','collection','recordId','revision','updatedAt'])
+       && r.version is int && r.version > 0 && r.lots is int && r.lots >= 0 && r.documents is int && r.documents >= 0 && r.observations is int && r.observations >= 0
+       && ident(r.recordId) && r.revision is int && r.revision > 0 && r.updatedAt == request.time;
+    }
+    function validAdvance(r) {
+      let p=/databases/$(database)/documents/gerencias/$(g)/$(r.collection)/$(r.recordId);
+      let saved=getAfter(p).data;
+      let added=!exists(p);
+      return r.collection in ['remisiones','lotes','documentos','observaciones'] && writeScope(g)
+       && rootId(g,r.collection,saved) == id && saved.revision == r.revision && saved.updatedAt == request.time
+       && (added || saved.revision == get(p).data.revision + 1)
+       && r.lots == resource.data.lots + (r.collection == 'lotes' && added ? 1 : 0)
+       && r.documents == resource.data.documents + (r.collection == 'documentos' && added ? 1 : 0)
+       && r.observations == resource.data.observations + (r.collection == 'observaciones' && added ? 1 : 0);
+    }
+    allow create: if validControl(request.resource.data) && request.resource.data.version == 1 && (
+      writeScope(g) && request.resource.data.collection == 'remisiones' && request.resource.data.recordId == id
+      && !exists(/databases/$(database)/documents/gerencias/$(g)/remisiones/$(id))
+      && getAfter(/databases/$(database)/documents/gerencias/$(g)/remisiones/$(id)).data.revision == 1
+      && request.resource.data.revision == 1 && request.resource.data.lots == 0 && request.resource.data.documents == 0 && request.resource.data.observations == 0
+      || role('technical') && request.resource.data.collection == 'initialization' && request.resource.data.recordId == id
+      && parent(g,'remisiones',id).get('annulment',null) == null && request.resource.data.revision == parent(g,'remisiones',id).revision
+      && getAfter(/databases/$(database)/documents/gerencias/$(g)/lifecycleAudit/$('init_'+id)).data.control == request.resource.data);
+    allow update: if validControl(request.resource.data) && request.resource.data.version == resource.data.version + 1 && (
+      request.resource.data.collection != 'annulment' && validAdvance(request.resource.data) || request.resource.data.collection == 'annulment' && request.resource.data.recordId == id
+      && request.resource.data.lots == resource.data.lots && request.resource.data.documents == resource.data.documents && request.resource.data.observations == resource.data.observations
+      && request.resource.data.revision == getAfter(/databases/$(database)/documents/gerencias/$(g)/remisiones/$(id)).data.revision
+      && parent(g,'remisiones',id).get('annulment',null) == null
+      && getAfter(/databases/$(database)/documents/gerencias/$(g)/remisiones/$(id)).data.annulment.actor == request.auth.uid
+      && getAfter(/databases/$(database)/documents/gerencias/$(g)/remisiones/$(id)).data.annulment.at == request.time);
+   }
+   match /lifecycleAudit/{event} {
+    allow read: if readScope(g);
+    allow create: if role('technical') && request.resource.data.keys().hasOnly(['actor','at','reason','remisionId','control'])
+      && request.resource.data.actor == request.auth.uid && request.resource.data.at == request.time && text(request.resource.data.reason,2000)
+      && event == 'init_'+request.resource.data.remisionId && !exists(controlPath(g,request.resource.data.remisionId))
+      && getAfter(controlPath(g,request.resource.data.remisionId)).data == request.resource.data.control;
+   }
+   match /annulPreviews/{operation} {
+    allow read: if readScope(g) && resource.data.actor == request.auth.uid;
+    allow create: if readScope(g) && profile().role in ['technical','director','gerente']
+      && request.resource.data.keys().hasAll(['id','actor','at','versions']) && request.resource.data.keys().hasOnly(['id','actor','at','versions'])
+      && ident(operation) && request.resource.data.id == operation && request.resource.data.actor == request.auth.uid && request.resource.data.at == request.time
+      && request.resource.data.versions is map && request.resource.data.versions.size() >= 1 && request.resource.data.versions.size() <= 2;
+   }
+   match /annulOperations/{operation} {
+    allow read: if readScope(g);
+    function linked(id) { let a=getAfter(/databases/$(database)/documents/gerencias/$(g)/remisiones/$(id)).data.annulment;
+      return a.operationId == operation && a.actor == request.auth.uid && a.at == request.time && a.reason == request.resource.data.reason; }
+    allow create: if readScope(g) && profile().role in ['technical','director','gerente']
+      && request.resource.data.keys().hasOnly(['id','actor','role','at','reason','status','ids','omitted'])
+      && request.resource.data.id == operation && ident(operation) && request.resource.data.actor == request.auth.uid && request.resource.data.role == profile().role
+      && request.resource.data.at == request.time && text(request.resource.data.reason,2000) && request.resource.data.status == 'completed'
+      && request.resource.data.ids is list && request.resource.data.ids.size() >= 1 && request.resource.data.ids.size() <= 2
+      && request.resource.data.ids.toSet().size() == request.resource.data.ids.size()
+      && request.resource.data.omitted is list && request.resource.data.omitted.size() <= 2
+      && linked(request.resource.data.ids[0]) && (request.resource.data.ids.size() == 1 || linked(request.resource.data.ids[1]));
    }
    match /audit/{event} {
     function validAudit() {
@@ -83,9 +194,10 @@ service cloud.firestore {
      let p = a.collection == 'gerencias' ? /databases/$(database)/documents/gerencias/$(g) : /databases/$(database)/documents/gerencias/$(g)/$(a.collection)/$(a.recordId);
      return a.keys().hasOnly(['id','actor','collection','recordId','at','before','after','reason']) && a.id == event && a.actor == request.auth.uid && a.at == request.time
        && a.collection in ['gerencias','cacs','remisiones','lotes','documentos','observaciones'] && ident(a.recordId) && text(a.reason,2000)
+       && (a.collection != 'remisiones' || a.after.get('annulment',null) == null || a.reason == a.after.annulment.reason)
        && event == a.collection+'_'+a.recordId+'_'+string(a.after.revision) && a.after == getAfter(p).data && (exists(p) ? a.before == get(p).data && a.after.revision == a.before.revision+1 : a.before == null && a.after.revision == 1);
     }
-    allow create: if (role('director') || writeScope(g)) && validAudit();
+    allow create: if (role('director') || writeScope(g) || role('gerente') && profile().gerenciaId == g && request.resource.data.collection == 'remisiones' && getAfter(/databases/$(database)/documents/gerencias/$(g)/remisiones/$(request.resource.data.recordId)).data.annulment.actor == request.auth.uid) && validAudit();
    }
   }
   match /sparkIds/{k} {

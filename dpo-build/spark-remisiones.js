@@ -13,12 +13,12 @@ export async function generateRemisiones(store,auth,input){
  const cacs=(await getDocsFromServer(collection(store,`gerencias/${gerenciaId}/cacs`))).docs.map(d=>d.data()).filter(c=>c.active!==false);
  if(cacs.length>200)throw Error('La generación admite hasta 200 CAC activos por gerencia.');
  const existing=(await getDocsFromServer(collection(store,`gerencias/${gerenciaId}/remisiones`))).docs.map(d=>d.data());
- const result={created:[],skipped:[],failed:[]};
+ const result={created:[],controls:[],skipped:[],failed:[]};
  const save=sparkWriter(store,auth);
  for(const cac of cacs){
   if(existing.some(r=>r.cacId===cac.id&&r.year===year&&r.month===month&&r.half===half)){result.skipped.push(cac.id);continue;}
-  const row={id:crypto.randomUUID(),cacId:cac.id,year,month,half,receivedOn,remittedOn,expediente};
-  try{const saved=await save({gerenciaId,collection:'remisiones',row,reason:'Generación de remisiones por gerencia'});result.created.push(saved.saved);}
+  const row={id:crypto.randomUUID(),cacId:cac.id,year,month,half,receivedOn,remittedOn,expediente,origin:'automatic'};
+  try{const saved=await save({gerenciaId,collection:'remisiones',row,reason:'Generación de remisiones por gerencia'});result.created.push(saved.saved);if(saved.control)result.controls.push(saved.control);}
   catch(error){
    // Otra sesión puede haber creado el mismo CAC/período mientras se procesaba.
    if(error.message==='Ya existe ese registro.')result.skipped.push(cac.id);

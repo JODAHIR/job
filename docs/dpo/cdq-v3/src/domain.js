@@ -33,7 +33,8 @@ export function deadlineStatus(r, today = new Intl.DateTimeFormat('en-CA', {time
 export function scope(db, f) {
   const cacs=db.cacs.filter(c=>(!f.gerencia||c.gerenciaId===f.gerencia)&&(!f.cac||c.id===f.cac));
   const ids=new Set(cacs.map(c=>c.id));
-  const baseRem=db.remisiones.filter(r=>ids.has(r.cacId)&&matches(r,f));
+  const periodRem=db.remisiones.filter(r=>ids.has(r.cacId)&&matches(r,f));
+  const baseRem=periodRem.filter(r=>f.lifecycle==='all'||(f.lifecycle==='annulled')===!!r.annulment);
   const counts=new Map();
   for(const d of db.documentos)counts.set(d.loteId,(counts.get(d.loteId)||0)+1);
   let rem=baseRem.filter(r=>f.remission!=='Pendiente'&&(!f.deadline||deadlineStatus(r,f.today)===f.deadline));
@@ -48,8 +49,8 @@ export function scope(db, f) {
   const expectedRows=[];
   const months=f.month?[+f.month]:Array.from({length:12},(_,i)=>i+1);
   for(const c of cacs)for(const month of months)for(const half of f.half?[+f.half]:[1,2]){
-    const existing=baseRem.find(r=>r.cacId===c.id&&r.month===month&&r.half===half);
-    if(c.active!==false||existing)expectedRows.push({cacId:c.id,year:+f.year,month,half,existing});
+    const existing=periodRem.find(r=>r.cacId===c.id&&r.month===month&&r.half===half);
+    if((c.active!==false||existing)&&(f.lifecycle==='annulled'?!!existing?.annulment:!existing?.annulment||f.lifecycle==='all'))expectedRows.push({cacId:c.id,year:+f.year,month,half,existing});
   }
   const pendingRows=expectedRows.filter(r=>!r.existing&&!f.deadline&&!f.reconciliation&&!f.verification&&!f.observation&&f.remission!=='Registrada');
   return {cacs,rem,lots,docs,observations,counts,expectedRows,pendingRows};

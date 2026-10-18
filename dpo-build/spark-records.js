@@ -1,9 +1,10 @@
+import {lifecycleFence} from './spark-lifecycle.js';
 import {validateResponsables} from './gerencia-contacts.js';
 import { doc, runTransaction, serverTimestamp } from 'firebase/firestore';
 
 const schemas = {
   gerencias: ['id','name','responsables'], cacs: ['id','name','gerenciaId','active'],
-  remisiones: ['id','cacId','year','month','half','receivedOn','expediente','remittedOn'],
+  remisiones: ['id','cacId','year','month','half','receivedOn','expediente','remittedOn','origin'],
   lotes: ['id','remisionId','code','declared'],
   documentos: ['id','loteId','type','number','state'],
   observaciones: ['id','documentId','description','date','owner','status'],
@@ -12,7 +13,7 @@ export function sparkRow(entity, row) {
   if (!schemas[entity] || !row || Object.keys(row).some(k => !schemas[entity].includes(k))) throw Error('Campos no admitidos.');
   const result = {};
   for (const k of schemas[entity]) {
-    if(['expediente','remittedOn'].includes(k) && row[k] === undefined)continue;
+    if(['expediente','remittedOn','origin'].includes(k) && row[k] === undefined)continue;
     const v = k === 'active' ? (row[k] ?? true) : row[k];
     if (v === undefined) throw Error(`Falta ${k}.`);
     result[k] = typeof v === 'string' ? v.trim() : v;
@@ -63,6 +64,7 @@ export function sparkWriter(store, auth) {
           after = {...after, ...day.data(), receivedOn: row.receivedOn};
         }
       }
+      const fence=await lifecycleFence(tx,store,g,entity,after,before);
       let related = null;
       if (entity === 'observaciones') {
         const dref = doc(store,`gerencias/${g}/documentos/${row.documentId}`), ds = await tx.get(dref);
@@ -75,6 +77,7 @@ export function sparkWriter(store, auth) {
         id:`${c}_${saved.id}_${saved.revision}`, actor:auth.currentUser.uid, collection:c, recordId:saved.id,
         at:serverTimestamp(),before:previous,after:saved,reason:reason.trim(),
       });
+      if(fence)tx.set(fence.ref,fence.after);
       tx.set(ref,after);
       tx.set(identityRef,{gerenciaId:g,entity,recordId:row.id});
       tx.set(lock,{path,gerenciaId:g,entity,recordId:row.id});
@@ -82,7 +85,7 @@ export function sparkWriter(store, auth) {
       writeAudit(entity,before,after);
       if (related) { tx.set(related.ref,related.after); writeAudit('documentos',related.before,related.after); }
       const view = value => {const {updatedAt,...record}=value;return record;};
-      return {id:row.id,revision:after.revision,saved:view(after),related:related?view(related.after):null};
+      return {id:row.id,revision:after.revision,saved:view(after),related:related?view(related.after):null,control:fence?{...view(fence.after),id:fence.ref.id,gerenciaId:g}:null};
     });
   };
 }

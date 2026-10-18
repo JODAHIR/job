@@ -1,4 +1,4 @@
-import { scope, metrics } from "./domain.js";
+import { scope, metrics } from "./domain.js?v=cah-anulaciones-20261018";
 export const reportTypes = {
   documentos: "Documentos por estado",
   observados: "Documentos observados",
@@ -89,6 +89,7 @@ export function makeReport(
         (obs.get(d.id) || [])
           .map((o) => `${o.description} (${o.date}; ${o.owner}; ${o.status})`)
           .join("\n"),
+        rs.get(ls.get(d.loteId).remisionId).annulment ? "Anulada" : "Vigente",
       ]);
   }
   if (["diferencias", "faltantes"].includes(type)) {
@@ -111,6 +112,7 @@ export function makeReport(
           n,
           n - l.declared,
           Math.max(0, l.declared - n),
+          rs.get(l.remisionId).annulment ? "Anulada" : "Vigente",
         ];
       })
       .filter((r) => (type === "faltantes" ? r[7] > 0 : r[6] !== 0));
@@ -149,10 +151,11 @@ export function makeReport(
                 ? "Vence hoy"
                 : `Próximo (${horizon} días)`,
           r.calendarVersion || "—",
+          r.annulment ? "Anulada" : "Vigente",
         ];
       })
       .filter((r) => r[5] === "" || r[5] <= horizon);
-    note = `Fecha de corte: ${today} (Paraguay). Ventana: ${horizon} días calendario. El vencimiento proviene del cálculo de días hábiles del servidor. No existe cierre administrativo de remisión: se informa vencimiento aunque los documentos estén revisados. Los filtros avanzados delimitan las remisiones seleccionadas.`;
+    note = `Fecha de corte: ${today} (Paraguay). Ventana: ${horizon} días calendario. El vencimiento proviene del cálculo de días hábiles del servidor. La verificación documental no suspende el plazo. Las remisiones anuladas solo aparecen si se incluyen mediante el filtro administrativo. Los filtros avanzados delimitan las remisiones seleccionadas.`;
   }
   if (type === "comparativo") {
     if (!["quincena", "mes", "año"].includes(comparison))
@@ -217,6 +220,8 @@ export function makeReport(
     note =
       "Mismo ámbito de gerencia y CAC. Mes: meses completos; año: años completos; quincena: seleccionada contra anterior (ambas: Q2 contra Q1). Los filtros avanzados se aplican a ambos períodos. Porcentajes sobre documentos individualizados.";
   }
+  if(type !== 'comparativo')headers.push('Estado administrativo');
+  note += ' Ámbito administrativo: '+(f.lifecycle==='all'?'incluye anuladas':f.lifecycle==='annulled'?'solo anuladas (histórico)':'solo vigentes; anuladas excluidas')+'. La anulación conserva fechas y documentos; no equivale a regularización.';
   return {
     title: reportTypes[type],
     headers,
@@ -225,6 +230,6 @@ export function makeReport(
     generatedAt: new Date().toISOString(),
     source,
     filters: { ...f, state, comparison, horizon },
-    scopeLabel: `Año ${f.year}; mes ${f.month}; quincena ${f.half || "ambas"}; gerencia ${f.gerencia ? gs.get(f.gerencia)?.name || f.gerencia : "todas las autorizadas"}; CAC ${f.cac ? cs.get(f.cac)?.name || f.cac : "todos los autorizados"}; estado ${state || "todos"}; remisión ${f.remission || "todas"}; conciliación ${f.reconciliation || "todas"}; verificación ${f.verification || "todas"}; observación ${f.observation || "todas"}; plazo ${f.deadline || "todos"}`,
+    scopeLabel: `Año ${f.year}; mes ${f.month}; quincena ${f.half || "ambas"}; gerencia ${f.gerencia ? gs.get(f.gerencia)?.name || f.gerencia : "todas las autorizadas"}; CAC ${f.cac ? cs.get(f.cac)?.name || f.cac : "todos los autorizados"}; estado ${state || "todos"}; remisión ${f.remission || "todas"}; conciliación ${f.reconciliation || "todas"}; verificación ${f.verification || "todas"}; observación ${f.observation || "todas"}; plazo ${f.deadline || "todos"}; administrativo ${f.lifecycle || "vigentes"}`,
   };
 }

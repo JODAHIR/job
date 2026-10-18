@@ -4,7 +4,7 @@ export const visibleModule = (p, page) => {
  if (!p?.active) return false;
  if (admin(p)) return true;
  const modules = {
- gerente: ['dashboard','documentos','observaciones','history'],
+ gerente: ['dashboard','remisiones','documentos','observaciones','history'],
  director: ['dashboard','documentos','observaciones','history','reports','lotes','remisiones','access','cacs','deadlines'],
  asistente: ['dashboard','remisiones','lotes','documentos','observaciones','history'],
  };

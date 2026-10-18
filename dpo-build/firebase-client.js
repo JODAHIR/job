@@ -143,7 +143,9 @@ export async function connectFirebase() {
         }
       }
       // Bounded parallel reads; audit is fetched separately using cursors.
+      if(spark)state.remisionControls=[];
       for (const g of state.gerencias) {
+        if(spark){const controls=await getDocsFromServer(query(collection(store,"gerencias",g.id,"remisionControls"),limit(3001)));if(controls.size>3000)throw Error("Más de 3000 controles: consulta incompleta bloqueada.");state.remisionControls.push(...controls.docs.map(d=>({...d.data(),id:d.id,gerenciaId:g.id})));}
         const snapshots = await Promise.all(
           entities.map((c) =>
             getDocsFromServer(

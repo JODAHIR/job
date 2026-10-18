@@ -46,7 +46,7 @@ export function cloudPanel(page, ctx) {
         (!ctx.f.gerencia || c.gerenciaId === ctx.f.gerencia) &&
         (!ctx.f.cac || c.id === ctx.f.cac),
     );
-    const rows = db.remisiones
+    const rows = db.remisiones.filter(r=>ctx.f.lifecycle==='all'||(ctx.f.lifecycle==='annulled')===!!r.annulment)
       .filter(
         (r) =>
           allowedCacs.some((c) => c.id === r.cacId) &&

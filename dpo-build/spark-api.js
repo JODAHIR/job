@@ -1,3 +1,4 @@
+import {initializeControl,previewAnnulments,annulRemisiones} from './spark-lifecycle.js';
 import {generateRemisiones} from './spark-remisiones.js';
 import {doc,collection,getDocFromServer,getDocsFromServer,runTransaction,serverTimestamp,query,orderBy,startAfter,limit} from 'firebase/firestore';
 import {sparkWriter} from './spark-records.js';
@@ -14,6 +15,9 @@ export function sparkAPI(api) {
  api.requestAccess=requestAccess;
  api.spark=true;
  return async(name,input)=>{
+  if(name==='initializeControl')return initializeControl(store,auth,input);
+  if(name==='previewAnnulments')return previewAnnulments(store,auth,input);
+  if(name==='annulRemisiones')return annulRemisiones(store,auth,input);
   if(name==='publishCalendar') return publishSparkCalendar(store,auth,input);
   if(name==='generateRemisiones') return generateRemisiones(store,auth,input);
   if(name==='saveRecord') return save(input);
