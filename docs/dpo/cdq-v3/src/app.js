@@ -71,7 +71,7 @@ function nView(error=''){
   if(cloud?.authOnly){authenticationView(error);return;}
   $('#app').innerHTML=`<main class="content login-page"><section class="panel"><h1>CONTROL DOCUMENTO</h1><p>Inicia sesión para acceder al sistema.</p><form id="login-form" class="form-fields">
   <label>Correo<input name="email" type="email" autocomplete="username" required></label><label>Contraseña<input name="password" type="password" autocomplete="current-password" required></label>
-  <button class="primary">Ingresar</button></form><p id="login-error" role="alert">${esc(error)}</p><div class="form-actions"><button  class="primary" id="google-login" class="secondary">Ingresar con Google</button>${cloud?.auth.currentUser?'
+  <button class="primary">Ingresar</button></form><p id="login-error" role="alert">${esc(error)}</p><div class="form-actions"><button id="google-login" class="primary">Ingresar con Google</button>${cloud?.auth.currentUser?'
   <button id="logout">Cerrar sesión</button>':''}</div><p>Falta agregar cuenta</p></section></main>`;
   $('#login-form').onsubmit=async e=>{e.preventDefault();const b=e.submitter;b.disabled=true;const values=new FormData(e.target);try{await cloud.login(values.get('email'),values.get('password'))}catch(error){$('#login-error').textContent=error.message;b.disabled=false}};
   $('#google-login').onclick=async()=>{try{await cloud.google()}catch(error){$('#login-error').textContent=error.message}};
