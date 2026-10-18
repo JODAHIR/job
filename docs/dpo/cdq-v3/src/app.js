@@ -66,8 +66,7 @@ const cloudContext=()=>({cloud,db,f,esc,table,badge,find,load,localRepository:Lo
 const phase3Context=()=>({db,f,mode,cloud,esc,table,render,load,repo});
 const canManage=(c)=>!cloudMode()||manageRecord(cloud?.profile,c);
 function gerenciaFor(c,row){if(c==='gerencias')return row.id;if(c==='cacs')return row.gerenciaId;if(c==='remisiones')return find('cacs',row.cacId).gerenciaId;if(c==='lotes')return gerenciaFor('remisiones',find('remisiones',row.remisionId));if(c==='documentos')return gerenciaFor('lotes',find('lotes',row.loteId));return gerenciaFor('documentos',find('documentos',row.documentId));}
-function nView(error=''){
-  hidePrivateShell();
+function loginView(error=''){  hidePrivateShell();
   if(cloud?.authOnly){authenticationView(error);return;}
   $('#app').innerHTML=`<main class="content login-page"><section class="panel"><h1>CONTROL DOCUMENTO</h1><p>Inicia sesión para acceder al sistema.</p><form id="login-form" class="form-fields">
   <label>Correo<input name="email" type="email" autocomplete="username" required></label><label>Contraseña<input name="password" type="password" autocomplete="current-password" required></label>
