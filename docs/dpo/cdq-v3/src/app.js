@@ -73,14 +73,24 @@ function loginView(error=''){  hidePrivateShell();
 <p id="login-error" role="alert">${esc(error)}</p>
 <div class="form-actions">
   <button id="google-login" class="secondary" type="button">Ingresar con Google</button>
+  ${!cloud?.auth.currentUser ? '<button id="google-signup" class="primary" type="button">Crear cuenta con Google</button>' : ''}
   ${cloud?.auth.currentUser ? '<button id="logout">Cerrar sesión</button>' : ''}
 </div>
-<p>Falta agregar cuenta</p></section></main>`;
+<p>¿Primera vez? Crea tu cuenta con Google y luego solicita acceso. El administrador deberá asignarte los permisos antes de que puedas consultar o registrar documentos.</p></section></main>`;
   $('#login-form').onsubmit=async e=>{e.preventDefault();const b=e.submitter;b.disabled=true;const values=new FormData(e.target);try{await cloud.login(values.get('email'),values.get('password'))}catch(error){$('#login-error').textContent=error.message;b.disabled=false}};
-  $('#google-login').onclick=async()=>{try{await cloud.google()}catch(error){$('#login-error').textContent=error.message}};
+  const googleAccess=async()=>{
+    const buttons=[$('#google-login'),$('#google-signup')].filter(Boolean);
+    buttons.forEach(button=>button.disabled=true);
+    try{await cloud.google()}catch(error){
+      const messages={'auth/popup-closed-by-user':'Se cerró la ventana de Google. Puedes intentarlo nuevamente.','auth/popup-blocked':'Permite la ventana emergente para continuar con Google.','auth/network-request-failed':'No se pudo conectar. Revisa tu conexión e inténtalo nuevamente.'};
+      if($('#login-error'))$('#login-error').textContent=messages[error.code]||error.message;
+    }finally{buttons.forEach(button=>button.disabled=false);}
+  };
+  $('#google-login').onclick=googleAccess;
+  if($('#google-signup'))$('#google-signup').onclick=googleAccess;
   if($('#logout'))$('#logout').onclick=()=>cloud.logout();
   if(cloud?.spark && cloud.auth.currentUser){const button=document.createElement('button');button.textContent='Solicitar acceso';button.className='primary';button.onclick=async()=>{button.disabled=true;try{await cloud.requestAccess();$('#login-error').textContent='Solicitud registrada. El administrador debe asignar su perfil.';}catch(e){$('#login-error').textContent=e.message;button.disabled=false}};$('.login-page .panel').append(button);}
-  if(!cloud){$('#google-login').disabled=true;$('#login-form button').disabled=true;}
+  if(!cloud){$('#google-login').disabled=true;if($('#google-signup'))$('#google-signup').disabled=true;$('#login-form button').disabled=true;}
 }
 function authenticationView(error=''){
   hidePrivateShell();
