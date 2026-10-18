@@ -72,11 +72,11 @@ function loginView(error=''){  hidePrivateShell();
 <button class="primary">Ingresar</button></form>
 <p id="login-error" role="alert">${esc(error)}</p>
 <div class="form-actions">
-  <button id="google-login" class="secondary" type="button">Ingresar con Google</button>
+  <button id="google-login" class="primary" type="button">Ingresar con Google</button>
   ${!cloud?.auth.currentUser ? '<button id="google-signup" class="primary" type="button">Crear cuenta con Google</button>' : ''}
   ${cloud?.auth.currentUser ? '<button id="logout">Cerrar sesión</button>' : ''}
 </div>
-<p>¿Primera vez? Crea tu cuenta con Google y luego solicita acceso. El administrador deberá asignarte los permisos antes de que puedas consultar o registrar documentos.</p></section></main>`;
+<p></p></section></main>`;
   $('#login-form').onsubmit=async e=>{e.preventDefault();const b=e.submitter;b.disabled=true;const values=new FormData(e.target);try{await cloud.login(values.get('email'),values.get('password'))}catch(error){$('#login-error').textContent=error.message;b.disabled=false}};
   const googleAccess=async()=>{
     const buttons=[$('#google-login'),$('#google-signup')].filter(Boolean);
