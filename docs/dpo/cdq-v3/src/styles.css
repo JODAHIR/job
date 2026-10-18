@@ -628,7 +628,7 @@ header {gap:16px;flex-wrap:wrap;height:auto;min-height:78px}
 #institution-nav svg{width:20px;height:20px;flex:0 0 20px}
 #institution-nav button:hover{background:#243e60}
 #institution-nav button:focus-visible{outline:3px solid #91c9ff;outline-offset:-3px}
-#institution-nav button[aria-current=page]{background:#245caa;color:#fff;box-shadow:inset 3px 0 #a1d3ff}
+#institution-nav button[aria-current=page]{background:#167b7e;color:#fff;box-shadow:inset 3px 0 #a1d3ff}
 #institution-nav button:disabled{opacity:.55;cursor:not-allowed}
 .nav-brand{display:flex;align-items:center;gap:12px;color:#fff;margin:0 8px 22px}
 .nav-brand strong{font-size:24px;letter-spacing:1px;border-bottom:3px solid #6ab4f4}
