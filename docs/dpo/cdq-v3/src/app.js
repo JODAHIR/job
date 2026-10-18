@@ -1,13 +1,13 @@
 import {pages,resolveRoute,routeFor} from './navigation.js';
-import {navigationMarkup,bindNavigation,breadcrumb} from './navigation-ui.js?v=cah-login-20261017';
+import {navigationMarkup,bindNavigation,breadcrumb} from './navigation-ui.js?v=cah-acordeones-20261017';
 import {installTables} from './tables.js';
 import {validateResponsables} from './gerencia-contacts.js';
 import { visibleModule, manageRecord, manageCacStatus } from './permissions.js';
-import {phase3Panel,bindPhase3} from './phase3-ui.js?v=cah-login-20261017';
+import {phase3Panel,bindPhase3} from './phase3-ui.js?v=cah-acordeones-20261017';
 import { metrics, scope, deadlineStatus, mutate, states, integer } from "./domain.js";
 import { LocalRepository } from "./repository.js";
 import { demo } from "./seed.js";
-import { cloudPanel, bindCloudPanel } from "./cloud-ui.js?v=cah-login-20261017";
+import { cloudPanel, bindCloudPanel } from "./cloud-ui.js?v=cah-acordeones-20261017";
 const $ = (s) => document.querySelector(s),
   esc = (v) =>
     String(v ?? "").replace(
@@ -68,7 +68,7 @@ const canManage=(c)=>!cloudMode()||manageRecord(cloud?.profile,c);
 function gerenciaFor(c,row){if(c==='gerencias')return row.id;if(c==='cacs')return row.gerenciaId;if(c==='remisiones')return find('cacs',row.cacId).gerenciaId;if(c==='lotes')return gerenciaFor('remisiones',find('remisiones',row.remisionId));if(c==='documentos')return gerenciaFor('lotes',find('lotes',row.loteId));return gerenciaFor('documentos',find('documentos',row.documentId));}
 function loginView(error=''){  hidePrivateShell();
   if(cloud?.authOnly){authenticationView(error);return;}
-  $('#app').innerHTML=`<main class="content login-page"><section class="panel"><h1>CONTROL DOCUMENTO</h1><p>Inicia sesión para acceder al sistema.</p><form id="login-form" class="form-fields">
+  $('#app').innerHTML=`<main class="content login-page"><section class="panel"><h1>CONTROL DOCUMENTO</h1><p>Inicia sesión para acceder al sistema.</p><form id="login-form" class="form-fields"><label>Correo<input name="email" type="email" autocomplete="username" required></label><label>Contraseña<input name="password" type="password" autocomplete="current-password" required></label>
 <button class="primary">Ingresar</button></form>
 <p id="login-error" role="alert">${esc(error)}</p>
 <div class="form-actions">
@@ -108,7 +108,7 @@ async function load() {
     else {$('#app').setAttribute('aria-busy','true');$('#refresh-cloud').disabled=true;}
 
     try{
-      if(!cloud){const module=await import('./firebase-client.bundle.js?v=cah-login-20261017');cloud=await module.connectFirebase();let initial=true;stopAuth=cloud.watchAuth(()=>{if(initial){initial=false;return}if(cloudMode()||!cloud.auth.currentUser){mode='cloud';epoch++;db=null;page="dashboard";functionId="list";window.history.replaceState(null,"",routeFor(page));$('#modal').close();load()}});}
+      if(!cloud){const module=await import('./firebase-client.bundle.js?v=cah-acordeones-20261017');cloud=await module.connectFirebase();let initial=true;stopAuth=cloud.watchAuth(()=>{if(initial){initial=false;return}if(cloudMode()||!cloud.auth.currentUser){mode='cloud';epoch++;db=null;page="dashboard";functionId="list";window.history.replaceState(null,"",routeFor(page));$('#modal').close();load()}});}
       if(cloud.authOnly){authenticationView();return}
       if(!cloud.auth.currentUser){loginView();return}
       const result=await cloud.load();if(token!==epoch||!cloudMode())return;db=result;
@@ -208,6 +208,24 @@ function lotRows(lots) {
     ];
   });
 }
+function groupedLots(lots) {
+  if (!lots.length) return '<p>No hay lotes para esta selección.</p>';
+  const remisiones = new Map(db.remisiones.map(r => [r.id, r]));
+  const cacs = new Map(db.cacs.map(c => [c.id, c]));
+  const levels = [
+    l => {const c=cacs.get(remisiones.get(l.remisionId)?.cacId);return [c?.gerenciaId || '', name('gerencias',c?.gerenciaId) || 'Sin gerencia'];},
+    l => {const r=remisiones.get(l.remisionId);return [String(r?.year || ''), String(r?.year || 'Sin año')];},
+    l => {const r=remisiones.get(l.remisionId);return [String(r?.month).padStart(2,'0')+'-'+r?.half, period(r || {})];},
+    l => {const r=remisiones.get(l.remisionId);return [r?.cacId || '', name('cacs',r?.cacId) || 'Sin CAC'];}
+  ];
+  function renderGroups(items, depth) {
+    if(depth===levels.length) return table(["Lote", "CAC / dependencia", "Período", "Declarados", "Individualizados", "Conciliación", ""],lotRows(items));
+    const groups=new Map();
+    for(const lot of items){const [key,label]=levels[depth](lot);if(!groups.has(key))groups.set(key,{label,items:[]});groups.get(key).items.push(lot);}
+    return [...groups.entries()].sort(([a],[b])=>a.localeCompare(b,'es',{numeric:true})).map(([,g])=>`<details class="lot-group"><summary>${esc(g.label)} <small>${g.items.length} ${g.items.length===1?'lote':'lotes'} · ${g.items.reduce((sum,l)=>sum+l.declared,0)} declarados</small></summary><div class="lot-group-content">${renderGroups(g.items,depth+1)}</div></details>`).join('');
+  }
+  return renderGroups(lots,0);
+}
 function dashboard() {
   const m = metrics(db, f);
   const cards = [
@@ -232,7 +250,7 @@ function dashboard() {
     ["Remisiones próximas a vencer",m.dueSoon,"Hoy y próximos 5 días calendario"],
     ["Remisiones vencidas",m.overdue,"Según vencimiento registrado"],
   ];
-  return `<div class="section-line"><div><h2>Resumen del período</h2><p>Una visión integral de la recepción y revisión documental.</p></div>${cloudMode()?"":badge("Actualizado con datos locales", "neutral")}</div><div class="stats">${cards.map(([label, n, sub], i) => `<article class="stat ${i === 3 ? "featured" : ""}"><button class="link" data-indicator="${i}">Ver detalle →</button><span>${label}</span><strong>${n}</strong><small>${sub}</small></article>`).join("")}</div><div class="progress-card"><div><span class="eyebrow">AVANCE DOCUMENTAL</span><h2>${m.progress === null ? "Sin documentos para verificar" : `${m.progress.toFixed(1)} % revisado`}</h2><p>${m.reviewed} de ${m.individual} documentos individualizados · Los faltantes se informan por separado.</p></div><div class="progress-track"><div style="width:${m.progress ?? 0}%"></div></div></div><section class="panel"><div class="section-line"><div><h2>Control de lotes</h2><p>Cantidad declarada frente a documentos individualizados</p></div>${!cloudMode() || visibleModule(cloud.profile,"lotes") ? '<button data-nav="lotes" class="secondary">Ver lotes →</button>' : ""}</div>${table(["Lote", "CAC / dependencia", "Período", "Declarados", "Individualizados", "Conciliación", ""], lotRows(m.lots))}</section>`;
+  return `<div class="section-line"><div><h2>Resumen del período</h2><p>Una visión integral de la recepción y revisión documental.</p></div>${cloudMode()?"":badge("Actualizado con datos locales", "neutral")}</div><div class="stats">${cards.map(([label, n, sub], i) => `<article class="stat ${i === 3 ? "featured" : ""}"><button class="link" data-indicator="${i}">Ver detalle →</button><span>${label}</span><strong>${n}</strong><small>${sub}</small></article>`).join("")}</div><div class="progress-card"><div><span class="eyebrow">AVANCE DOCUMENTAL</span><h2>${m.progress === null ? "Sin documentos para verificar" : `${m.progress.toFixed(1)} % revisado`}</h2><p>${m.reviewed} de ${m.individual} documentos individualizados · Los faltantes se informan por separado.</p></div><div class="progress-track"><div style="width:${m.progress ?? 0}%"></div></div></div><section class="panel"><div class="section-line"><div><h2>Control de lotes</h2><p>Cantidad declarada frente a documentos individualizados</p></div>${!cloudMode() || visibleModule(cloud.profile,"lotes") ? '<button data-nav="lotes" class="secondary">Ver lotes →</button>' : ""}</div>${groupedLots(m.lots)}</section>`;
 }
 function collectionView() {
   const s = scope(db, f);
@@ -407,7 +425,7 @@ function activateNavigationFunction(fn){
  if(fn?.action==='new')form(page);
  else if(fn?.action==='generate')generateRemisiones();
  else if(fn?.report){const select=$('#report-type');if(select){select.value=fn.report;select.dispatchEvent(new Event('change'));}}
- else if(fn?.target){const target=$(fn.target);if(target){target.scrollIntoView({block:'start',behavior:'auto'});if(fn.click)target.click();else{target.setAttribute('tabindex','-1');target.focus();}}}
+ else if(fn?.target){const target=$(fn.target);if(target){for(let node=target;node;node=node.parentElement){if(node.tagName==='DETAILS')node.open=true;}target.scrollIntoView({block:'start',behavior:'auto'});if(fn.click)target.click();else{target.setAttribute('tabindex','-1');target.focus();}}}
 }
 window.addEventListener('hashchange',()=>{if(db)navigate(location.hash,true)});
 

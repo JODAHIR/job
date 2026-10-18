@@ -12,12 +12,16 @@ export function cloudPanel(page, ctx) {
   const director = cloud.profile.role === "director" || technical;
   if (page === "access") {
     const users = db.users ?? [];
+    const registered = new Set(users.map(u => u.id));
+    const requests = db.accessRequests ?? [];
+    const pending = requests.filter(r => !registered.has(r.id)).length;
+    const gerencias = new Map(db.gerencias.map(g => [g.id, g.name]));
     const rows = users.map((u) => [
       esc(u.id),
       esc(u.description || "—"),
       esc((roles[u.role] ?? u.role) + (u.secondaryRole ? " + " + roles[u.secondaryRole] : "")),
       u.active ? "Activo" : "Inactivo",
-      esc(u.gerenciaId ?? (u.gerencias ?? []).join(", ")),
+      esc(["technical", "director"].includes(u.role) ? "Todas las gerencias" : (u.gerenciaId ? [u.gerenciaId] : u.gerencias ?? []).map(id => gerencias.get(id) || "Gerencia no disponible").join(", ") || "Sin asignación"),
       String(u.revision ?? 0),
       technical && u.id!==cloud.auth.currentUser.uid ? `<button class="link" data-profile-edit="${esc(u.id)}">Editar perfil</button>` : "—",
     ]);
@@ -25,15 +29,15 @@ export function cloudPanel(page, ctx) {
       .filter((u) => u.role === "asistente" && u.active)
       .map((u) => `<option value="${esc(u.id)}">${esc(u.id)}</option>`)
       .join("")}</select></label>`;
-    return `<section class="panel"><h2>Usuarios y permisos</h2><p>Las asignaciones se verifican nuevamente en cada operación del servidor.</p>${table(["UID", "Descripción", "Rol", "Estado", "Gerencias", "Revisión", ""], rows)}${cloud.spark && technical ? `<h2 id="access-requests">Solicitudes de acceso</h2>${table(["UID", "Correo"], (db.accessRequests ?? []).map(r => [esc(r.id), esc(r.email)]))}` : ""}${
+    return `<section class="panel"><h2>Usuarios y permisos</h2><p>Las asignaciones se verifican nuevamente en cada operación del servidor.</p>${table(["UID", "Descripción", "Rol", "Estado", "Gerencias", "Revisión", ""], rows)}${cloud.spark && technical ? `<details id="access-requests" class="access-section" ${pending ? "open" : ""}><summary>Solicitudes de acceso · ${pending} pendientes</summary>${table(["UID", "Correo", "Estado"], requests.map(r => [esc(r.id), esc(r.email), registered.has(r.id) ? "Perfil registrado" : "Pendiente"]))}</details>` : ""}${
       director
-        ? `<form id="assignment-form" class="form-fields"><h2>Asignar o retirar gerencias a un asistente</h2>${choose}<fieldset><legend>Asignación completa que reemplazará la actual</legend>${db.gerencias.map((g) => `<label class="check-label"><input type="checkbox" name="gerencias" value="${esc(g.id)}">${esc(g.name)}</label>`).join("")}</fieldset>${input("reason", "Motivo")}<button class="primary">Guardar asignación completa</button></form>` : ""}${technical ? `<form id="profile-form" class="form-fields"><h2>Provisionar perfil</h2><p>El UID debe corresponder a una cuenta creada en Firebase Authentication. El administrador tiene acceso operativo global. El segundo rol es opcional y no reduce sus permisos. No puede modificar su propio perfil.</p>${input("uid", "UID de Firebase Authentication")}<label>Descripción del usuario (opcional)<textarea name="description" maxlength="500" rows="3" placeholder="Nombre de referencia, función o información del usuario"></textarea></label><label>Rol<select name="role">${Object.entries(
+        ? `<details class="access-section"><summary>Asignar o retirar gerencias a un asistente</summary><form id="assignment-form" class="form-fields">${choose}<fieldset><legend>Asignación completa que reemplazará la actual</legend>${db.gerencias.map((g) => `<label class="check-label"><input type="checkbox" name="gerencias" value="${esc(g.id)}">${esc(g.name)}</label>`).join("")}</fieldset>${input("reason", "Motivo")}<button class="primary">Guardar asignación completa</button></form></details>` : ""}${technical ? `<details class="access-section"><summary>Provisionar perfil</summary><form id="profile-form" class="form-fields"><p>El UID debe corresponder a una cuenta creada en Firebase Authentication. El administrador tiene acceso operativo global. El segundo rol es opcional y no reduce sus permisos. No puede modificar su propio perfil.</p>${input("uid", "UID de Firebase Authentication")}<label>Descripción del usuario (opcional)<textarea name="description" maxlength="500" rows="3" placeholder="Nombre de referencia, función o información del usuario"></textarea></label><label>Rol<select name="role">${Object.entries(
             roles,
           )
             .map(([id, label]) => `<option value="${id}">${label}</option>`)
             .join(
               "",
-            )}</select></label><label>Segundo rol (solo administrador)<select name="secondaryRole"><option value="">Ninguno</option><option value="director">Director de Operaciones</option><option value="asistente">Asistente operativo</option><option value="gerente">Gerente Departamental</option></select></label><label>Estado<select name="active"><option value="true">Activo</option><option value="false">Inactivo</option></select></label><label>ID de gerencia (solo Gerente)<input name="gerenciaId"></label>${input("expectedRevision", "Revisión actual (0 para nueva cuenta)", "number", "0")}${input("reason", "Motivo")}<button class="primary">Guardar perfil</button></form>` : ""
+            )}</select></label><label>Segundo rol (solo administrador)<select name="secondaryRole"><option value="">Ninguno</option><option value="director">Director de Operaciones</option><option value="asistente">Asistente operativo</option><option value="gerente">Gerente Departamental</option></select></label><label>Estado<select name="active"><option value="true">Activo</option><option value="false">Inactivo</option></select></label><label>ID de gerencia (solo Gerente)<input name="gerenciaId"></label>${input("expectedRevision", "Revisión actual (0 para nueva cuenta)", "number", "0")}${input("reason", "Motivo")}<button class="primary">Guardar perfil</button></form></details>` : ""
     }<p id="cloud-message" role="status"></p></section>`;
   }
   if (page === "deadlines") {
@@ -125,7 +129,7 @@ export function bindCloudPanel(page, ctx) {
       const value=key==='uid'?user.id:key==='expectedRevision'?user.revision:user[key];
       form.elements[key].value=value??'';
     }
-    form.scrollIntoView({block:'start'});form.elements.description.focus();
+    form.closest('details').open=true;form.scrollIntoView({block:'start'});form.elements.description.focus();
   });
   handler("#profile-form", async (data) => {
     const payload = Object.fromEntries(data);

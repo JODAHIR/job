@@ -672,3 +672,18 @@ body.nav-compact #institution-nav button{justify-content:center}
 @media(prefers-reduced-motion:reduce){#institution-nav *{animation:none!important}}
 .login-page{margin:0 auto;max-width:620px;padding:64px 20px;min-height:100vh}
 @media(max-width:750px){.login-page{padding:32px 16px}}
+
+/* Navegación institucional y secciones desplegables */
+.nav-brand strong{border-bottom:0;padding-bottom:10px;position:relative}
+.nav-brand strong::after{content:"";position:absolute;bottom:0;left:0;right:0;height:6px;background:linear-gradient(to bottom,#e53935 0 33.33%,#fff 33.33% 66.66%,#2464bc 66.66%)}
+.nav-brand small{display:block;letter-spacing:0;font-size:12px;margin-top:5px;color:#d5e7fa}
+.nav-chatbot{display:flex;align-items:center;gap:12px;padding:14px 12px;color:#d5e7fa;text-decoration:none;border-top:1px solid #ffffff20;margin-top:12px;border-radius:6px}
+.nav-chatbot:hover,.nav-chatbot:focus-visible{background:#245b99;color:white}
+.nav-chatbot svg{width:20px;height:20px;flex-shrink:0}
+footer{justify-content:flex-end;text-align:right}
+.access-section,.lot-group{border:1px solid #dbe5eb;border-radius:8px;margin:14px 0;background:#fff}
+.access-section>summary,.lot-group>summary{padding:16px;cursor:pointer;font-weight:600;line-height:1.6}
+.access-section>form,.access-section>.table-wrap,.lot-group-content{padding:0 16px 16px}
+.lot-group>summary small{font-weight:400;color:#597586;margin-left:12px;display:inline-block}
+.lot-group-content{overflow:auto}
+@media(max-width:750px){.lot-group-content{padding:0 8px 8px}.lot-group>summary small{display:block;margin-left:16px}}
