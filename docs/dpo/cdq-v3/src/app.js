@@ -113,23 +113,26 @@ function updateNotice(message, error = false) {
   document.body.append(notice);
   updateNoticeTimer=setTimeout(()=>notice.remove(),error?8000:3500);
 }
+// The reload placeholder contains no account, permissions or document data.
+function syncShell(){return `<aside class="sync-sidebar" aria-hidden="true"><strong>CAH</strong><p>Dirección de Operaciones</p></aside><main class="sync-shell"><header><strong>CONTROL DOCUMENTO — CAH</strong><span role="status">Sincronizando…</span></header><div class="content" aria-hidden="true"><div class="sync-placeholder sync-title"></div><div class="sync-placeholder sync-filters"></div><div class="sync-cards">${'<div class="sync-placeholder"></div>'.repeat(4)}</div></div></main>`;}
+function showSyncStatus(){if($('#sync-status'))return;const status=document.createElement('div');status.id='sync-status';status.setAttribute('role','status');status.textContent='Sincronizando…';document.body.append(status);}
 async function load() {
   const token=++epoch;
   if(cloudMode()){
     const refreshing=!!(db && cloud?.auth.currentUser && $('#refresh-cloud'));
-    if(!refreshing){$('#modal').close();$('#app').innerHTML='<main class="content"><p role="status">Cargando…</p></main>';db=null;}
-    else {$('#app').setAttribute('aria-busy','true');$('#refresh-cloud').disabled=true;}
+    if(!refreshing){$('#modal').close();$('#app').innerHTML=syncShell();db=null;}
+    else {$('#app').setAttribute('aria-busy','true');$('#refresh-cloud').disabled=true;showSyncStatus();}
 
     try{
-      if(!cloud){const module=await import('./firebase-client.bundle.js?v=cah-carga-20261019');cloud=await module.connectFirebase();let initial=true;stopAuth=cloud.watchAuth(()=>{if(initial){initial=false;return}if(cloudMode()||!cloud.auth.currentUser){mode='cloud';epoch++;db=null;page="dashboard";functionId="list";window.history.replaceState(null,"",routeFor(page));$('#modal').close();load()}});}
+      if(!cloud){const module=await import('./firebase-client.bundle.js?v=cah-lotes-rapidos-20261019');cloud=await module.connectFirebase();let initial=true;stopAuth=cloud.watchAuth(()=>{if(initial){initial=false;return}if(cloudMode()||!cloud.auth.currentUser){mode='cloud';epoch++;db=null;page="dashboard";functionId="list";window.history.replaceState(null,"",routeFor(page));$('#modal').close();load()}});}
       if(cloud.authOnly){authenticationView();return}
       if(!cloud.auth.currentUser){loginView();return}
       const result=await cloud.load();if(token!==epoch||!cloudMode())return;db=result;
       if(stopProfile)stopProfile();const signature=JSON.stringify(cloud.profile);stopProfile=cloud.watchProfile(cloud.auth.currentUser.uid,p=>{if(cloudMode()&&JSON.stringify(p)!==signature){epoch++;db=null;$('#modal').close();load()}});
       if(!visibleModule(cloud.profile,page))page='dashboard';
-      $('#app').removeAttribute('aria-busy');render();if(refreshing)updateNotice('Actualización realizada');return;
+      $('#sync-status')?.remove();$('#app').removeAttribute('aria-busy');render();if(refreshing)updateNotice('Actualización realizada');return;
     }catch(error){if(token===epoch){
-      $('#app').removeAttribute('aria-busy');
+      $('#sync-status')?.remove();$('#app').removeAttribute('aria-busy');
       if(refreshing && cloud?.auth.currentUser && ['unavailable','deadline-exceeded'].includes(error.code?.replace('firestore/',''))){
         if($('#refresh-cloud'))$('#refresh-cloud').disabled=false;
         updateNotice('No se pudo actualizar. Inténtalo de nuevo.',true);
@@ -445,7 +448,7 @@ function activateNavigationFunction(fn){
 window.addEventListener('hashchange',()=>{if(db)navigate(location.hash,true)});
 
 function hidePrivateShell(){
-  db=null;document.body.classList.remove('nav-open');$('#modal').close();
+  $('#sync-status')?.remove();db=null;document.body.classList.remove('nav-open');$('#modal').close();
   const note=document.querySelector('.publication-note');if(note)note.hidden=true;
 }
 function render() {

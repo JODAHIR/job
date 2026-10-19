@@ -1,3 +1,4 @@
+import {readPool} from './read-pool.js';
 import {doc,collection,query,limit,getDocsFromServer,getDocFromServer,runTransaction,serverTimestamp} from 'firebase/firestore';
 import {lotPermission,lotQuantity,typedKey} from './lot-catalog.js';
 import {lifecycleFence} from './spark-lifecycle.js';
@@ -7,26 +8,33 @@ export async function createTypedLot(store,auth,{gerenciaId,remisionId,typeId,de
  if(!reason.trim()||reason.length>2000)throw Error('Motivo obligatorio.');
  const lotId=crypto.randomUUID();let attemptedKey;
  return runTransaction(store,async tx=>{
-  const p=(await tx.get(doc(store,'users',auth.currentUser.uid))).data();if(!lotPermission(p,g))throw Error('Sin permisos en esta gerencia.');
-  const rs=await tx.get(doc(store,`gerencias/${g}/remisiones/${rid}`));if(!rs.exists()||rs.data().annulment)throw Error('Sin remisión registrada vigente.');const r=rs.data();
-  const cs=await tx.get(doc(store,`gerencias/${g}/cacs/${r.cacId}`));if(!cs.exists()||cs.data().active===false)throw Error('CAC deshabilitado.');
-  const current=(await tx.get(doc(store,'documentCatalog/current'))).data();if(!current||current.revision!==catalogRevision)throw Error('El catálogo cambió: revise nuevamente la selección.');
+  const reqRef=doc(store,`gerencias/${g}/lotRequirements/${rid}`),controlRef=doc(store,`gerencias/${g}/remisionControls/${rid}`),remRef=doc(store,`gerencias/${g}/remisiones/${rid}`);
+  const [profileSnap,rs,currentSnap,reqSnap,control]=await Promise.all([
+   tx.get(doc(store,'users',auth.currentUser.uid)),tx.get(remRef),tx.get(doc(store,'documentCatalog/current')),tx.get(reqRef),tx.get(controlRef)
+  ]);
+  const p=profileSnap.data();if(!lotPermission(p,g))throw Error('Sin permisos en esta gerencia.');
+  if(!rs.exists()||rs.data().annulment)throw Error('Sin remisión registrada vigente.');const r=rs.data();
+  const current=currentSnap.data();if(!current||current.revision!==catalogRevision)throw Error('El catálogo cambió: revise nuevamente la selección.');
   const type=current.types[typeId];if(!type?.enabled)throw Error('Tipo no habilitado.');
-  const reqRef=doc(store,`gerencias/${g}/lotRequirements/${rid}`),reqSnap=await tx.get(reqRef);
   const version=reqSnap.exists()?reqSnap.data().catalogVersion:current.revision;
-  const frozen=(await tx.get(doc(store,'documentCatalogVersions',String(version)))).data();
+  const key=typedKey(g,r,typeId);attemptedKey=key;const lock=doc(store,'sparkKeys',key);
+  const seqId=`${r.cacId}_${r.year}_${r.half}`,seqRef=doc(store,`gerencias/${g}/lotSequences/${seqId}`);
+  const [cs,frozenSnap,existing,seqSnap]=await Promise.all([
+   tx.get(doc(store,`gerencias/${g}/cacs/${r.cacId}`)),tx.get(doc(store,'documentCatalogVersions',String(version))),tx.get(lock),tx.get(seqRef)
+  ]);
+  if(!cs.exists()||cs.data().active===false)throw Error('CAC deshabilitado.');
+  const frozen=frozenSnap.data();
   if(!frozen?.types[typeId]?.enabled)throw Error('Tipo fuera de la configuración histórica de esta remisión.');
-  const key=typedKey(g,r,typeId);attemptedKey=key;const lock=doc(store,'sparkKeys',key),existing=await tx.get(lock);
   if(existing.exists())return {status:'existing',id:existing.data().recordId,remisionId:rid,typeId};
-  const control=await tx.get(doc(store,`gerencias/${g}/remisionControls/${rid}`));
   if(!control.exists())throw Error('Un Administrador debe inicializar el control de esta remisión.');
   if(!reqSnap.exists()&&control.data().lots>0)throw Error('Lotes históricos sin clasificación: requiere revisión administrativa; no se crearán duplicados.');
-  const seqId=`${r.cacId}_${r.year}_${r.half}`,seqRef=doc(store,`gerencias/${g}/lotSequences/${seqId}`),seqSnap=await tx.get(seqRef),sequence=(seqSnap.data()?.value||0)+1;
+  const sequence=(seqSnap.data()?.value||0)+1;
   const cacCode=cs.data().name.split(' - ')[0].trim();
   if(!/^[A-Za-z0-9_-]{1,40}$/.test(cacCode))throw Error('El CAC necesita un código inicial válido antes de generar.');
   const code=`LOT_${String(sequence).padStart(2,'0')}_${type.code}_${cacCode}_${r.year}_${r.half}`;
   const after={id:lotId,remisionId:rid,code,declared,revision:1,updatedAt:serverTimestamp(),uniqueKey:key,typeId,typeCode:type.code,typeRequired:frozen.types[typeId].required,catalogVersion:version,sequence,cacCode};
-  const fence=await lifecycleFence(tx,store,g,'lotes',after,null);
+  // Reuse snapshots read by this same transaction, never a cross-transaction cache.
+  const fence=await lifecycleFence({get:ref=>ref.path===remRef.path?Promise.resolve(rs):ref.path===controlRef.path?Promise.resolve(control):tx.get(ref)},store,g,'lotes',after,null);
   if(!reqSnap.exists())tx.set(reqRef,{id:rid,catalogVersion:version,actor:auth.currentUser.uid,at:serverTimestamp()});
   tx.set(seqRef,{value:sequence,lotId,updatedAt:serverTimestamp()});
   tx.set(doc(store,`gerencias/${g}/lotes/${lotId}`),after);
@@ -48,11 +56,12 @@ export async function generateLots(store,auth,input){
  const keys=new Set();for(const i of items){identifier(i.cacId);identifier(i.typeId);lotQuantity(i.declared);const k=i.cacId+'|'+i.typeId;if(keys.has(k))throw Error('Selección duplicada.');keys.add(k);}
  const remSnap=await getDocsFromServer(query(collection(store,`gerencias/${g}/remisiones`),limit(3001)));if(remSnap.size>3000)throw Error('Consulta incompleta: reduzca el ámbito.');
  const rem=remSnap.docs.map(d=>d.data()),results=[];
- for(const item of items){
+ const byCac=new Map();items.forEach((item,index)=>{if(!byCac.has(item.cacId))byCac.set(item.cacId,[]);byCac.get(item.cacId).push({item,index});});const groups=[...byCac.values()];
+ await readPool(groups,async group=>{for(const {item,index} of group){
   const r=rem.find(r=>r.cacId===item.cacId&&r.year===year&&r.month===month&&r.half===half&&!r.annulment);
-  if(!r){results.push({...item,status:'omitted',message:'Sin remisión registrada'});continue;}
-  try{results.push({...item,...await createTypedLot(store,auth,{gerenciaId:g,remisionId:r.id,typeId:item.typeId,declared:item.declared,catalogRevision})});}
-  catch(e){results.push({...item,status:'error',message:e.message});}
- }
+  if(!r){results[index]={...item,status:'omitted',message:'Sin remisión registrada'};continue;}
+  try{results[index]={...item,...await createTypedLot(store,auth,{gerenciaId:g,remisionId:r.id,typeId:item.typeId,declared:item.declared,catalogRevision})};}
+  catch(e){results[index]={...item,status:'error',message:e.message};}
+ }},3);
  return {results};
 }
