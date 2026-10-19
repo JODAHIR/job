@@ -18,90 +18,97 @@
     <body class="chat-page">
         <a class="skip-link" href="#question">Ir a la consulta</a>
 
+
 <aside class="app-sidebar" aria-label="Menú principal">
 
-    <!-- IDENTIDAD INSTITUCIONAL -->
-    <a class="cah-brand" href="asistente.html">
-        <span class="cah-identity">
-            <strong class="cah-logo">CAH</strong>
-            <span class="cah-tricolor" aria-hidden="true">
-                <span class="stripe-red"></span>
-                <span class="stripe-white"></span>
-                <span class="stripe-blue"></span>
-            </span>
-        </span>
+  <!-- Encabezado institucional CAH -->
+  <a class="cah-brand" href="asistente.html">
+    <span class="cah-identity">
+      <strong class="cah-logo">CAH</strong>
 
-        <span class="cah-brand-info">
-            <span class="cah-system">ASISTENTE DPO</span>
-            <span class="cah-department">
-                Dirección de Operaciones
-            </span>
-        </span>
-    </a>
+      <!-- Tricolor horizontal: rojo, blanco y azul -->
+      <span class="cah-tricolor" aria-hidden="true">
+        <span class="stripe-red"></span>
+        <span class="stripe-white"></span>
+        <span class="stripe-blue"></span>
+      </span>
+    </span>
 
-    <!-- NAVEGACIÓN -->
-    <nav class="sidebody" aria-label="Navegación principal">
+    <span class="cah-brand-info">
+      <span class="cah-system">ASISTENTE DPO</span>
+      <span class="cah-department">
+        Dirección de Operaciones
+      </span>
+    </span>
+  </a>
 
-        <div class="cah-menu-heading">
-            <span class="cah-menu-icon" aria-hidden="true">
-                ☰
-            </span>
-            <span>Menú</span>
-        </div>
+  <!-- Menú original del asistente -->
+  <nav class="sidebody" aria-label="Navegación principal">
 
-        <a class="side-link active"
-           href="asistente.html"
-           aria-current="page">
-            <span class="cah-nav-icon" aria-hidden="true">▦</span>
-            <span>Asistente operativo</span>
-        </a>
-
-        <a class="side-link" href="../pizarra/">
-            <span class="cah-nav-icon" aria-hidden="true">▤</span>
-            <span>Mi Pizarra</span>
-        </a>
-
-        <a class="side-link"
-           href="https://jodahir.github.io/job/dpo/">
-            <span class="cah-nav-icon" aria-hidden="true">▣</span>
-            <span>Rendición Documentos</span>
-        </a>
-
-        <!-- Visible solamente para administradores -->
-        <a id="side-admin-link"
-           class="side-link"
-           href="admin.html"
-           hidden>
-            <span class="cah-nav-icon" aria-hidden="true">⚙</span>
-            <span>Administración</span>
-        </a>
-
-    </nav>
-
-    <!-- HISTORIAL DE CONSULTAS -->
-    <section id="sidebar-history"
-             class="sidebar-history"
-             hidden
-             aria-label="Historial de consultas">
-
-        <div class="history-heading">
-            <span>HISTORIAL</span>
-            <span id="history-count"
-                  class="history-count"></span>
-        </div>
-
-        <div id="history-groups"></div>
-
-    </section>
-
-    <!-- PIE INSTITUCIONAL -->
-    <div class="sidenote">
-        <span class="small-dot" aria-hidden="true"></span>
-        Dirección de Operaciones - CAH Py
-        <span class="side-muted">Consultas ++</span>
+    <div class="cah-menu-heading">
+      <span aria-hidden="true">☰</span>
+      <span>Menú</span>
     </div>
 
+    <a
+      class="side-link active"
+      href="asistente.html"
+      aria-current="page"
+    >
+      <span class="cah-nav-icon" aria-hidden="true">▦</span>
+      <span>Asistente operativo</span>
+    </a>
+
+    <a class="side-link" href="../pizarra/">
+      <span class="cah-nav-icon" aria-hidden="true">▤</span>
+      <span>Mi Pizarra</span>
+    </a>
+
+    <a
+      class="side-link"
+      href="https://jodahir.github.io/job/dpo/"
+    >
+      <span class="cah-nav-icon" aria-hidden="true">▣</span>
+      <span>Rendición Documentos</span>
+    </a>
+
+    <!-- La visibilidad la controla el JS existente -->
+    <a
+      id="side-admin-link"
+      class="side-link"
+      href="admin.html"
+      hidden
+    >
+      <span class="cah-nav-icon" aria-hidden="true">⚙</span>
+      <span>Administración</span>
+    </a>
+
+  </nav>
+
+  <!-- Historial original -->
+  <section
+    id="sidebar-history"
+    class="sidebar-history"
+    hidden
+    aria-label="Historial de consultas"
+  >
+    <div class="history-heading">
+      <span>HISTORIAL</span>
+      <span id="history-count" class="history-count"></span>
+    </div>
+
+    <div id="history-groups"></div>
+  </section>
+
+  <!-- Pie institucional -->
+  <div class="sidenote">
+    <span class="small-dot" aria-hidden="true"></span>
+    Dirección de Operaciones - CAH Py
+    <span class="side-muted">Consultas ++</span>
+  </div>
+
 </aside>
+
         <main class="chat-main">
             <header class="topbar">
                 <div><h1>Asistente operativo</h1></div>
