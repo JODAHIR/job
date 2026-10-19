@@ -1,4 +1,4 @@
-import {ANNUL_LIMIT,annulEligibility,treeCounts} from './remision-lifecycle.js?v=cah-anulaciones-20261018';
+import {ANNUL_LIMIT,annulEligibility,treeCounts} from './remision-lifecycle.js?v=cah-lotes-20261019';
 let origin='',status='active',lastResult='';
 export function annulPanel({db,cloud,f,esc,table}) {
   if(!cloud?.spark || !['technical','director','gerente'].includes(cloud.profile?.role))return '';

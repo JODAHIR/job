@@ -19,6 +19,7 @@ import {
   collection,
   query,
   limit,
+  orderBy,
   onSnapshot,
   connectFirestoreEmulator,
 } from "firebase/firestore";
@@ -28,7 +29,7 @@ import {
   connectFunctionsEmulator,
 } from "firebase/functions";
 import { initializeAppCheck, ReCaptchaV3Provider } from "firebase/app-check";
-import { empty, validate } from "../docs/dpo/cdq-v3/src/domain.js";
+import { empty, validate } from "./domain.js";
 import { sparkAPI } from "./spark-api.js";
 import { connectAuthenticationOnly } from "./authentication-only.js";
 
@@ -142,10 +143,18 @@ export async function connectFirebase() {
           if (s.exists()) state.gerencias.push(s.data());
         }
       }
+      if(spark){
+        const catalog=await getDocFromServer(doc(store,'documentCatalog/current'));state.catalog=catalog.exists()?catalog.data():null;
+        state.lotRequirements=[];state.catalogVersions=[];
+        if(['technical','director'].includes(profile.role)){
+          const history=await getDocsFromServer(query(collection(store,'catalogAudit'),orderBy('revision','desc'),limit(50)));state.catalogAudit=history.docs.map(d=>d.data());
+        }
+      }
       // Bounded parallel reads; audit is fetched separately using cursors.
       if(spark)state.remisionControls=[];
       for (const g of state.gerencias) {
         if(spark){const controls=await getDocsFromServer(query(collection(store,"gerencias",g.id,"remisionControls"),limit(3001)));if(controls.size>3000)throw Error("Más de 3000 controles: consulta incompleta bloqueada.");state.remisionControls.push(...controls.docs.map(d=>({...d.data(),id:d.id,gerenciaId:g.id})));}
+        if(spark){const requirements=await getDocsFromServer(query(collection(store,'gerencias',g.id,'lotRequirements'),limit(3001)));if(requirements.size>3000)throw Error('Requisitos históricos: consulta incompleta.');state.lotRequirements.push(...requirements.docs.map(d=>({...d.data(),gerenciaId:g.id})));}
         const snapshots = await Promise.all(
           entities.map((c) =>
             getDocsFromServer(
@@ -166,6 +175,7 @@ export async function connectFirebase() {
           await getDocsFromServer(collection(store, "users"))
         ).docs.map((s) => ({ ...s.data(), id: s.id }));
       }
+      if(spark){for(const v of new Set(state.lotRequirements.map(r=>r.catalogVersion))){const snap=await getDocFromServer(doc(store,'documentCatalogVersions',String(v)));if(snap.exists())state.catalogVersions.push(snap.data());}}
       state.audit.sort((a, b) => a.at.localeCompare(b.at));
       const cal = await getDocFromServer(doc(store, "settings", "calendar"));
       state.calendarVersion = cal.exists() ? cal.data().version : null;

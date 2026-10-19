@@ -1,4 +1,4 @@
-import { empty } from "./domain.js";
+import { empty } from "./domain.js?v=cah-lotes-20261019";
 export function demo() {
   const d = empty();
   d.gerencias = [

@@ -39,11 +39,11 @@ export function scope(db, f) {
   for(const d of db.documentos)counts.set(d.loteId,(counts.get(d.loteId)||0)+1);
   let rem=baseRem.filter(r=>f.remission!=='Pendiente'&&(!f.deadline||deadlineStatus(r,f.today)===f.deadline));
   let rids=new Set(rem.map(r=>r.id));
-  let lots=db.lotes.filter(l=>rids.has(l.remisionId)&&(!f.reconciliation||(f.reconciliation==='Conciliado')===((counts.get(l.id)||0)===l.declared)));
+  let lots=db.lotes.filter(l=>rids.has(l.remisionId)&&(!f.documentType||l.typeId===f.documentType)&&(!f.reconciliation||(f.reconciliation==='Conciliado')===((counts.get(l.id)||0)===l.declared)));
   let lids=new Set(lots.map(l=>l.id));
   let docs=db.documentos.filter(d=>lids.has(d.loteId)&&(!f.verification||d.state===f.verification)&&(!f.observation||db.observaciones.some(o=>o.documentId===d.id&&o.status===f.observation)));
   if(f.verification||f.observation){lids=new Set(docs.map(d=>d.loteId));lots=lots.filter(l=>lids.has(l.id));}
-  if(f.reconciliation||f.verification||f.observation){rids=new Set(lots.map(l=>l.remisionId));rem=rem.filter(r=>rids.has(r.id));}
+  if(f.documentType||f.reconciliation||f.verification||f.observation){rids=new Set(lots.map(l=>l.remisionId));rem=rem.filter(r=>rids.has(r.id));}
   const dids=new Set(docs.map(d=>d.id));
   const observations=db.observaciones.filter(o=>dids.has(o.documentId)&&(!f.observation||o.status===f.observation));
   const expectedRows=[];
@@ -52,7 +52,7 @@ export function scope(db, f) {
     const existing=periodRem.find(r=>r.cacId===c.id&&r.month===month&&r.half===half);
     if((c.active!==false||existing)&&(f.lifecycle==='annulled'?!!existing?.annulment:!existing?.annulment||f.lifecycle==='all'))expectedRows.push({cacId:c.id,year:+f.year,month,half,existing});
   }
-  const pendingRows=expectedRows.filter(r=>!r.existing&&!f.deadline&&!f.reconciliation&&!f.verification&&!f.observation&&f.remission!=='Registrada');
+  const pendingRows=expectedRows.filter(r=>!r.existing&&!f.documentType&&!f.deadline&&!f.reconciliation&&!f.verification&&!f.observation&&f.remission!=='Registrada');
   return {cacs,rem,lots,docs,observations,counts,expectedRows,pendingRows};
 }
 export function metrics(db,f){

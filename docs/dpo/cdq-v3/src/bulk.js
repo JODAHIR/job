@@ -1,4 +1,4 @@
-import { validate, integer, states } from "./domain.js";
+import { validate, integer, states } from "./domain.js?v=cah-lotes-20261019";
 export const columns = [
   "tipo",
   "numero",

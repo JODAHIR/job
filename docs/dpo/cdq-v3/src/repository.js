@@ -1,4 +1,4 @@
-import { empty, validate } from "./domain.js";
+import { empty, validate } from "./domain.js?v=cah-lotes-20261019";
 // Contrato reemplazable por un repositorio Firebase en fase 2.
 export class LocalRepository {
   constructor(mode) {

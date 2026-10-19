@@ -41,11 +41,12 @@ export function sparkWriter(store, auth) {
     if (!Number.isSafeInteger(expectedRevision) || expectedRevision < 0) throw Error('Revisión inválida.');
     const path = entity === 'gerencias' ? `gerencias/${g}` : `gerencias/${g}/${entity}/${row.id}`;
     return runTransaction(store, async tx => {
+      const profile=(await tx.get(doc(store,'users',auth.currentUser.uid))).data();
       const ref = doc(store,path), snap = await tx.get(ref), before = snap.exists() ? snap.data() : null;
       if ((before?.revision || 0) !== expectedRevision) throw Error('El registro cambió. Actualice antes de guardar.');
       if(entity==='cacs' && before && !explicitActive)row.active=before.active??true;
       let after = {...before,...row, revision: expectedRevision + 1, updatedAt: serverTimestamp()};
-      const key = sparkKey(entity,after), lock = doc(store,'sparkKeys',key);
+      const key = entity==='lotes' && before?.typeId ? before.uniqueKey : sparkKey(entity,after), lock = doc(store,'sparkKeys',key);
       const reserved = await tx.get(lock);
       if (reserved.exists() && reserved.data().path !== path) throw Error('Ya existe ese registro.');
       after.uniqueKey = key;
@@ -75,7 +76,7 @@ export function sparkWriter(store, auth) {
       if (entity === 'documentos' && !before) after.firstObservationId = '';
       if (entity === 'gerencias' && !before) after.scopeRevision = 0;
       const writeAudit = (c, previous, saved) => tx.set(doc(store,`gerencias/${g}/audit/${c}_${saved.id}_${saved.revision}`), {
-        id:`${c}_${saved.id}_${saved.revision}`, actor:auth.currentUser.uid, collection:c, recordId:saved.id,
+        id:`${c}_${saved.id}_${saved.revision}`, actor:auth.currentUser.uid, ...(c==='lotes'?{role:profile.role}:{}), collection:c, recordId:saved.id,
         at:serverTimestamp(),before:previous,after:saved,reason:reason.trim(),
       });
       if(fence)tx.set(fence.ref,fence.after);

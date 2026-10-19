@@ -1,4 +1,4 @@
-import {userDescription} from './gerencia-contacts.js?v=cah-cac-contactos-20261018';
+import {userDescription} from './gerencia-contacts.js?v=cah-lotes-20261019';
 const roles = {
   director: "Director de Operaciones",
   gerente: "Gerente Departamental",

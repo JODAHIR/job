@@ -1,6 +1,6 @@
-import { template, prepareBulk, applyBulkLocal } from "./bulk.js";
-import { makeReport, reportTypes } from "./reports.js";
-import { states } from "./domain.js";
+import { template, prepareBulk, applyBulkLocal } from "./bulk.js?v=cah-lotes-20261019";
+import { makeReport, reportTypes } from "./reports.js?v=cah-lotes-20261019";
+import { states } from "./domain.js?v=cah-lotes-20261019";
 const settings = {
   type: "documentos",
   state: "",
@@ -86,7 +86,7 @@ export function bindPhase3(page, c) {
         (b.onclick = async () => {
           b.disabled = true;
           try {
-            const module = await import("./exporters.bundle.js");
+            const module = await import("./exporters.bundle.js?v=cah-lotes-20261019");
             const report =
               mode === "cloud"
                 ? await cloud.call("report", {

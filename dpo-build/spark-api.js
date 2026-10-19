@@ -1,9 +1,11 @@
+import {saveCatalog,initializeCatalog,catalogHistory} from './spark-catalog.js';
+import {generateLots} from './spark-lots.js';
 import {initializeControl,previewAnnulments,annulRemisiones} from './spark-lifecycle.js';
 import {generateRemisiones} from './spark-remisiones.js';
 import {doc,collection,getDocFromServer,getDocsFromServer,runTransaction,serverTimestamp,query,orderBy,startAfter,limit} from 'firebase/firestore';
 import {sparkWriter} from './spark-records.js';
 import {publishSparkCalendar} from './spark-calendar.js';
-import {makeReport} from '../docs/dpo/cdq-v3/src/reports.js';
+import {makeReport} from './reports.js';
 export function sparkAPI(api) {
  const {store,auth}=api, save=sparkWriter(store,auth);
  const requestAccess=()=>runTransaction(store,async tx=>{
@@ -15,6 +17,10 @@ export function sparkAPI(api) {
  api.requestAccess=requestAccess;
  api.spark=true;
  return async(name,input)=>{
+  if(name==='catalogHistory')return catalogHistory(store,input);
+  if(name==='saveCatalog')return saveCatalog(store,auth,input);
+  if(name==='initializeCatalog')return initializeCatalog(store,auth);
+  if(name==='generateLots')return generateLots(store,auth,input);
   if(name==='initializeControl')return initializeControl(store,auth,input);
   if(name==='previewAnnulments')return previewAnnulments(store,auth,input);
   if(name==='annulRemisiones')return annulRemisiones(store,auth,input);

@@ -692,3 +692,6 @@ footer{justify-content:flex-end;text-align:right}
 @media(max-width:750px){.lot-group-content{padding:0 8px 8px}.lot-group>summary small{display:block;margin-left:16px}}
 
 .lifecycle-content{padding:0 16px 16px}.lifecycle-content input[type=checkbox]{width:20px;height:20px}.lifecycle-content select{min-width:160px}
+
+#lot-generate-form{max-width:100%;width:900px}#lot-generate-form details{padding:12px 0;border-bottom:1px solid var(--line)}.lot-type-row{display:grid;grid-template-columns:2fr 1fr;gap:12px;padding:12px 0}.lot-type-row small{grid-column:1/-1}.lot-type-row label{min-width:0;overflow-wrap:anywhere}.lot-type-row input[type=number]{width:100%}#lot-error,#type-error{color:#a32424}#lot-generate-form summary{cursor:pointer;font-weight:600;padding:8px 0}@media(max-width:750px){#lot-generate-form{width:100%}.lot-type-row{grid-template-columns:1fr}}
+dialog:has(#lot-generate-form){width:960px}.lot-type-row>label:first-child{flex-direction:row;align-items:flex-start;line-height:1.5}.lot-type-row input[type=checkbox]{flex:none;width:18px;height:18px;margin:0}#lot-generate-form>details:first-of-type .form-fields{grid-template-columns:repeat(3,minmax(0,1fr));margin-bottom:16px}@media(max-width:750px){#lot-generate-form>details:first-of-type .form-fields{grid-template-columns:1fr}}

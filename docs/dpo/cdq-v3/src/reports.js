@@ -1,5 +1,8 @@
-import { scope, metrics } from "./domain.js?v=cah-anulaciones-20261018";
+import {lotTracking} from './lot-catalog.js?v=cah-lotes-20261019';
+import { scope, metrics } from "./domain.js?v=cah-lotes-20261019";
 export const reportTypes = {
+  lotes: "Lotes por tipo documental",
+  seguimiento: "Seguimiento de carga por CAC",
   documentos: "Documentos por estado",
   observados: "Documentos observados",
   pendientes: "Pendientes de verificación",
@@ -220,6 +223,16 @@ export function makeReport(
     note =
       "Mismo ámbito de gerencia y CAC. Mes: meses completos; año: años completos; quincena: seleccionada contra anterior (ambas: Q2 contra Q1). Los filtros avanzados se aplican a ambos períodos. Porcentajes sobre documentos individualizados.";
   }
+  if(type==='lotes'){
+    headers=['Gerencia','CAC','Período','Lote','Tipo','Condición histórica','Declarados','Individualizados','Revisados','Faltantes'];
+    rows=s.lots.map(l=>{const r=rs.get(l.remisionId),c=cs.get(r.cacId),docs=s.docs.filter(d=>d.loteId===l.id);return [gs.get(c.gerenciaId)?.name,c.name,`${r.year}-${r.month} Q${r.half}`,l.code,l.typeCode||'Histórico sin clasificación',l.typeId?(l.typeRequired?'Obligatorio':'Opcional'):'No determinada',l.declared,docs.length,docs.filter(d=>d.state!=='Pendiente').length,Math.max(0,l.declared-(counts.get(l.id)||0)),r.annulment?'Anulada':'Vigente'];});
+    note='Condición conservada al iniciar la carga; los cambios de catálogo no recalculan el histórico.';
+  }
+  if(type==='seguimiento'){
+    headers=['Gerencia','CAC','Período','Seguimiento','Lotes','Declarados','Individualizados','Revisados','Observados','Faltantes','Tipos pendientes'];
+    rows=lotTracking(db,f).map(r=>[gs.get(r.gerenciaId)?.name,cs.get(r.cacId)?.name,`${r.year}-${r.month} Q${r.half}`,r.status,r.lots,r.declared,r.received,r.reviewed,r.observed,r.missing,r.pending,r.status==='Anulada'?'Anulada':'Vigente']);
+    note='Carga completa no significa verificada. Exclusiones sin descuento: procedimiento pendiente.';
+  }
   if(type !== 'comparativo')headers.push('Estado administrativo');
   note += ' Ámbito administrativo: '+(f.lifecycle==='all'?'incluye anuladas':f.lifecycle==='annulled'?'solo anuladas (histórico)':'solo vigentes; anuladas excluidas')+'. La anulación conserva fechas y documentos; no equivale a regularización.';
   return {
@@ -230,6 +243,6 @@ export function makeReport(
     generatedAt: new Date().toISOString(),
     source,
     filters: { ...f, state, comparison, horizon },
-    scopeLabel: `Año ${f.year}; mes ${f.month}; quincena ${f.half || "ambas"}; gerencia ${f.gerencia ? gs.get(f.gerencia)?.name || f.gerencia : "todas las autorizadas"}; CAC ${f.cac ? cs.get(f.cac)?.name || f.cac : "todos los autorizados"}; estado ${state || "todos"}; remisión ${f.remission || "todas"}; conciliación ${f.reconciliation || "todas"}; verificación ${f.verification || "todas"}; observación ${f.observation || "todas"}; plazo ${f.deadline || "todos"}; administrativo ${f.lifecycle || "vigentes"}`,
+    scopeLabel: `Año ${f.year}; mes ${f.month}; quincena ${f.half || "ambas"}; gerencia ${f.gerencia ? gs.get(f.gerencia)?.name || f.gerencia : "todas las autorizadas"}; CAC ${f.cac ? cs.get(f.cac)?.name || f.cac : "todos los autorizados"}; estado ${state || "todos"}; tipo ${f.documentType || "todos"}; remisión ${f.remission || "todas"}; conciliación ${f.reconciliation || "todas"}; verificación ${f.verification || "todas"}; observación ${f.observation || "todas"}; plazo ${f.deadline || "todos"}; administrativo ${f.lifecycle || "vigentes"}`,
   };
 }

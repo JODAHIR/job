@@ -10,22 +10,24 @@ service cloud.firestore {
   function profile() { return get(/databases/$(database)/documents/users/$(request.auth.uid)).data; }
   function role(r) { return signed() && profile().active == true && profile().role == r; }
   function readScope(g) { return signed() && profile().active == true && (profile().role in ['director','technical'] || (profile().role == 'asistente' && g in profile().gerencias) || (profile().role == 'gerente' && profile().gerenciaId == g)); }
-  function writeScope(g) { return role('technical') || (role('asistente') && g in profile().gerencias); }
+  function writeScope(g) { let p=profile(); return signed() && p.active && (p.role == 'technical' || p.role == 'asistente' && g in p.gerencias); }
+  function lotWrite(g) { let p=profile(); return signed() && p.active && (p.role in ['technical','director'] || p.role == 'gerente' && p.gerenciaId == g || p.role == 'asistente' && g in p.gerencias); }
+  function entityWrite(g,c) { return c == 'lotes' ? lotWrite(g) : writeScope(g); }
   function ident(v) { return v is string && v.matches('^[A-Za-z0-9_-]{1,128}$'); }
   function text(v,n) { return v is string && v.size() > 0 && v.size() <= n; }
   function part(v) { return v.matches('^\\S(.*\\S)?$') && text(v,150) && !v.matches('.*[/|].*'); }
   function civil(v) { let a=v.split('-'); let t=timestamp.date(int(a[0]),int(a[1]),int(a[2])); return v.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$') && t.year() >= 2000 && t.year() <= 2100 && t.month() == int(a[1]) && t.day() == int(a[2]); }
   function parent(g,c,id) { return get(/databases/$(database)/documents/gerencias/$(g)/$(c)/$(id)).data; }
   function existsParent(g,c,id) { return ident(id) && exists(/databases/$(database)/documents/gerencias/$(g)/$(c)/$(id)); }
-  function key(c,r) {
+  function key(c,r,g) {
    return c == 'gerencias' ? c+'|'+r.name.lower()
     : c == 'cacs' ? c+'|'+r.gerenciaId+'|'+r.name.lower()
     : c == 'remisiones' ? c+'|'+r.cacId+'|'+string(r.year)+'|'+string(r.month)+'|'+string(r.half)
-    : c == 'lotes' ? c+'|'+r.remisionId+'|'+r.code.lower()
+    : c == 'lotes' ? ('typeId' in r ? typedLotKey(g,r) : c+'|'+r.remisionId+'|'+r.code.lower())
     : c == 'documentos' ? c+'|'+r.loteId+'|'+r.type.lower()+'|'+r.number.lower()
     : c+'|'+r.id;
   }
-  function locked(g,c,r,path) { return r.uniqueKey == key(c,r) && getAfter(/databases/$(database)/documents/sparkKeys/$(r.uniqueKey)).data == { 'path':path,'gerenciaId':g,'entity':c,'recordId':r.id }; }
+  function locked(g,c,r,path) { return r.uniqueKey == key(c,r,g) && getAfter(/databases/$(database)/documents/sparkKeys/$(r.uniqueKey)).data == { 'path':path,'gerenciaId':g,'entity':c,'recordId':r.id }; }
   function audited(g,c,id,r) {
    let a = getAfter(/databases/$(database)/documents/gerencias/$(g)/audit/$(c+'_'+id+'_'+string(r.revision))).data;
    return a.actor == request.auth.uid && a.at == request.time && a.after == r;
@@ -41,8 +43,8 @@ service cloud.firestore {
        && existsParent(g,'cacs',r.cacId) && r.year is int && r.year >= 2000 && r.year <= 2100 && r.month is int && r.month >= 1 && r.month <= 12 && r.half in [1,2]
        && ((!('expediente' in r) && !('remittedOn' in r)) || text(r.expediente,150) && civil(r.remittedOn) && r.remittedOn <= r.receivedOn)
        && text(r.receivedOn,10) && text(r.dueOn,10) && text(r.originalDueOn,10) && ident(r.calendarVersion) && r.businessDays == 10 && r.timeZone == 'America/Asuncion'
-    : c == 'lotes' ? r.keys().hasOnly(['id','remisionId','code','declared','revision','updatedAt','uniqueKey']) && existsParent(g,'remisiones',r.remisionId) && part(r.code) && r.declared is int && r.declared >= 0 && r.declared <= 1000000
-    : c == 'documentos' ? r.keys().hasOnly(['id','loteId','type','number','state','firstObservationId','revision','updatedAt','uniqueKey']) && existsParent(g,'lotes',r.loteId) && part(r.type) && part(r.number)
+    : c == 'lotes' ? r.keys().hasOnly(['id','remisionId','code','declared','revision','updatedAt','uniqueKey','typeId','typeCode','typeRequired','catalogVersion','sequence','cacCode']) && existsParent(g,'remisiones',r.remisionId) && part(r.code) && r.declared is int && r.declared >= 0 && r.declared <= 1000000
+    : c == 'documentos' ? r.keys().hasOnly(['id','loteId','type','number','state','firstObservationId','revision','updatedAt','uniqueKey']) && existsParent(g,'lotes',r.loteId) && part(r.type) && part(r.number) && (!('typeId' in parent(g,'lotes',r.loteId)) || r.type == parent(g,'lotes',r.loteId).typeCode)
       && r.state in ['Pendiente','Verificado','Verificado con observación'] && r.firstObservationId is string && r.firstObservationId.size() <= 128
       && (r.firstObservationId == '' ? r.state != 'Verificado con observación' : ident(r.firstObservationId) && r.state == 'Verificado con observación' && getAfter(/databases/$(database)/documents/gerencias/$(g)/observaciones/$(r.firstObservationId)).data.documentId == r.id)
     : c == 'observaciones' && r.keys().hasOnly(['id','documentId','description','date','owner','status','revision','updatedAt','uniqueKey']) && existsParent(g,'documentos',r.documentId)
@@ -52,7 +54,7 @@ service cloud.firestore {
   function stable(c,r,b) {
    return c == 'cacs' ? r.gerenciaId == b.gerenciaId
     : c == 'remisiones' ? r.cacId == b.cacId && r.year == b.year && r.month == b.month && r.half == b.half && r.receivedOn == b.receivedOn && r.dueOn == b.dueOn && r.originalDueOn == b.originalDueOn && r.calendarVersion == b.calendarVersion && r.get('origin','unknown') == b.get('origin','unknown')
-    : c == 'lotes' ? r.remisionId == b.remisionId
+    : c == 'lotes' ? r.remisionId == b.remisionId && (!('typeId' in b) ? !('typeId' in r) : r.diff(b).affectedKeys().hasOnly(['declared','revision','updatedAt']))
     : c == 'documentos' ? r.loteId == b.loteId && (b.firstObservationId == '' || r.firstObservationId == b.firstObservationId)
     : r.documentId == b.documentId;
   }
@@ -107,6 +109,59 @@ service cloud.firestore {
     && c.celular is string && c.celular.matches('^[0-9 +().-]{6,30}$') && c.celular.matches('.*[0-9].*');
   }
   function contacts(r) {return r.responsables is list && r.responsables.size()==2 && contact(r.responsables[0]) && contact(r.responsables[1]) && r.responsables[0].correo.lower()!=r.responsables[1].correo.lower();}
+  function typedLotKey(g,r) {
+    let rem=parent(g,'remisiones',r.remisionId);
+    return 'typed|'+g+'|'+rem.cacId+'|'+string(rem.year)+'|'+string(rem.month)+'|'+string(rem.half)+'|'+r.typeId;
+  }
+  function newTypedLot(g,id,r) {
+    let rem=parent(g,'remisiones',r.remisionId);
+    let cac=parent(g,'cacs',rem.cacId);
+    let catalog=get(/databases/$(database)/documents/documentCatalog/current).data;
+    let version=get(/databases/$(database)/documents/documentCatalogVersions/$(string(r.catalogVersion))).data;
+    let req=getAfter(/databases/$(database)/documents/gerencias/$(g)/lotRequirements/$(r.remisionId)).data;
+    let seq=getAfter(/databases/$(database)/documents/gerencias/$(g)/lotSequences/$(rem.cacId+'_'+string(rem.year)+'_'+string(rem.half))).data;
+    let control=getAfter(controlPath(g,r.remisionId)).data;
+    return lotWrite(g) && ident(id) && r.id == id && r.revision == 1 && r.updatedAt == request.time
+     && getAfter(/databases/$(database)/documents/sparkIds/$('lotes_'+id)).data == {'gerenciaId':g,'entity':'lotes','recordId':id}
+     && schema(g,'lotes',r) && rem.get('annulment',null) == null && cac.get('active',true)
+     && catalog.types.keys().hasAll(['SCA','RES','CON','REC66']) && catalog.types[r.typeId].enabled && r.typeCode == catalog.types[r.typeId].code
+     && version.types[r.typeId].enabled && r.typeRequired == version.types[r.typeId].required && req.catalogVersion == r.catalogVersion
+     && r.sequence is int && r.sequence > 0 && seq.value == r.sequence && seq.lotId == id && seq.updatedAt == request.time
+     && r.cacCode == cac.name.split(' - ')[0]
+     && r.code == 'LOT_'+(r.sequence < 10 ? '0' : '')+string(r.sequence)+'_'+r.typeCode+'_'+r.cacCode+'_'+string(rem.year)+'_'+string(rem.half)
+     && control.collection == 'lotes' && control.recordId == id && control.updatedAt == request.time
+     && locked(g,'lotes',r,'gerencias/'+g+'/lotes/'+id) && audited(g,'lotes',id,r);
+  }
+  function catalogManager() { return role('director') || role('technical'); }
+  function validCatalog(c) {
+    let t=c.types[c.changedId];
+    return c.keys().hasOnly(['revision','types','changedId','actor','updatedAt']) && c.revision is int && c.revision > 0
+     && c.actor == request.auth.uid && c.updatedAt == request.time && c.types is map && c.types.size() <= 100
+     && t.keys().hasOnly(['id','code','description','required','enabled','order']) && t.id == c.changedId && t.code == c.changedId
+     && t.code.matches('^[A-Za-z0-9_-]{1,40}$') && text(t.description,200) && t.required is bool && t.enabled is bool && t.order is int && t.order >= 0 && t.order <= 10000
+     && (!(t.code in ['SCA','RES','CON','REC66']) || t.required && t.enabled)
+     && getAfter(/databases/$(database)/documents/documentCatalogVersions/$(string(c.revision))).data == c
+     && getAfter(/databases/$(database)/documents/catalogAudit/$(string(c.revision))).data.after == t;
+  }
+  match /documentCatalog/current {
+    allow read: if signed() && profile().active;
+    allow create: if catalogManager() && validCatalog(request.resource.data) && request.resource.data.revision == 1 && request.resource.data.types.size() == 1;
+    allow update: if catalogManager() && validCatalog(request.resource.data) && request.resource.data.revision == resource.data.revision + 1
+     && request.resource.data.types.diff(resource.data.types).affectedKeys().hasOnly([request.resource.data.changedId])
+     && request.resource.data.types.diff(resource.data.types).removedKeys().size() == 0;
+  }
+  match /documentCatalogVersions/{v} {
+    allow read: if signed() && profile().active;
+    allow create: if catalogManager() && v == string(request.resource.data.revision) && getAfter(/databases/$(database)/documents/documentCatalog/current).data == request.resource.data && request.resource.data.updatedAt == request.time;
+  }
+  match /catalogAudit/{v} {
+    allow read: if catalogManager();
+    allow create: if catalogManager() && request.resource.data.keys().hasOnly(['revision','actor','role','at','reason','before','after'])
+     && request.resource.data.actor == request.auth.uid && request.resource.data.role == profile().role && request.resource.data.at == request.time && text(request.resource.data.reason,2000)
+     && v == string(request.resource.data.revision) && getAfter(/databases/$(database)/documents/documentCatalog/current).data.revision == request.resource.data.revision
+     && request.resource.data.after == getAfter(/databases/$(database)/documents/documentCatalog/current).data.types[request.resource.data.after.id]
+     && request.resource.data.before == (exists(/databases/$(database)/documents/documentCatalog/current) ? get(/databases/$(database)/documents/documentCatalog/current).data.types.get(request.resource.data.after.id,null) : null);
+  }
   match /gerencias/{g} {
    allow read: if readScope(g);
    allow create, update: if role('technical') && request.resource.data.keys().hasOnly(['id','name','responsables','revision','scopeRevision','updatedAt','uniqueKey'])
@@ -115,11 +170,34 @@ service cloud.firestore {
     && (resource == null ? request.resource.data.revision == 1 : request.resource.data.revision == resource.data.revision + 1);
    match /{c}/{id} {
     allow read: if c in ['cacs','remisiones','lotes','documentos','observaciones','audit'] && readScope(g) && exists(/databases/$(database)/documents/gerencias/$(g));
-    allow create: if c in ['cacs','remisiones','lotes','documentos','observaciones'] && writeScope(g) && (c != 'cacs' || role('technical')) && exists(/databases/$(database)/documents/gerencias/$(g))
+    allow create: if c in ['cacs','remisiones','lotes','documentos','observaciones'] && entityWrite(g,c) && (c != 'cacs' || role('technical')) && exists(/databases/$(database)/documents/gerencias/$(g))
+      && (c != 'lotes' || !exists(/databases/$(database)/documents/documentCatalog/current) && !('typeId' in request.resource.data))
       && operational(g,c,request.resource.data,true) && basic(g,c,id,request.resource.data,'gerencias/'+g+'/'+c+'/'+id) && schema(g,c,request.resource.data) && request.resource.data.revision == 1
       && (c != 'remisiones' || receipt(request.resource.data) && get(/databases/$(database)/documents/gerencias/$(g)/cacs/$(request.resource.data.cacId)).data.get('active',true) == true);
-    allow update: if c in ['cacs','remisiones','lotes','documentos','observaciones'] && (writeScope(g) && (c != 'cacs' || role('technical')) || role('director') && c == 'cacs' && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['active','revision','updatedAt'])) && exists(/databases/$(database)/documents/gerencias/$(g))
+    allow update: if c in ['cacs','remisiones','lotes','documentos','observaciones'] && (entityWrite(g,c) && (c != 'cacs' || role('technical')) || role('director') && c == 'cacs' && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['active','revision','updatedAt'])) && exists(/databases/$(database)/documents/gerencias/$(g))
       && operational(g,c,request.resource.data,false) && basic(g,c,id,request.resource.data,'gerencias/'+g+'/'+c+'/'+id) && schema(g,c,request.resource.data) && request.resource.data.revision == resource.data.revision + 1 && stable(c,request.resource.data,resource.data);
+   }
+   match /lotes/{id} {
+    allow create: if newTypedLot(g,id,request.resource.data);
+   }
+   match /lotRequirements/{id} {
+    allow read: if readScope(g);
+    allow create: if lotWrite(g) && request.resource.data.keys().hasOnly(['id','catalogVersion','actor','at']) && request.resource.data.id == id
+     && request.resource.data.actor == request.auth.uid && request.resource.data.at == request.time
+     && request.resource.data.catalogVersion == get(/databases/$(database)/documents/documentCatalog/current).data.revision
+     && get(controlPath(g,id)).data.lots == 0 && parent(g,'remisiones',id).get('annulment',null) == null
+     && getAfter(controlPath(g,id)).data.lots == 1;
+   }
+   match /lotSequences/{id} {
+    allow read: if readScope(g);
+    function validSequence(r) {
+     let lot=getAfter(/databases/$(database)/documents/gerencias/$(g)/lotes/$(r.lotId)).data;
+     let rem=parent(g,'remisiones',lot.remisionId);
+     return r.keys().hasOnly(['value','lotId','updatedAt']) && r.value == (resource == null ? 1 : resource.data.value+1) && r.updatedAt == request.time
+      && !exists(/databases/$(database)/documents/gerencias/$(g)/lotes/$(r.lotId)) && lot.sequence == r.value
+      && id == rem.cacId+'_'+string(rem.year)+'_'+string(rem.half);
+    }
+    allow create, update: if lotWrite(g) && validSequence(request.resource.data);
    }
    match /remisiones/{id} {
     allow update: if readScope(g) && annulChange(g,id,request.resource.data,resource.data)
@@ -138,7 +216,7 @@ service cloud.firestore {
       let p=/databases/$(database)/documents/gerencias/$(g)/$(r.collection)/$(r.recordId);
       let saved=getAfter(p).data;
       let added=!exists(p);
-      return r.collection in ['remisiones','lotes','documentos','observaciones'] && writeScope(g)
+      return r.collection in ['remisiones','lotes','documentos','observaciones'] && entityWrite(g,r.collection)
        && rootId(g,r.collection,saved) == id && saved.revision == r.revision && saved.updatedAt == request.time
        && (added || saved.revision == get(p).data.revision + 1)
        && r.lots == resource.data.lots + (r.collection == 'lotes' && added ? 1 : 0)
@@ -192,29 +270,29 @@ service cloud.firestore {
     function validAudit() {
      let a = request.resource.data;
      let p = a.collection == 'gerencias' ? /databases/$(database)/documents/gerencias/$(g) : /databases/$(database)/documents/gerencias/$(g)/$(a.collection)/$(a.recordId);
-     return a.keys().hasOnly(['id','actor','collection','recordId','at','before','after','reason']) && a.id == event && a.actor == request.auth.uid && a.at == request.time
+     return a.keys().hasOnly(['id','actor','role','collection','recordId','at','before','after','reason']) && (a.collection == 'lotes' ? a.role == profile().role : !('role' in a) || a.role == profile().role) && a.id == event && a.actor == request.auth.uid && a.at == request.time
        && a.collection in ['gerencias','cacs','remisiones','lotes','documentos','observaciones'] && ident(a.recordId) && text(a.reason,2000)
        && (a.collection != 'remisiones' || a.after.get('annulment',null) == null || a.reason == a.after.annulment.reason)
        && event == a.collection+'_'+a.recordId+'_'+string(a.after.revision) && a.after == getAfter(p).data && (exists(p) ? a.before == get(p).data && a.after.revision == a.before.revision+1 : a.before == null && a.after.revision == 1);
     }
-    allow create: if (role('director') || writeScope(g) || role('gerente') && profile().gerenciaId == g && request.resource.data.collection == 'remisiones' && getAfter(/databases/$(database)/documents/gerencias/$(g)/remisiones/$(request.resource.data.recordId)).data.annulment.actor == request.auth.uid) && validAudit();
+    allow create: if (request.resource.data.collection == 'lotes' && lotWrite(g) || role('director') || writeScope(g) || role('gerente') && profile().gerenciaId == g && request.resource.data.collection == 'remisiones' && getAfter(/databases/$(database)/documents/gerencias/$(g)/remisiones/$(request.resource.data.recordId)).data.annulment.actor == request.auth.uid) && validAudit();
    }
   }
   match /sparkIds/{k} {
    allow get: if signed() && profile().active == true;
-   allow create: if (role('director') || writeScope(request.resource.data.gerenciaId)) && request.resource.data.keys().hasOnly(['gerenciaId','entity','recordId']) && ident(request.resource.data.gerenciaId) && ident(request.resource.data.recordId) && request.resource.data.entity in ['gerencias','cacs','remisiones','lotes','documentos','observaciones'] && k == request.resource.data.entity+'_'+request.resource.data.recordId
+   allow create: if (role('director') || entityWrite(request.resource.data.gerenciaId,request.resource.data.entity)) && request.resource.data.keys().hasOnly(['gerenciaId','entity','recordId']) && ident(request.resource.data.gerenciaId) && ident(request.resource.data.recordId) && request.resource.data.entity in ['gerencias','cacs','remisiones','lotes','documentos','observaciones'] && k == request.resource.data.entity+'_'+request.resource.data.recordId
     && getAfter(path('/databases/'+database+'/documents/gerencias/'+request.resource.data.gerenciaId+(request.resource.data.entity == 'gerencias' ? '' : '/'+request.resource.data.entity+'/'+request.resource.data.recordId))).data.id == request.resource.data.recordId;
    allow update: if signed() && profile().active == true && request.resource.data == resource.data;
   }
   match /sparkKeys/{k} {
    allow get: if signed() && profile().active == true && (resource == null || role('director') || readScope(resource.data.gerenciaId));
-   allow create, update: if (role('director') || writeScope(request.resource.data.gerenciaId))
+   allow create, update: if (role('director') || entityWrite(request.resource.data.gerenciaId,request.resource.data.entity))
      && request.resource.data.keys().hasOnly(['path','gerenciaId','entity','recordId']) && ident(request.resource.data.gerenciaId) && ident(request.resource.data.recordId)
      && request.resource.data.entity in ['gerencias','cacs','remisiones','lotes','documentos','observaciones']
      && request.resource.data.path == (request.resource.data.entity == 'gerencias' ? 'gerencias/'+request.resource.data.gerenciaId : 'gerencias/'+request.resource.data.gerenciaId+'/'+request.resource.data.entity+'/'+request.resource.data.recordId)
      && getAfter(path('/databases/'+database+'/documents/'+request.resource.data.path)).data.uniqueKey == k
      && (resource == null || resource.data == request.resource.data);
-   allow delete: if (role('director') || writeScope(resource.data.gerenciaId)) && getAfter(path('/databases/'+database+'/documents/'+resource.data.path)).data.uniqueKey != k;
+   allow delete: if (role('director') || entityWrite(resource.data.gerenciaId,resource.data.entity)) && getAfter(path('/databases/'+database+'/documents/'+resource.data.path)).data.uniqueKey != k;
   }
   match /users/{uid} {
    allow get: if signed() && (request.auth.uid == uid || role('technical') || role('director'));
