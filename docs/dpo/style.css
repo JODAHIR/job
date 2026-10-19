@@ -1,390 +1,341 @@
 
-/* =====================================================
-   CAH - ASISTENTE DPO
-   MENÚ INSTITUCIONAL CONSOLIDADO
-   ===================================================== */
+/* ============================================
+   ASISTENTE DPO - MENÚ INSTITUCIONAL CAH
+   Versión consolidada
+   ============================================ */
 
 :root {
-    --cah-navy: #122844;
-    --cah-navy-light: #1b3859;
-    --cah-border: #344962;
-    --cah-text: #f4f7fb;
-    --cah-muted: #c7d8eb;
-    --cah-active: #24466c;
+  --cah-navy: #122844;
+  --cah-navy-hover: #1b3859;
+  --cah-active: #24466c;
+  --cah-border: #344962;
+  --cah-white: #f4f7fb;
+  --cah-muted: #c7d8eb;
 }
 
-/* CONTENEDOR LATERAL */
+/* CONTENEDOR */
 
 .chat-page .app-sidebar {
-    background: var(--cah-navy);
-    color: var(--cah-text);
-    width: 256px;
-    min-width: 256px;
-    max-width: 256px;
-    flex: 0 0 256px;
-    display: flex;
-    flex-direction: column;
-    align-items: stretch;
-    min-height: 0;
-    height: 100dvh;
-    padding: 0;
-    overflow-x: hidden;
-    overflow-y: auto;
-    border-right: 1px solid var(--cah-border);
+  width: 256px;
+  min-width: 256px;
+  max-width: 256px;
+  height: 100dvh;
+  min-height: 0;
+  flex: 0 0 256px;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  padding: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  background: var(--cah-navy);
+  color: var(--cah-white);
+  border-right: 1px solid var(--cah-border);
 }
 
-/* IDENTIDAD CAH */
+/* ENCABEZADO */
 
 .app-sidebar .cah-brand {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    padding: 22px 12px;
-    text-decoration: none;
-    color: #ffffff;
-    flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 22px 12px;
+  color: #fff;
+  text-decoration: none;
+  flex-shrink: 0;
 }
 
 .app-sidebar .cah-brand:hover {
-    color: #ffffff;
+  color: #fff;
 }
 
 .app-sidebar .cah-identity {
-    display: flex;
-    flex-direction: column;
-    flex-shrink: 0;
-    width: 55px;
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  width: 55px;
 }
 
 .app-sidebar .cah-logo {
-    display: block;
-    color: #ffffff;
-    font-size: 26px;
-    font-weight: 800;
-    line-height: 1.1;
-    letter-spacing: -1px;
+  display: block;
+  font-size: 26px;
+  font-weight: 800;
+  line-height: 1.1;
+  letter-spacing: -1px;
+  color: #fff;
 }
 
-/* TRICOLOR HORIZONTAL DE PARAGUAY
-   ROJO / BLANCO / AZUL */
+/* TRICOLOR HORIZONTAL
+   Tres franjas superpuestas */
 
 .app-sidebar .cah-tricolor {
-    display: flex;
-    flex-direction: column;
-    width: 55px;
-    height: 9px;
-    margin-top: 7px;
-    overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  width: 55px;
+  height: 9px;
+  margin-top: 7px;
+  overflow: hidden;
 }
 
 .app-sidebar .cah-tricolor span {
-    display: block;
-    width: 100%;
-    height: 3px;
-    min-height: 3px;
-    flex: 0 0 3px;
+  display: block;
+  width: 100%;
+  height: 3px;
+  flex: 0 0 3px;
 }
 
 .app-sidebar .stripe-red {
-    background-color: #e53945;
+  background: #e53945;
 }
 
 .app-sidebar .stripe-white {
-    background-color: #ffffff;
+  background: #ffffff;
 }
 
 .app-sidebar .stripe-blue {
-    background-color: #246cc5;
+  background: #246cc5;
 }
 
+/* DESCRIPCIÓN */
+
 .app-sidebar .cah-brand-info {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-    min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
 }
 
 .app-sidebar .cah-system {
-    color: #ffffff;
-    font-size: 11px;
-    font-weight: 700;
-    letter-spacing: .5px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .5px;
+  color: #fff;
 }
 
 .app-sidebar .cah-department {
-    color: var(--cah-muted);
-    font-size: 11px;
-    line-height: 1.4;
-    white-space: normal;
+  font-size: 11px;
+  line-height: 1.4;
+  color: var(--cah-muted);
 }
 
 /* NAVEGACIÓN */
 
 .app-sidebar .sidebody {
-    display: flex;
-    flex-direction: column;
-    gap: 0;
-    margin: 0;
-    padding: 0 8px;
-    flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  margin: 0;
+  padding: 0 8px;
+  flex-shrink: 0;
 }
 
 .app-sidebar .cah-menu-heading {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    padding: 14px 10px;
-    color: var(--cah-muted);
-    font-size: 13px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 10px;
+  color: var(--cah-muted);
+  font-size: 13px;
 }
-
-.app-sidebar .cah-menu-icon {
-    font-size: 18px;
-    line-height: 1;
-}
-
-/* OPCIONES */
 
 .app-sidebar .side-link {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    width: 100%;
-    min-height: 50px;
-    margin: 0;
-    padding: 12px 10px;
-    border: 0;
-    border-bottom: 1px solid var(--cah-border);
-    border-radius: 0;
-    background: transparent;
-    color: var(--cah-text);
-    font-size: 13px;
-    font-weight: 500;
-    line-height: 1.5;
-    text-decoration: none;
-    transition: background .2s ease;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  min-height: 50px;
+  margin: 0;
+  padding: 12px 10px;
+  border: 0;
+  border-bottom: 1px solid var(--cah-border);
+  border-radius: 0;
+  background: transparent;
+  color: var(--cah-white);
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.5;
+  text-decoration: none;
+  transition: background .2s ease;
 }
 
 .app-sidebar .side-link:hover {
-    background: var(--cah-navy-light);
-    color: #ffffff;
+  background: var(--cah-navy-hover);
+  color: #fff;
 }
 
 .app-sidebar .side-link.active,
 .app-sidebar .side-link[aria-current="page"] {
-    background: var(--cah-active);
-    color: #ffffff;
-    border-radius: 5px;
-    font-weight: 600;
+  background: var(--cah-active);
+  border-radius: 5px;
+  color: #fff;
+  font-weight: 600;
 }
 
 .app-sidebar .cah-nav-icon {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 20px;
-    flex: 0 0 20px;
-    color: var(--cah-muted);
-    font-size: 18px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  flex: 0 0 20px;
+  font-size: 18px;
+  color: var(--cah-muted);
 }
 
-.app-sidebar .side-link.active .cah-nav-icon {
-    color: #ffffff;
-}
-
-/* PERMISOS */
+/* RESPETAR VISIBILIDAD POR PERMISOS */
 
 .app-sidebar [hidden] {
-    display: none !important;
+  display: none !important;
 }
 
 /* HISTORIAL */
 
 .app-sidebar .sidebar-history {
-    display: block;
-    flex: 1 1 auto;
-    min-height: 0;
-    margin: 20px 8px 0;
-    padding: 0 8px;
-    overflow-y: auto;
-    scrollbar-width: thin;
-    scrollbar-color: #55708d transparent;
-    color: var(--cah-text);
+  flex: 1 1 auto;
+  min-height: 0;
+  margin: 20px 8px 0;
+  padding: 0 8px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: #55708d transparent;
+  color: var(--cah-white);
 }
 
 .app-sidebar .history-heading {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 10px 0;
-    margin-bottom: 8px;
-    border-bottom: 1px solid var(--cah-border);
-    color: var(--cah-muted);
-    font-size: 11px;
-    font-weight: 700;
-    letter-spacing: .6px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--cah-border);
+  color: var(--cah-muted);
+  font-size: 11px;
+  font-weight: 700;
 }
 
 .app-sidebar .history-count {
-    display: inline-grid;
-    place-items: center;
-    min-width: 20px;
-    height: 20px;
-    padding: 0 5px;
-    border-radius: 10px;
-    background: #294b70;
-    color: #ffffff;
-    font-size: 10px;
+  background: #294b70;
+  color: #fff;
 }
 
 .app-sidebar .history-day {
-    border-bottom: 1px solid var(--cah-border);
+  border-bottom-color: var(--cah-border);
 }
 
 .app-sidebar .history-day summary {
-    color: #e4ecf7;
+  color: #e4ecf7;
 }
 
-.app-sidebar .history-day summary small {
-    color: var(--cah-muted);
-}
-
+.app-sidebar .history-day summary small,
 .app-sidebar .history-list button {
-    color: #d1dfef;
+  color: var(--cah-muted);
 }
 
 .app-sidebar .history-list button:hover,
 .app-sidebar .history-list button:focus-visible {
-    background: var(--cah-active);
-    color: #ffffff;
+  background: var(--cah-active);
+  color: #fff;
 }
 
-/* PIE INSTITUCIONAL */
+/* PIE */
 
 .app-sidebar .sidenote {
-    flex-shrink: 0;
-    margin-top: auto;
-    padding: 16px 12px;
-    border-top: 1px solid var(--cah-border);
-    color: var(--cah-muted);
-    font-size: 11px;
-    line-height: 1.7;
+  flex-shrink: 0;
+  margin-top: auto;
+  padding: 16px 12px;
+  border-top: 1px solid var(--cah-border);
+  color: var(--cah-muted);
+  font-size: 11px;
+  line-height: 1.7;
 }
 
 .app-sidebar .side-muted {
-    display: block;
-    color: #91aac5;
-    font-size: 10px;
-}
-
-.app-sidebar .small-dot {
-    background: #71bda7;
+  display: block;
+  color: #91aac5;
+  font-size: 10px;
 }
 
 /* ACCESIBILIDAD */
 
-.app-sidebar a:focus-visible,
-.app-sidebar button:focus-visible {
-    outline: 2px solid #8dc7ff;
-    outline-offset: 2px;
+.app-sidebar a:focus-visible {
+  outline: 2px solid #8dc7ff;
+  outline-offset: 2px;
 }
 
-/* TABLET Y ESCRITORIO */
+/* ESCRITORIO Y TABLET */
 
 @media (min-width: 768px) {
-    .chat-page {
-        flex-direction: row;
-    }
+  .chat-page {
+    flex-direction: row;
+  }
 
-    .chat-page .app-sidebar {
-        width: 256px;
-        min-width: 256px;
-        max-width: 256px;
-        flex: 0 0 256px;
-        height: 100dvh;
-    }
+  .chat-page .app-sidebar {
+    width: 256px;
+    min-width: 256px;
+    max-width: 256px;
+    flex: 0 0 256px;
+  }
 }
 
 /* TELÉFONOS
-   MENÚ VERTICAL VISIBLE SOBRE EL CHAT */
+   Se mantiene el menú vertical.
+   No se altera el formulario del chat. */
 
 @media (max-width: 767px) {
-    .chat-page {
-        display: flex;
-        flex-direction: column;
-    }
+  .chat-page {
+    flex-direction: column;
+  }
 
-    .chat-page .app-sidebar {
-        width: 100%;
-        min-width: 0;
-        max-width: 100%;
-        height: auto;
-        min-height: 0;
-        max-height: 45dvh;
-        flex: 0 0 auto;
-        flex-direction: column;
-        align-items: stretch;
-        padding: 0;
-        overflow-y: auto;
-        border-right: 0;
-        border-bottom: 1px solid var(--cah-border);
-    }
+  .chat-page .app-sidebar {
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+    height: auto;
+    min-height: 0;
+    max-height: 45dvh;
+    flex: 0 0 auto;
+    flex-direction: column;
+    align-items: stretch;
+    padding: 0;
+    overflow-y: auto;
+    border-right: 0;
+    border-bottom: 1px solid var(--cah-border);
+  }
 
-    .app-sidebar .cah-brand {
-        padding: 12px 16px;
-    }
+  .app-sidebar .cah-brand {
+    padding: 12px 16px;
+  }
 
-    .app-sidebar .sidebody {
-        display: flex;
-        flex-direction: column;
-        padding: 0 12px 12px;
-    }
+  .app-sidebar .sidebody {
+    display: flex;
+    flex-direction: column;
+    padding: 0 12px 12px;
+  }
 
-    .app-sidebar .side-link {
-        min-height: 44px;
-        padding: 10px 12px;
-    }
+  .app-sidebar .side-link {
+    min-height: 44px;
+    padding: 10px 12px;
+  }
 
-    .app-sidebar .sidebar-history {
-        display: block;
-        flex: 0 0 auto;
-        max-height: 160px;
-        margin: 0 12px 12px;
-        overflow-y: auto;
-    }
+  .app-sidebar .sidebar-history {
+    display: block;
+    flex: 0 0 auto;
+    max-height: 160px;
+    margin: 0 12px 12px;
+  }
 
-    .app-sidebar .sidenote {
-        display: none;
-    }
+  .app-sidebar .sidenote {
+    display: none;
+  }
 
-    .chat-main {
-        width: 100%;
-        min-width: 0;
-        min-height: 0;
-        flex: 1 1 auto;
-    }
+  .chat-main {
+    flex: 1 1 auto;
+    min-height: 0;
+    width: 100%;
+  }
 }
-
-/* PANTALLAS MUY PEQUEÑAS */
-
-@media (max-width: 374px) {
-    .app-sidebar .cah-brand {
-        gap: 9px;
-    }
-
-    .app-sidebar .cah-system {
-        font-size: 10px;
-    }
-
-    .app-sidebar .cah-department {
-        font-size: 10px;
-    }
-}
-
-/* MOVIMIENTO REDUCIDO */
 
 @media (prefers-reduced-motion: reduce) {
-    .app-sidebar .side-link {
-        transition: none;
-    }
+  .app-sidebar .side-link {
+    transition: none;
+  }
 }
