@@ -1,4 +1,4 @@
-import {catalogPanel,bindCatalog,showLotGenerator,lotDashboard} from './lot-ui.js?v=cah-lotes-20261019';
+import {catalogPanel,bindCatalog,showLotGenerator,lotDashboard} from './lot-ui.js?v=cah-guardado-directo-20261019';
 import {sortedTypes} from './lot-catalog.js?v=cah-lotes-20261019';
 import {annulPanel,bindAnnulPanel} from './remision-annul-ui.js?v=cah-lotes-20261019';
 import {pages,resolveRoute,routeFor} from './navigation.js?v=cah-lotes-20261019';
