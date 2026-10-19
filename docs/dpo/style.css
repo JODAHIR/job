@@ -1,48 +1,135 @@
 
-/* ============================================
-   ASISTENTE DPO - MENÚ INSTITUCIONAL CAH
-   Versión consolidada
-   ============================================ */
+/* =========================================================
+   ASISTENTE DPO | CAH
+   HOJA DE ESTILOS COMPLETA - VERSIÓN 5
+   ========================================================= */
+
+/* 01. VARIABLES */
 
 :root {
   --cah-navy: #122844;
-  --cah-navy-hover: #1b3859;
+  --cah-hover: #1b3859;
   --cah-active: #24466c;
   --cah-border: #344962;
   --cah-white: #f4f7fb;
   --cah-muted: #c7d8eb;
+
+  --page-bg: #f4f7fa;
+  --panel-bg: #ffffff;
+  --text: #203246;
+  --text-muted: #64748b;
+  --line: #dce5ed;
+  --primary: #24466c;
+  --primary-hover: #173858;
+  --bot-bg: #ffffff;
+  --user-bg: #e8f1fa;
+
+  --sidebar-width: 256px;
+  --topbar-height: 74px;
 }
 
-/* CONTENEDOR */
+/* 02. REGLAS GENERALES */
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  min-height: 100%;
+}
+
+body {
+  font-family: system-ui, -apple-system, BlinkMacSystemFont,
+    "Segoe UI", sans-serif;
+  color: var(--text);
+  background: var(--page-bg);
+}
+
+button,
+input,
+textarea {
+  font: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+a {
+  text-decoration: none;
+}
+
+[hidden] {
+  display: none !important;
+}
+
+:focus-visible {
+  outline: 2px solid #4386c4;
+  outline-offset: 3px;
+}
+
+.skip-link {
+  position: fixed;
+  top: -60px;
+  left: 12px;
+  z-index: 1000;
+  padding: 10px 16px;
+  border-radius: 8px;
+  background: #fff;
+  color: var(--cah-navy);
+}
+
+.skip-link:focus {
+  top: 12px;
+}
+
+/* 03. ESTRUCTURA PRINCIPAL */
+
+body.chat-page {
+  display: flex;
+  flex-direction: row;
+  width: 100%;
+  height: 100vh;
+  height: 100dvh;
+  overflow: hidden;
+}
 
 .chat-page .app-sidebar {
-  width: 256px;
-  min-width: 256px;
-  max-width: 256px;
-  height: 100dvh;
-  min-height: 0;
-  flex: 0 0 256px;
+  position: relative;
   display: flex;
   flex-direction: column;
   align-items: stretch;
+  flex: 0 0 var(--sidebar-width);
+  width: var(--sidebar-width);
+  min-width: var(--sidebar-width);
+  height: 100%;
+  min-height: 0;
   padding: 0;
   overflow-x: hidden;
   overflow-y: auto;
   background: var(--cah-navy);
   color: var(--cah-white);
   border-right: 1px solid var(--cah-border);
+  scrollbar-width: thin;
+  scrollbar-color: #55708d transparent;
 }
 
-/* ENCABEZADO */
+/* 04. MARCA INSTITUCIONAL */
 
 .app-sidebar .cah-brand {
   display: flex;
   align-items: center;
   gap: 12px;
+  flex-shrink: 0;
+  min-height: 105px;
   padding: 22px 12px;
+  border-bottom: 1px solid var(--cah-border);
   color: #fff;
   text-decoration: none;
-  flex-shrink: 0;
 }
 
 .app-sidebar .cah-brand:hover {
@@ -65,9 +152,6 @@
   color: #fff;
 }
 
-/* TRICOLOR HORIZONTAL
-   Tres franjas superpuestas */
-
 .app-sidebar .cah-tricolor {
   display: flex;
   flex-direction: column;
@@ -75,6 +159,7 @@
   height: 9px;
   margin-top: 7px;
   overflow: hidden;
+  border-radius: 1px;
 }
 
 .app-sidebar .cah-tricolor span {
@@ -96,8 +181,6 @@
   background: #246cc5;
 }
 
-/* DESCRIPCIÓN */
-
 .app-sidebar .cah-brand-info {
   display: flex;
   flex-direction: column;
@@ -106,27 +189,27 @@
 }
 
 .app-sidebar .cah-system {
+  color: #fff;
   font-size: 11px;
   font-weight: 700;
   letter-spacing: .5px;
-  color: #fff;
 }
 
 .app-sidebar .cah-department {
+  color: var(--cah-muted);
   font-size: 11px;
   line-height: 1.4;
-  color: var(--cah-muted);
 }
 
-/* NAVEGACIÓN */
+/* 05. NAVEGACIÓN LATERAL */
 
 .app-sidebar .sidebody {
   display: flex;
   flex-direction: column;
+  flex-shrink: 0;
   gap: 0;
   margin: 0;
-  padding: 0 8px;
-  flex-shrink: 0;
+  padding: 8px;
 }
 
 .app-sidebar .cah-menu-heading {
@@ -136,6 +219,7 @@
   padding: 14px 10px;
   color: var(--cah-muted);
   font-size: 13px;
+  font-weight: 600;
 }
 
 .app-sidebar .side-link {
@@ -159,7 +243,7 @@
 }
 
 .app-sidebar .side-link:hover {
-  background: var(--cah-navy-hover);
+  background: var(--cah-hover);
   color: #fff;
 }
 
@@ -175,19 +259,13 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 20px;
   flex: 0 0 20px;
+  width: 20px;
   font-size: 18px;
   color: var(--cah-muted);
 }
 
-/* RESPETAR VISIBILIDAD POR PERMISOS */
-
-.app-sidebar [hidden] {
-  display: none !important;
-}
-
-/* HISTORIAL */
+/* 06. HISTORIAL */
 
 .app-sidebar .sidebar-history {
   flex: 1 1 auto;
@@ -195,39 +273,74 @@
   margin: 20px 8px 0;
   padding: 0 8px;
   overflow-y: auto;
+  color: var(--cah-white);
   scrollbar-width: thin;
   scrollbar-color: #55708d transparent;
-  color: var(--cah-white);
 }
 
 .app-sidebar .history-heading {
   display: flex;
-  justify-content: space-between;
   align-items: center;
+  justify-content: space-between;
+  gap: 8px;
   margin-bottom: 8px;
   padding: 10px 0;
   border-bottom: 1px solid var(--cah-border);
   color: var(--cah-muted);
   font-size: 11px;
   font-weight: 700;
+  letter-spacing: .6px;
 }
 
 .app-sidebar .history-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 22px;
+  padding: 2px 6px;
+  border-radius: 20px;
   background: #294b70;
   color: #fff;
+  font-size: 10px;
 }
 
 .app-sidebar .history-day {
-  border-bottom-color: var(--cah-border);
+  margin: 0;
+  border-bottom: 1px solid var(--cah-border);
 }
 
 .app-sidebar .history-day summary {
+  padding: 10px 3px;
   color: #e4ecf7;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
 }
 
-.app-sidebar .history-day summary small,
-.app-sidebar .history-list button {
+.app-sidebar .history-day summary small {
   color: var(--cah-muted);
+  font-size: 10px;
+}
+
+.app-sidebar .history-list {
+  display: grid;
+  gap: 3px;
+  padding: 0 0 9px 8px;
+}
+
+.app-sidebar .history-list button {
+  display: block;
+  width: 100%;
+  padding: 8px;
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  color: var(--cah-muted);
+  text-align: left;
+  font-size: 11px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .app-sidebar .history-list button:hover,
@@ -236,7 +349,7 @@
   color: #fff;
 }
 
-/* PIE */
+/* 07. PIE DEL MENÚ */
 
 .app-sidebar .sidenote {
   flex-shrink: 0;
@@ -248,60 +361,461 @@
   line-height: 1.7;
 }
 
+.app-sidebar .small-dot {
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  margin-right: 6px;
+  border-radius: 50%;
+  background: #52b788;
+}
+
 .app-sidebar .side-muted {
   display: block;
   color: #91aac5;
   font-size: 10px;
 }
 
-/* ACCESIBILIDAD */
+/* 08. ÁREA PRINCIPAL DEL ASISTENTE */
 
-.app-sidebar a:focus-visible {
-  outline: 2px solid #8dc7ff;
-  outline-offset: 2px;
+.chat-page .chat-main {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  width: 0;
+  min-width: 0;
+  min-height: 0;
+  height: 100%;
+  overflow: hidden;
+  background: var(--page-bg);
 }
 
-/* ESCRITORIO Y TABLET */
+/* 09. ENCABEZADO SUPERIOR */
 
-@media (min-width: 768px) {
-  .chat-page {
-    flex-direction: row;
+.chat-main .topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex: 0 0 auto;
+  min-height: var(--topbar-height);
+  padding: 15px 28px;
+  background: var(--panel-bg);
+  border-bottom: 1px solid var(--line);
+}
+
+.topbar h1 {
+  margin: 0;
+  color: var(--cah-navy);
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 1.3;
+}
+
+.topbar .user-session {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+  min-width: 0;
+}
+
+#logged-user {
+  max-width: 230px;
+  color: var(--text-muted);
+  font-size: 12px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+#header-session {
+  flex-shrink: 0;
+  border-color: #c4d3e3;
+  color: var(--primary);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+#header-session:hover {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: #fff;
+}
+
+/* 10. BARRA DE ACCESO CLOUD */
+
+.chat-main .cloud-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex: 0 0 auto;
+  padding: 14px 28px;
+  border-bottom: 1px solid var(--line);
+  background: #eef5fc;
+}
+
+.cloud-bar .access-copy {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.cloud-bar .access-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 30px;
+  height: 30px;
+  border-radius: 9px;
+  background: #dceaf8;
+  color: var(--primary);
+  font-size: 20px;
+}
+
+.cloud-bar #cloud-status {
+  margin: 0;
+  color: #435970;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.cloud-bar .access-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.cloud-bar .btn {
+  font-size: 12px;
+}
+
+.cloud-bar .btn-light {
+  border: 1px solid var(--line);
+  background: #fff;
+  color: var(--primary);
+}
+
+/* 11. CONTENEDOR DE CONVERSACIÓN */
+
+.chat-main #chat {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: 18px;
+  min-height: 0;
+  padding: 28px max(24px, calc((100% - 900px) / 2));
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scroll-behavior: smooth;
+  scrollbar-width: thin;
+  scrollbar-color: #c0cfdb transparent;
+}
+
+/* 12. MENSAJES */
+
+#chat .message {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  width: 100%;
+  min-width: 0;
+}
+
+#chat .message.user {
+  align-items: flex-end;
+}
+
+#chat .message.bot,
+#chat .message.assistant {
+  align-items: flex-start;
+}
+
+#chat .bubble {
+  max-width: min(100%, 760px);
+  padding: 16px 19px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: var(--bot-bg);
+  color: var(--text);
+  box-shadow: 0 3px 12px rgb(15 40 65 / 4%);
+  font-size: 14px;
+  line-height: 1.7;
+  overflow-wrap: anywhere;
+}
+
+#chat .message.user .bubble {
+  border-color: #d1e1f0;
+  border-bottom-right-radius: 5px;
+  background: var(--user-bg);
+}
+
+#chat .message.bot .bubble,
+#chat .message.assistant .bubble {
+  border-bottom-left-radius: 5px;
+}
+
+#chat .bubble h2 {
+  margin: 0 0 10px;
+  color: var(--cah-navy);
+  font-size: 21px;
+  font-weight: 700;
+}
+
+#chat .bubble h3 {
+  margin: 14px 0 8px;
+  font-size: 16px;
+  font-weight: 700;
+}
+
+#chat .bubble p {
+  margin: 0 0 12px;
+}
+
+#chat .bubble p:last-child,
+#chat .bubble ul:last-child,
+#chat .bubble ol:last-child {
+  margin-bottom: 0;
+}
+
+#chat .bubble ul,
+#chat .bubble ol {
+  padding-left: 22px;
+}
+
+#chat .bubble a {
+  color: #175c9a;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+#chat .bubble pre {
+  max-width: 100%;
+  padding: 14px;
+  border-radius: 9px;
+  background: #152c45;
+  color: #f4f7fb;
+  overflow-x: auto;
+}
+
+#chat .bubble code {
+  font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+  font-size: .9em;
+}
+
+#chat .bubble :not(pre) > code {
+  padding: 2px 5px;
+  border-radius: 4px;
+  background: #edf2f7;
+  color: #234b72;
+}
+
+#chat .bubble table {
+  display: block;
+  max-width: 100%;
+  border-collapse: collapse;
+  overflow-x: auto;
+}
+
+#chat .bubble th,
+#chat .bubble td {
+  padding: 8px 10px;
+  border: 1px solid var(--line);
+  text-align: left;
+}
+
+/* 13. MENSAJE DE BIENVENIDA */
+
+#chat .message.welcome {
+  align-items: center;
+  justify-content: center;
+  flex: 1 0 auto;
+  text-align: center;
+}
+
+#chat .message.welcome .bubble {
+  max-width: 560px;
+  padding: 30px 35px;
+  border: 1px solid #e3eaf1;
+  border-radius: 18px;
+  background: #fff;
+}
+
+#chat .message.welcome h2 {
+  margin: 0;
+  font-size: clamp(22px, 3vw, 29px);
+  line-height: 1.3;
+}
+
+/* 14. FORMULARIO INFERIOR */
+
+.chat-main .composer-area {
+  position: relative;
+  display: flex;
+  flex: 0 0 auto;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 17px 24px 15px;
+  border-top: 1px solid var(--line);
+  background: var(--panel-bg);
+}
+
+.composer-area .composer {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: min(100%, 900px);
+  min-height: 58px;
+  margin: 0;
+  padding: 6px 7px 6px 18px;
+  border: 1px solid #cbd8e4;
+  border-radius: 15px;
+  background: #fff;
+  box-shadow: 0 2px 8px rgb(15 40 65 / 4%);
+  transition: border-color .2s ease, box-shadow .2s ease;
+}
+
+.composer-area .composer:focus-within {
+  border-color: #638eb7;
+  box-shadow: 0 0 0 3px rgb(67 134 196 / 12%);
+}
+
+.composer #question {
+  flex: 1 1 auto;
+  width: 100%;
+  min-width: 0;
+  min-height: 40px;
+  padding: 8px 0;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: var(--text);
+  font-size: 14px;
+}
+
+.composer #question::placeholder {
+  color: #8999a9;
+}
+
+.composer .send {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 44px;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: 0;
+  border-radius: 11px;
+  background: var(--primary);
+  color: #fff;
+  font-size: 24px;
+  line-height: 1;
+}
+
+.composer .send:hover {
+  background: var(--primary-hover);
+}
+
+.composer .send:disabled {
+  opacity: .55;
+  cursor: not-allowed;
+}
+
+.composer-area > p {
+  max-width: 900px;
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 11px;
+  text-align: center;
+  line-height: 1.5;
+}
+
+/* 15. SUGERENCIAS DE CONSULTAS */
+
+.composer-area .live-suggestions {
+  position: absolute;
+  right: 24px;
+  bottom: calc(100% - 1px);
+  left: 24px;
+  z-index: 20;
+  width: min(900px, calc(100% - 48px));
+  max-height: 260px;
+  margin: 0 auto;
+  padding: 8px;
+  border: 1px solid var(--line);
+  border-radius: 13px 13px 0 0;
+  background: #fff;
+  box-shadow: 0 -8px 28px rgb(15 40 65 / 10%);
+  overflow-y: auto;
+}
+
+.live-suggestions button,
+.live-suggestions [role="option"] {
+  display: block;
+  width: 100%;
+  padding: 10px 12px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text);
+  text-align: left;
+  font-size: 13px;
+}
+
+.live-suggestions button:hover,
+.live-suggestions [role="option"]:hover,
+.live-suggestions [aria-selected="true"] {
+  background: #edf4fb;
+}
+
+/* 16. TABLET */
+
+@media (max-width: 1100px) and (min-width: 768px) {
+  :root {
+    --sidebar-width: 232px;
   }
 
-  .chat-page .app-sidebar {
-    width: 256px;
-    min-width: 256px;
-    max-width: 256px;
-    flex: 0 0 256px;
+  .chat-main .topbar {
+    padding: 15px 20px;
+  }
+
+  .chat-main #chat {
+    padding: 22px;
   }
 }
 
-/* TELÉFONOS
-   Se mantiene el menú vertical.
-   No se altera el formulario del chat. */
+/* 17. TELÉFONOS */
 
 @media (max-width: 767px) {
-  .chat-page {
+  body.chat-page {
     flex-direction: column;
+    height: 100vh;
+    height: 100dvh;
   }
 
   .chat-page .app-sidebar {
+    flex: 0 0 auto;
     width: 100%;
     min-width: 0;
     max-width: 100%;
     height: auto;
-    min-height: 0;
-    max-height: 45dvh;
-    flex: 0 0 auto;
-    flex-direction: column;
-    align-items: stretch;
-    padding: 0;
+    max-height: min(42dvh, 290px);
+    overflow-x: hidden;
     overflow-y: auto;
     border-right: 0;
     border-bottom: 1px solid var(--cah-border);
   }
 
   .app-sidebar .cah-brand {
+    min-height: 72px;
     padding: 12px 16px;
   }
 
@@ -311,15 +825,18 @@
     padding: 0 12px 12px;
   }
 
+  .app-sidebar .cah-menu-heading {
+    padding: 9px 10px;
+  }
+
   .app-sidebar .side-link {
-    min-height: 44px;
-    padding: 10px 12px;
+    min-height: 42px;
+    padding: 9px 12px;
   }
 
   .app-sidebar .sidebar-history {
-    display: block;
     flex: 0 0 auto;
-    max-height: 160px;
+    max-height: 150px;
     margin: 0 12px 12px;
   }
 
@@ -327,15 +844,126 @@
     display: none;
   }
 
-  .chat-main {
+  .chat-page .chat-main {
     flex: 1 1 auto;
-    min-height: 0;
     width: 100%;
+    height: auto;
+    min-height: 0;
+  }
+
+  .chat-main .topbar {
+    min-height: 58px;
+    padding: 10px 14px;
+  }
+
+  .topbar h1 {
+    font-size: 16px;
+  }
+
+  .topbar .user-session {
+    gap: 6px;
+  }
+
+  #logged-user {
+    max-width: 100px;
+    font-size: 10px;
+  }
+
+  #header-session {
+    padding: 6px 9px;
+    font-size: 10px;
+  }
+
+  .chat-main .cloud-bar {
+    flex-direction: column;
+    align-items: stretch;
+    padding: 12px 14px;
+  }
+
+  .cloud-bar .access-actions {
+    justify-content: flex-start;
+  }
+
+  .chat-main #chat {
+    gap: 12px;
+    padding: 15px 12px;
+  }
+
+  #chat .bubble {
+    max-width: 95%;
+    padding: 12px 14px;
+    font-size: 13px;
+  }
+
+  #chat .message.welcome .bubble {
+    padding: 20px;
+  }
+
+  .chat-main .composer-area {
+    gap: 7px;
+    padding: 10px 12px;
+  }
+
+  .composer-area .composer {
+    min-height: 50px;
+    padding: 5px 6px 5px 12px;
+    border-radius: 12px;
+  }
+
+  .composer #question {
+    font-size: 13px;
+  }
+
+  .composer .send {
+    flex-basis: 39px;
+    width: 39px;
+    height: 39px;
+    font-size: 21px;
+  }
+
+  .composer-area > p {
+    font-size: 10px;
+  }
+
+  .composer-area .live-suggestions {
+    right: 12px;
+    left: 12px;
+    width: calc(100% - 24px);
   }
 }
 
+/* 18. PANTALLAS PEQUEÑAS */
+
+@media (max-width: 380px) {
+  .topbar h1 {
+    font-size: 14px;
+  }
+
+  #logged-user {
+    max-width: 70px;
+  }
+
+  #header-session {
+    font-size: 9px;
+  }
+
+  .app-sidebar .cah-brand {
+    gap: 9px;
+  }
+
+  .app-sidebar .cah-system {
+    font-size: 10px;
+  }
+}
+
+/* 19. ACCESIBILIDAD */
+
 @media (prefers-reduced-motion: reduce) {
-  .app-sidebar .side-link {
-    transition: none;
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    transition-duration: .01ms !important;
+    animation-duration: .01ms !important;
   }
 }
