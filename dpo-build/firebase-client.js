@@ -1,3 +1,4 @@
+import {readPool} from './read-pool.js';
 import { initializeApp } from "firebase/app";
 import {
   getAuth,
@@ -122,64 +123,63 @@ export async function connectFirebase() {
         );
       api.profile = profile;
       const state = empty();
-      if (profile.role === "technical") {
-        state.users = (
-          await getDocsFromServer(collection(store, "users"))
-        ).docs.map((s) => ({ ...s.data(), id: s.id }));
-        if (spark) state.accessRequests = (await getDocsFromServer(collection(store, "accessRequests"))).docs.map(d => d.data());
-        if (!spark) return state;
+      const globalScope = profile.role === "director" || (spark && profile.role === "technical");
+      const tasks = [];
+      if (globalScope || profile.role === "technical") tasks.push(async () => {
+        state.users = (await getDocsFromServer(collection(store, "users"))).docs.map(s => ({...s.data(), id:s.id}));
+      });
+      if (spark && profile.role === "technical") tasks.push(async () => {
+        state.accessRequests = (await getDocsFromServer(collection(store, "accessRequests"))).docs.map(s => ({...s.data(), id:s.id}));
+      });
+      if (!spark && profile.role === "technical") {
+        await readPool(tasks, task => task());
+        return state;
       }
-      if (profile.role === "director" || (spark && profile.role === "technical"))
-        state.gerencias = (
-          await getDocsFromServer(collection(store, "gerencias"))
-        ).docs.map((s) => s.data());
+      if (globalScope) tasks.push(async () => {
+        state.gerencias = (await getDocsFromServer(collection(store, "gerencias"))).docs.map(s => s.data());
+      });
       else {
-        const ids =
-          profile.role === "gerente"
-            ? [profile.gerenciaId]
-            : (profile.gerencias ?? []);
-        for (const id of ids) {
-          const s = await getDocFromServer(doc(store, "gerencias", id));
-          if (s.exists()) state.gerencias.push(s.data());
-        }
-      }
-      if(spark){
-        const catalog=await getDocFromServer(doc(store,'documentCatalog/current'));state.catalog=catalog.exists()?catalog.data():null;
-        state.lotRequirements=[];state.catalogVersions=[];
-        if(['technical','director'].includes(profile.role)){
-          const history=await getDocsFromServer(query(collection(store,'catalogAudit'),orderBy('revision','desc'),limit(50)));state.catalogAudit=history.docs.map(d=>d.data());
-        }
-      }
-      // Bounded parallel reads; audit is fetched separately using cursors.
-      if(spark)state.remisionControls=[];
-      for (const g of state.gerencias) {
-        if(spark){const controls=await getDocsFromServer(query(collection(store,"gerencias",g.id,"remisionControls"),limit(3001)));if(controls.size>3000)throw Error("Más de 3000 controles: consulta incompleta bloqueada.");state.remisionControls.push(...controls.docs.map(d=>({...d.data(),id:d.id,gerenciaId:g.id})));}
-        if(spark){const requirements=await getDocsFromServer(query(collection(store,'gerencias',g.id,'lotRequirements'),limit(3001)));if(requirements.size>3000)throw Error('Requisitos históricos: consulta incompleta.');state.lotRequirements.push(...requirements.docs.map(d=>({...d.data(),gerenciaId:g.id})));}
-        const snapshots = await Promise.all(
-          entities.map((c) =>
-            getDocsFromServer(
-              query(collection(store, "gerencias", g.id, c), limit(3001)),
-            ),
-          ),
-        );
-        snapshots.forEach((snap, i) => {
-          if (snap.size > 3000)
-            throw Error(
-              "El ámbito supera 3000 registros por entidad; requiere paginación operativa adicional.",
-            );
-          state[entities[i]].push(...snap.docs.map((s) => s.data()));
+        const ids = profile.role === "gerente" ? [profile.gerenciaId] : (profile.gerencias ?? []);
+        tasks.push(async () => {
+          const snapshots = await readPool(ids, id => getDocFromServer(doc(store, "gerencias", id)));
+          state.gerencias = snapshots.filter(s => s.exists()).map(s => s.data());
         });
       }
-      if (profile.role === "director" || (spark && profile.role === "technical")) {
-        state.users = (
-          await getDocsFromServer(collection(store, "users"))
-        ).docs.map((s) => ({ ...s.data(), id: s.id }));
+      if (spark) {
+        state.lotRequirements = []; state.catalogVersions = []; state.remisionControls = [];
+        tasks.push(async () => {
+          const snapshot = await getDocFromServer(doc(store, 'documentCatalog/current'));
+          state.catalog = snapshot.exists() ? snapshot.data() : null;
+        });
+        if (['technical', 'director'].includes(profile.role)) tasks.push(async () => {
+          state.catalogAudit = (await getDocsFromServer(query(collection(store, 'catalogAudit'), orderBy('revision','desc'), limit(50)))).docs.map(s => s.data());
+        });
       }
-      if(spark){for(const v of new Set(state.lotRequirements.map(r=>r.catalogVersion))){const snap=await getDocFromServer(doc(store,'documentCatalogVersions',String(v)));if(snap.exists())state.catalogVersions.push(snap.data());}}
-      state.audit.sort((a, b) => a.at.localeCompare(b.at));
-      const cal = await getDocFromServer(doc(store, "settings", "calendar"));
-      state.calendarVersion = cal.exists() ? cal.data().version : null;
-      if(state.calendarVersion){const calendar=await getDocFromServer(doc(store,'calendars',state.calendarVersion));state.calendar=calendar.exists()?calendar.data():null;}
+      tasks.push(async () => {
+        const cal = await getDocFromServer(doc(store, 'settings', 'calendar'));
+        state.calendarVersion = cal.exists() ? cal.data().version : null;
+        if (state.calendarVersion) {
+          const calendar = await getDocFromServer(doc(store, 'calendars', state.calendarVersion));
+          state.calendar = calendar.exists() ? calendar.data() : null;
+        }
+      });
+      await readPool(tasks, task => task());
+      const collections = spark ? [...entities, 'remisionControls', 'lotRequirements'] : entities;
+      const reads = state.gerencias.flatMap(g => collections.map(entity => ({gerenciaId:g.id, entity})));
+      const snapshots = await readPool(reads, ({gerenciaId, entity}) =>
+        getDocsFromServer(query(collection(store, 'gerencias', gerenciaId, entity), limit(3001))));
+      snapshots.forEach((snapshot, index) => {
+        if (snapshot.size > 3000) throw Error('El ámbito supera 3000 registros por entidad; consulta incompleta bloqueada.');
+        const {entity, gerenciaId} = reads[index];
+        const metadata = ['remisionControls','lotRequirements'].includes(entity);
+        state[entity].push(...snapshot.docs.map(s => metadata ? {...s.data(), id:s.id, gerenciaId} : s.data()));
+      });
+      if (spark) {
+        const versions = [...new Set(state.lotRequirements.map(r => r.catalogVersion))];
+        const snapshots = await readPool(versions, v => getDocFromServer(doc(store, 'documentCatalogVersions', String(v))));
+        state.catalogVersions = snapshots.filter(s => s.exists()).map(s => s.data());
+      }
+      state.audit.sort((a,b) => a.at.localeCompare(b.at));
       return validate(state);
     },
   };
