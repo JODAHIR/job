@@ -17,41 +17,91 @@
     </head>
     <body class="chat-page">
         <a class="skip-link" href="#question">Ir a la consulta</a>
-        <aside class="app-sidebar">
-            <a class="brand" href="asistente.html"
-                ><span class="mark" aria-hidden="true">a0<span>.</span></span
-                ><span>asistente<span class="brand-sub">OPERACIONES</span></span></a
-            >
-            <div class="sidebody">
-                <p class="eyebrow">TU ESPACIO</p>
-                <a class="side-link active" href="asistente.html" aria-current="page"
-                    ><span aria-hidden="true">◫</span> Asistente operativo
-                    <span class="side-arrow" aria-hidden="true">↗</span></a
-                ><a class="side-link" href="../pizarra/"
-                    ><span aria-hidden="true">▤</span> Mi Pizarra
-                    <span class="side-arrow" aria-hidden="true">↗</span></a
-                ><a class="side-link" href="https://jodahir.github.io/job/dpo/"
-                    ><span aria-hidden="true">▤</span> Rendición Documentos
-                    <span class="side-arrow" aria-hidden="true">↗</span></a
-                >
-                <a id="side-admin-link" class="side-link" href="admin.html" hidden
-                    ><span aria-hidden="true">⚙</span> Administración
-                    <span class="side-arrow" aria-hidden="true">↗</span></a
-                >
-            </div>
-            <section id="sidebar-history" class="sidebar-history" hidden aria-label="Historial de consultas">
-                <div class="history-heading">
-                    <span>HISTORIAL</span><span id="history-count" class="history-count"></span>
-                </div>
-                <div id="history-groups"></div>
-            </section>
-            <div class="sidenote">
-                <span class="small-dot" aria-hidden="true"></span> Dirección de Operaciones - CAH Py<br /><span
-                    class="side-muted"
-                    >Consultas ++</span
-                >
-            </div>
-        </aside>
+
+<aside class="app-sidebar" aria-label="Menú principal">
+
+    <!-- IDENTIDAD INSTITUCIONAL -->
+    <a class="cah-brand" href="asistente.html">
+        <span class="cah-identity">
+            <strong class="cah-logo">CAH</strong>
+            <span class="cah-tricolor" aria-hidden="true">
+                <span class="stripe-red"></span>
+                <span class="stripe-white"></span>
+                <span class="stripe-blue"></span>
+            </span>
+        </span>
+
+        <span class="cah-brand-info">
+            <span class="cah-system">ASISTENTE DPO</span>
+            <span class="cah-department">
+                Dirección de Operaciones
+            </span>
+        </span>
+    </a>
+
+    <!-- NAVEGACIÓN -->
+    <nav class="sidebody" aria-label="Navegación principal">
+
+        <div class="cah-menu-heading">
+            <span class="cah-menu-icon" aria-hidden="true">
+                ☰
+            </span>
+            <span>Menú</span>
+        </div>
+
+        <a class="side-link active"
+           href="asistente.html"
+           aria-current="page">
+            <span class="cah-nav-icon" aria-hidden="true">▦</span>
+            <span>Asistente operativo</span>
+        </a>
+
+        <a class="side-link" href="../pizarra/">
+            <span class="cah-nav-icon" aria-hidden="true">▤</span>
+            <span>Mi Pizarra</span>
+        </a>
+
+        <a class="side-link"
+           href="https://jodahir.github.io/job/dpo/">
+            <span class="cah-nav-icon" aria-hidden="true">▣</span>
+            <span>Rendición Documentos</span>
+        </a>
+
+        <!-- Visible solamente para administradores -->
+        <a id="side-admin-link"
+           class="side-link"
+           href="admin.html"
+           hidden>
+            <span class="cah-nav-icon" aria-hidden="true">⚙</span>
+            <span>Administración</span>
+        </a>
+
+    </nav>
+
+    <!-- HISTORIAL DE CONSULTAS -->
+    <section id="sidebar-history"
+             class="sidebar-history"
+             hidden
+             aria-label="Historial de consultas">
+
+        <div class="history-heading">
+            <span>HISTORIAL</span>
+            <span id="history-count"
+                  class="history-count"></span>
+        </div>
+
+        <div id="history-groups"></div>
+
+    </section>
+
+    <!-- PIE INSTITUCIONAL -->
+    <div class="sidenote">
+        <span class="small-dot" aria-hidden="true"></span>
+        Dirección de Operaciones - CAH Py
+        <span class="side-muted">Consultas ++</span>
+    </div>
+
+</aside>
         <main class="chat-main">
             <header class="topbar">
                 <div><h1>Asistente operativo</h1></div>
