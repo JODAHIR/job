@@ -1,3 +1,4 @@
+import {dashboardFilters,intelligencePanel,bindIntelligence} from './intelligence-ui.js?v=cah-inteligencia-20261020';
 import {catalogPanel,bindCatalog,showLotGenerator,lotDashboard} from './lot-ui.js?v=cah-guardado-directo-20261019';
 import {sortedTypes} from './lot-catalog.js?v=cah-lotes-20261019';
 import {annulPanel,bindAnnulPanel} from './remision-annul-ui.js?v=cah-lotes-20261019';
@@ -124,7 +125,7 @@ async function load() {
     else {$('#app').setAttribute('aria-busy','true');$('#refresh-cloud').disabled=true;showSyncStatus();}
 
     try{
-      if(!cloud){const module=await import('./firebase-client.bundle.js?v=cah-lotes-rapidos-20261019');cloud=await module.connectFirebase();let initial=true;stopAuth=cloud.watchAuth(()=>{if(initial){initial=false;return}if(cloudMode()||!cloud.auth.currentUser){mode='cloud';epoch++;db=null;page="dashboard";functionId="list";window.history.replaceState(null,"",routeFor(page));$('#modal').close();load()}});}
+      if(!cloud){const module=await import('./firebase-client.bundle.js?v=cah-inteligencia-20261020');cloud=await module.connectFirebase();let initial=true;stopAuth=cloud.watchAuth(()=>{if(initial){initial=false;return}if(cloudMode()||!cloud.auth.currentUser){mode='cloud';epoch++;db=null;page="dashboard";functionId="list";window.history.replaceState(null,"",routeFor(page));$('#modal').close();load()}});}
       if(cloud.authOnly){authenticationView();return}
       if(!cloud.auth.currentUser){loginView();return}
       const result=await cloud.load();if(token!==epoch||!cloudMode())return;db=result;
@@ -150,6 +151,7 @@ async function load() {
   render();
 }
 function filters() {
+  if(page==='dashboard'&&intelligenceLevel!=='legacy')return dashboardFilters(db,f);
   return `<section class="filters">${select(
     "year",
     "Año",
@@ -243,7 +245,11 @@ function groupedLots(lots) {
   }
   return renderGroups(lots,0);
 }
-function dashboard() {
+let intelligenceLevel="executive";
+function dashboard() { return intelligenceLevel==='legacy'
+ ? '<button id="intel-modern" class="secondary">Volver a Inteligencia Documental</button><p>Vista histórica: métricas del modelo de individualización completa.</p>'+legacyDashboard()
+ : intelligencePanel(db,f,intelligenceLevel)+'<button id="intel-legacy" class="secondary">Consultar indicadores del modelo histórico</button>'; }
+function legacyDashboard() {
   const m = metrics(db, f);
   const cards = [
     ["Gerencias involucradas", m.gerencias, "Ámbito seleccionado"],
@@ -269,6 +275,18 @@ function dashboard() {
   ];
   return `<div class="section-line"><div><h2>Resumen del período</h2><p>Una visión integral de la recepción y revisión documental.</p></div>${cloudMode()?"":badge("Actualizado con datos locales", "neutral")}</div><div class="stats">${cards.map(([label, n, sub], i) => `<article class="stat ${i === 3 ? "featured" : ""}"><button class="link" data-indicator="${i}">Ver detalle →</button><span>${label}</span><strong>${n}</strong><small>${sub}</small></article>`).join("")}</div><div class="progress-card"><div><span class="eyebrow">AVANCE DOCUMENTAL</span><h2>${m.progress === null ? "Sin documentos para verificar" : `${m.progress.toFixed(1)} % revisado`}</h2><p>${m.reviewed} de ${m.individual} documentos individualizados · Los faltantes se informan por separado.</p></div><div class="progress-track"><div style="width:${m.progress ?? 0}%"></div></div></div><section class="panel"><div class="section-line"><div><h2>Control de lotes</h2><p>Cantidad declarada frente a documentos individualizados · Las anuladas solo se incluyen al seleccionarlas en el filtro administrativo</p></div>${!cloudMode() || visibleModule(cloud.profile,"lotes") ? '<button data-nav="lotes" class="secondary">Ver lotes →</button>' : ""}</div>${groupedLots(m.lots)}</section>${cloud?.spark?lotDashboard(cloudContext()):''}`;
 }
+function showIntelligenceRecord(entity,id){
+ const record=db[entity]?.find(r=>r.id===id);if(!record)return;
+ const modal=$('#modal');
+ const labels={code:'Lote',number:'Número',type:'Tipo documental',declared:'Cantidad declarada',expediente:'Expediente',receivedOn:'Recepción',remittedOn:'Remisión',dueOn:'Vencimiento de control',calendarVersion:'Calendario',year:'Año',month:'Mes',half:'Quincena',state:'Verificación',description:'Descripción',date:'Fecha',owner:'Responsable',status:'Regularización',regularizedOn:'Fecha de regularización'};
+ const children={remisiones:['lotes','remisionId'],lotes:['documentos','loteId'],documentos:['observaciones','documentId']}[entity];
+ const rows=children?db[children[0]].filter(r=>r[children[1]]===id):[];
+ modal.innerHTML=`<div class="intel-dialog"><h2>${esc(pages.find(p=>p[0]===entity)?.[2]||entity)}</h2>${table(['Campo','Valor'],Object.entries(labels).filter(([key])=>record[key]!==undefined).map(([key,label])=>[label,esc(record[key])]))}${children?`<h3>Registros vinculados</h3>${table(['Registro','Detalle'],rows.map(r=>[esc(r.code||r.number||r.description||r.id),`<button class="link" data-intel-child="${children[0]}" data-id="${esc(r.id)}">Consultar →</button>`]))}`:''}<button id="intel-record-close" class="secondary">Cerrar</button></div>`;
+ if(!modal.open)modal.showModal();
+ modal.querySelector('#intel-record-close').onclick=()=>modal.close();
+ modal.querySelectorAll('[data-intel-child]').forEach(b=>b.onclick=()=>showIntelligenceRecord(b.dataset.intelChild,b.dataset.id));
+}
+
 function collectionView() {
   const s = scope(db, f);
   if(contextFilter?.child===page){const {entity,id}=contextFilter;
@@ -465,6 +483,9 @@ function render() {
   installTables();
 }
 function bind() {
+  if($('#intel-legacy'))$('#intel-legacy').onclick=()=>{intelligenceLevel='legacy';render();};
+  if($('#intel-modern'))$('#intel-modern').onclick=()=>{intelligenceLevel='executive';render();};
+  if(page==='dashboard')bindIntelligence({db,f,render,setLevel:value=>intelligenceLevel=value,openRecord:showIntelligenceRecord,cloud,mode});
   if(page==='catalog')bindCatalog(cloudContext());
   if($('#generate-lots'))$('#generate-lots').onclick=()=>showLotGenerator(cloudContext());
   if(page==='remisiones'&&cloudMode())bindAnnulPanel({...cloudContext(),render});

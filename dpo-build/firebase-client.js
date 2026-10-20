@@ -174,6 +174,15 @@ export async function connectFirebase() {
         const metadata = ['remisionControls','lotRequirements'].includes(entity);
         state[entity].push(...snapshot.docs.map(s => metadata ? {...s.data(), id:s.id, gerenciaId} : s.data()));
       });
+      // Read each immutable calendar actually referenced by authorized remissions.
+      // Never substitute the current version for a missing historical version.
+      const historicalVersions = [...new Set(state.remisiones.map(r => r.calendarVersion).filter(v => v && v !== state.calendarVersion))];
+      const historicalCalendars = await readPool(historicalVersions, version =>
+        getDocFromServer(doc(store, 'calendars', version)));
+      state.calendars = [
+        ...(state.calendar ? [state.calendar] : []),
+        ...historicalCalendars.filter(s => s.exists()).map(s => s.data()),
+      ];
       if (spark) {
         const versions = [...new Set(state.lotRequirements.map(r => r.catalogVersion))];
         const snapshots = await readPool(versions, v => getDocFromServer(doc(store, 'documentCatalogVersions', String(v))));
