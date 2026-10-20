@@ -18,7 +18,7 @@ export function cloudPanel(page, ctx) {
     const pending = requests.filter(r => !registered.has(r.id)).length;
     const gerencias = new Map(db.gerencias.map(g => [g.id, g.name]));
     const rows = users.map((u) => [
-      esc(u.id),
+      esc(u.email || requests.find(r=>r.id===u.id)?.email || (u.id===cloud.auth.currentUser.uid?cloud.auth.currentUser.email:null) || "Correo no disponible"),
       esc(u.description || "—"),
       esc((roles[u.role] ?? u.role) + (u.secondaryRole ? " + " + roles[u.secondaryRole] : "")),
       u.active ? "Activo" : "Inactivo",
@@ -30,7 +30,7 @@ export function cloudPanel(page, ctx) {
       .filter((u) => u.role === "asistente" && u.active)
       .map((u) => `<option value="${esc(u.id)}">${esc(userDescription(u))}</option>`)
       .join("")}</select></label>`;
-    return `<section class="panel"><h2>Usuarios y permisos</h2><p>Las asignaciones se verifican nuevamente en cada operación del servidor.</p>${table(["UID", "Descripción", "Rol", "Estado", "Gerencias", "Revisión", ""], rows)}${cloud.spark && technical ? `<details id="access-requests" class="access-section" ${pending ? "open" : ""}><summary>Solicitudes de acceso · ${pending} pendientes</summary>${table(["UID", "Correo", "Estado"], requests.map(r => [esc(r.id), esc(r.email), registered.has(r.id) ? "Perfil registrado" : "Pendiente"]))}</details>` : ""}${
+    return `<section class="panel"><h2>Usuarios y permisos</h2><p>Las asignaciones se verifican nuevamente en cada operación del servidor.</p>${table(["Correo", "Descripción", "Rol", "Estado", "Gerencias", "Revisión", ""], rows)}${cloud.spark && technical ? `<details id="access-requests" class="access-section" ${pending ? "open" : ""}><summary>Solicitudes de acceso · ${pending} pendientes</summary>${table(["Correo", "Estado"], requests.map(r => [esc(r.email), registered.has(r.id) ? "Perfil registrado" : "Pendiente"]))}</details>` : ""}${
       director
         ? `<details class="access-section"><summary>Asignar o retirar gerencias a un asistente</summary><form id="assignment-form" class="form-fields">${choose}<fieldset><legend>Asignación completa que reemplazará la actual</legend>${db.gerencias.map((g) => `<label class="check-label"><input type="checkbox" name="gerencias" value="${esc(g.id)}">${esc(g.name)}</label>`).join("")}</fieldset>${input("reason", "Motivo")}<button class="primary">Guardar asignación completa</button></form></details>` : ""}${technical ? `<details class="access-section"><summary>Provisionar perfil</summary><form id="profile-form" class="form-fields"><p>El UID debe corresponder a una cuenta creada en Firebase Authentication. El administrador tiene acceso operativo global. El segundo rol es opcional y no reduce sus permisos. No puede modificar su propio perfil.</p>${input("uid", "UID de Firebase Authentication")}<label>Descripción del usuario (opcional)<textarea name="description" maxlength="500" rows="3" placeholder="Nombre de referencia, función o información del usuario"></textarea></label><label>Rol<select name="role">${Object.entries(
             roles,

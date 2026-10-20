@@ -1,7 +1,8 @@
+import {creationActions} from './record-actions.js?v=cah-ajustes-20261020';
 import {dashboardFilters,intelligencePanel,bindIntelligence} from './intelligence-ui.js?v=cah-inteligencia-20261020';
 import {catalogPanel,bindCatalog,showLotGenerator,lotDashboard} from './lot-ui.js?v=cah-guardado-directo-20261019';
 import {sortedTypes} from './lot-catalog.js?v=cah-lotes-20261019';
-import {annulPanel,bindAnnulPanel} from './remision-annul-ui.js?v=cah-lotes-20261019';
+import {annulPanel,bindAnnulPanel} from './remision-annul-ui.js?v=cah-ajustes-20261020';
 import {pages,resolveRoute,routeFor} from './navigation.js?v=cah-lotes-20261019';
 import {navigationMarkup,bindNavigation,breadcrumb} from './navigation-ui.js?v=cah-lotes-20261019';
 import {installTables} from './tables.js?v=cah-lotes-20261019';
@@ -11,7 +12,7 @@ import {phase3Panel,bindPhase3} from './phase3-ui.js?v=cah-lotes-20261019';
 import { metrics, scope, deadlineStatus, mutate, states, integer } from "./domain.js?v=cah-lotes-20261019";
 import { LocalRepository } from "./repository.js?v=cah-lotes-20261019";
 import { demo } from "./seed.js?v=cah-lotes-20261019";
-import { cloudPanel, bindCloudPanel } from "./cloud-ui.js?v=cah-lotes-20261019";
+import { cloudPanel, bindCloudPanel } from "./cloud-ui.js?v=cah-ajustes-20261020";
 const $ = (s) => document.querySelector(s),
   esc = (v) =>
     String(v ?? "").replace(
@@ -400,7 +401,7 @@ function collectionView() {
   const filtered = rows.filter((r) =>
     r.join(" ").toLowerCase().includes(esc(query.toLowerCase())),
   );
-  return `${page==='remisiones'&&cloudMode()?annulPanel({...cloudContext(),render}):''}<section class="panel">${contextFilter?.child===page?'<p>Mostrando registros vinculados. <button id="clear-context" class="link">Ver todos los registros del período</button></p>':""}<div class="section-line"><div><h2>${pages.find((p) => p[0] === page)[2]}</h2><p>${page === "gerencias" || page === "cacs" ? "Catálogo institucional · independiente del período" : "Registros del período y ámbito seleccionados"}</p></div>${page === "remisiones" && cloud?.spark && canManage("remisiones") ? `<button class="secondary" id="generate-remisiones">Generar remisiones de la gerencia</button>` : ""}${page==='lotes'&&cloud?.spark&&canManage('lotes')?'<button class="secondary" id="generate-lots">Generar lotes automáticamente</button>':''}${canManage(collection)?`<button class="primary" data-new="${collection}">+ Nuevo registro</button>`:""}</div><input class="search" id="search" placeholder="Buscar en esta tabla…" value="${esc(query)}" aria-label="Buscar en la tabla">${table(headers, filtered)}<p class="footnote">${filtered.length} resultados · ${cloudMode()?"Persistencia en Firestore · permisos validados en servidor":"Cambios guardados únicamente en este navegador."}</p></section>`;
+  return `<section class="panel">${contextFilter?.child===page?'<p>Mostrando registros vinculados. <button id="clear-context" class="link">Ver todos los registros del período</button></p>':""}<div class="section-line"><div><h2>${pages.find((p) => p[0] === page)[2]}</h2><p>${page === "gerencias" || page === "cacs" ? "Catálogo institucional · independiente del período" : "Registros del período y ámbito seleccionados"}</p></div>${creationActions(collection,canManage(collection),cloud?.spark)}</div><input class="search" id="search" placeholder="Buscar en esta tabla…" value="${esc(query)}" aria-label="Buscar en la tabla">${table(headers, filtered)}<p class="footnote">${filtered.length} resultados · ${cloudMode()?"Persistencia en Firestore · permisos validados en servidor":"Cambios guardados únicamente en este navegador."}</p></section>${page==='remisiones'&&cloudMode()?annulPanel({...cloudContext(),render}):''}`;
 }
 function history() {
   const keys = [

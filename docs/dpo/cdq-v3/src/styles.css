@@ -744,3 +744,11 @@ dialog:has(#lot-generate-form){width:960px}.lot-type-row>label:first-child{flex-
 @media(max-width:1200px){.intel-kpis{grid-template-columns:repeat(3,minmax(0,1fr))}}
 @media(max-width:900px){.intel-grid{grid-template-columns:1fr}.intel-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}.intel-toolbar{align-items:stretch}}
 @media(max-width:480px){.intel-kpis{grid-template-columns:1fr}.intel-exports{width:100%}.intel-exports select{max-width:100%;width:100%}.intel-kpi>span{min-height:0}.intel-filters{grid-template-columns:1fr}.intel-dialog{padding:12px}.intel-bar{grid-template-columns:minmax(90px,1fr) 65px 40px}}
+
+.new-record-actions {position:relative;flex-shrink:0}
+.new-record-actions>summary {cursor:pointer;padding:11px 16px;border-radius:6px;list-style:none}
+.new-record-actions>summary::-webkit-details-marker {display:none}
+.new-record-actions>summary::after {content:' ▾'}
+.new-record-actions>div {position:absolute;right:0;top:calc(100% + 6px);z-index:30;display:grid;gap:8px;padding:12px;min-width:240px;background:white;border:1px solid #dce6eb;border-radius:8px;box-shadow:0 6px 20px #1233}
+.new-record-actions button {text-align:left}
+@media(max-width:480px){.new-record-actions>div{min-width:210px;max-width:85vw}}
