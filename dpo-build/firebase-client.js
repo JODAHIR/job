@@ -146,7 +146,7 @@ export async function connectFirebase() {
         });
       }
       if (spark) {
-        state.lotRequirements = []; state.catalogVersions = []; state.remisionControls = [];
+        state.lotVerifications = []; state.lotRequirements = []; state.catalogVersions = []; state.remisionControls = [];
         tasks.push(async () => {
           const snapshot = await getDocFromServer(doc(store, 'documentCatalog/current'));
           state.catalog = snapshot.exists() ? snapshot.data() : null;
@@ -164,7 +164,7 @@ export async function connectFirebase() {
         }
       });
       await readPool(tasks, task => task());
-      const collections = spark ? [...entities, 'remisionControls', 'lotRequirements'] : entities;
+      const collections = spark ? [...entities, 'remisionControls', 'lotRequirements', 'lotVerifications'] : entities;
       const reads = state.gerencias.flatMap(g => collections.map(entity => ({gerenciaId:g.id, entity})));
       const snapshots = await readPool(reads, ({gerenciaId, entity}) =>
         getDocsFromServer(query(collection(store, 'gerencias', gerenciaId, entity), limit(3001))));

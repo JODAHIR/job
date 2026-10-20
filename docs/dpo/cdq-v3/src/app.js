@@ -1,3 +1,4 @@
+import {showLotVerification,lotVerificationLabel} from './lot-verification-ui.js?v=cah-verificacion-20261020';
 import {creationActions} from './record-actions.js?v=cah-ajustes-20261020';
 import {dashboardFilters,intelligencePanel,bindIntelligence} from './intelligence-ui.js?v=cah-inteligencia-20261020';
 import {catalogPanel,bindCatalog,showLotGenerator,lotDashboard} from './lot-ui.js?v=cah-guardado-directo-20261019';
@@ -126,7 +127,7 @@ async function load() {
     else {$('#app').setAttribute('aria-busy','true');$('#refresh-cloud').disabled=true;showSyncStatus();}
 
     try{
-      if(!cloud){const module=await import('./firebase-client.bundle.js?v=cah-inteligencia-20261020');cloud=await module.connectFirebase();let initial=true;stopAuth=cloud.watchAuth(()=>{if(initial){initial=false;return}if(cloudMode()||!cloud.auth.currentUser){mode='cloud';epoch++;db=null;page="dashboard";functionId="list";window.history.replaceState(null,"",routeFor(page));$('#modal').close();load()}});}
+      if(!cloud){const module=await import('./firebase-client.bundle.js?v=cah-verificacion-20261020');cloud=await module.connectFirebase();let initial=true;stopAuth=cloud.watchAuth(()=>{if(initial){initial=false;return}if(cloudMode()||!cloud.auth.currentUser){mode='cloud';epoch++;db=null;page="dashboard";functionId="list";window.history.replaceState(null,"",routeFor(page));$('#modal').close();load()}});}
       if(cloud.authOnly){authenticationView();return}
       if(!cloud.auth.currentUser){loginView();return}
       const result=await cloud.load();if(token!==epoch||!cloudMode())return;db=result;
@@ -224,7 +225,7 @@ function lotRows(lots) {
         diff === 0 ? "Conciliado" : `${diff > 0 ? "+" : ""}${diff} documentos`,
         diff === 0 ? "ok" : "warn",
       ),
-      edit("lotes", l.id),
+      edit("lotes", l.id)+(cloud?.spark?`<p>${esc(lotVerificationLabel(db,l))}</p><button class="link" data-verify-lot="${esc(l.id)}">Conciliar y verificar lote</button>`:""),
     ];
   });
 }
@@ -487,6 +488,7 @@ function bind() {
   if($('#intel-legacy'))$('#intel-legacy').onclick=()=>{intelligenceLevel='legacy';render();};
   if($('#intel-modern'))$('#intel-modern').onclick=()=>{intelligenceLevel='executive';render();};
   if(page==='dashboard')bindIntelligence({db,f,render,setLevel:value=>intelligenceLevel=value,openRecord:showIntelligenceRecord,cloud,mode});
+  document.querySelectorAll('[data-verify-lot]').forEach(b=>b.onclick=()=>showLotVerification(cloudContext(),b.dataset.verifyLot));
   if(page==='catalog')bindCatalog(cloudContext());
   if($('#generate-lots'))$('#generate-lots').onclick=()=>showLotGenerator(cloudContext());
   if(page==='remisiones'&&cloudMode())bindAnnulPanel({...cloudContext(),render});

@@ -180,6 +180,30 @@ service cloud.firestore {
    match /lotes/{id} {
     allow create: if newTypedLot(g,id,request.resource.data);
    }
+   // Immutable signed review; quantities are the authorized reviewer's attestation.
+   // Inventory is recalculated by the client, fenced against concurrent operational writes.
+   match /lotVerifications/{id} {
+    allow read: if readScope(g);
+    allow create: if lotWrite(g) && validVerification(request.resource.data);
+    function validVerification(v) {
+     let l=get(/databases/$(database)/documents/gerencias/$(g)/lotes/$(v.lotId)).data;
+     let r=get(/databases/$(database)/documents/gerencias/$(g)/remisiones/$(l.remisionId)).data;
+     let c=get(/databases/$(database)/documents/gerencias/$(g)/remisionControls/$(l.remisionId)).data;
+     return v.keys().hasAll(['id','lotId','code','remisionId','lotRevision','controlVersion','actor','role','at','declared','registered','missing','excess','openObservations','confirmed','result','comments','reviewerComments'])
+      && v.keys().hasOnly(['id','lotId','code','remisionId','lotRevision','controlVersion','actor','role','at','declared','registered','missing','excess','openObservations','confirmed','result','comments','reviewerComments'])
+      && ident(id) && v.id == id && ident(v.lotId) && v.code == l.code && v.remisionId == l.remisionId
+      && r.get('annulment',null) == null && v.lotRevision == l.revision && v.controlVersion == c.version
+      && v.actor == request.auth.uid && v.role == profile().role && v.at == request.time
+      && v.declared == l.declared && v.registered is int && v.registered >= 0 && v.registered <= 3000
+      && v.openObservations is int && v.openObservations >= 0 && v.openObservations <= 3000
+      && v.missing == (v.declared > v.registered ? v.declared-v.registered : 0)
+      && v.excess == (v.registered > v.declared ? v.registered-v.declared : 0)
+      && v.confirmed is bool && v.comments is string && v.comments.size() <= 2000
+      && v.reviewerComments is string && v.reviewerComments.size() <= 2000
+      && (v.confirmed ? v.result == 'Verificado' && v.declared > 0 && v.registered == v.declared && v.openObservations == 0 && v.comments == 'Presentación sin inconvenientes, lote completo'
+        : v.result == 'Con observaciones' && text(v.comments,2000) && v.comments == v.reviewerComments);
+    }
+   }
    match /lotRequirements/{id} {
     allow read: if readScope(g);
     allow create: if lotWrite(g) && request.resource.data.keys().hasOnly(['id','catalogVersion','actor','at']) && request.resource.data.id == id
