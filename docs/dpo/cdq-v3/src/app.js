@@ -1,7 +1,7 @@
 import {connectionState,orderLots} from './presentation-status.js?v=cah-filtros-20261020';
-import {showLotVerification,lotVerificationLabel} from './lot-verification-ui.js?v=cah-verificacion-20261020';
+import {showLotVerification,lotVerificationLabel} from './lot-verification-ui.js?manual-20261021';
 import {creationActions} from './record-actions.js?v=cah-ajustes-20261020';
-import {dashboardFilters,intelligencePanel,bindIntelligence} from './intelligence-ui.js?v=cah-filtros-20261020';
+import {dashboardFilters,intelligencePanel,bindIntelligence,groupModuleFilters} from './intelligence-ui.js?manual-20261021';
 import {catalogPanel,bindCatalog,showLotGenerator,lotDashboard} from './lot-ui.js?v=cah-guardado-directo-20261019';
 import {sortedTypes} from './lot-catalog.js?v=cah-lotes-20261019';
 import {annulPanel,bindAnnulPanel} from './remision-annul-ui.js?v=cah-filtros-20261020';
@@ -522,6 +522,7 @@ function bind() {
         navigate(routeFor(b.dataset.nav));
       }),
   );
+  groupModuleFilters();
   document.querySelectorAll("[data-filter]").forEach(
     (el) =>
       (el.onchange = () => {

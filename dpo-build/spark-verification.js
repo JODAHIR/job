@@ -1,6 +1,6 @@
 import {doc,collection,query,where,limit,getDocsFromServer,getDocFromServer,runTransaction,serverTimestamp} from 'firebase/firestore';
 import {lotPermission} from './lot-catalog.js';
-import {reconcileLot,verificationResult} from './lot-verification.js';
+import {reconcileLot,reconcilePresented,verificationResult} from './lot-verification.js';
 const id=v=>{if(typeof v!=='string'||! /^[A-Za-z0-9_-]{1,128}$/.test(v))throw Error('Identificador inválido.');return v;};
 export async function reviewLot(store,auth,{gerenciaId,lotId}) {
  const g=id(gerenciaId),l=id(lotId),base=`gerencias/${g}`;
@@ -17,12 +17,13 @@ export async function reviewLot(store,auth,{gerenciaId,lotId}) {
  if(!rs.exists()||rs.data().annulment)throw Error('La remisión está anulada o no existe.');
  return {gerenciaId:g,lotId:l,lot,controlVersion:end.data().version,summary:reconcileLot(lot,ds.docs.map(d=>d.data()),os.docs.map(d=>d.data()))};
 }
-export async function verifyLot(store,auth,{review,confirmed=false,comments='',operationId}) {
+export async function verifyLot(store,auth,{review,confirmed=false,comments='',operationId,registered}) {
  const g=id(review.gerenciaId),l=id(review.lotId),op=id(operationId),base=`gerencias/${g}`;
- // Recalculate from server reads; do not accept the UI's submitted quantities.
+ // Refresh inventory and observations; manual presented totals are recorded separately.
  const fresh=await reviewLot(store,auth,{gerenciaId:g,lotId:l});
  if(fresh.controlVersion!==review.controlVersion||fresh.lot.revision!==review.lot.revision)throw Error('El lote cambió desde su revisión. Vuelva a conciliar.');
- const result=verificationResult(fresh.summary,confirmed,comments);
+ const summary=registered===undefined?fresh.summary:reconcilePresented(fresh.summary,registered);
+ const result=verificationResult(summary,confirmed,comments);
  if(!confirmed&&!comments.trim())throw Error('Describa el resultado de la revisión.');
  return runTransaction(store,async tx=>{
  const target=doc(store,base,'lotVerifications',op);
@@ -30,7 +31,7 @@ export async function verifyLot(store,auth,{review,confirmed=false,comments='',o
  if(existing.exists()){if(existing.data().actor!==auth.currentUser.uid)throw Error('Operación ajena.');return existing.data();}
  if(!lotPermission(ps.data(),g))throw Error('Sin permisos para verificar este lote.');
  if(!ls.exists()||ls.data().revision!==fresh.lot.revision||cs.data()?.version!==fresh.controlVersion||!rs.exists()||rs.data().annulment)throw Error('El lote cambió. Vuelva a conciliar.');
- const {complete,...counts}=fresh.summary;
+ const {complete,...counts}=summary;
  const record={id:op,lotId:l,code:fresh.lot.code,remisionId:fresh.lot.remisionId,lotRevision:fresh.lot.revision,controlVersion:fresh.controlVersion,actor:auth.currentUser.uid,role:ps.data().role,at:serverTimestamp(),...counts,...result};
  tx.set(target,record);return record;
  });

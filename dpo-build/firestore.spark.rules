@@ -190,11 +190,12 @@ service cloud.firestore {
      let r=get(/databases/$(database)/documents/gerencias/$(g)/remisiones/$(l.remisionId)).data;
      let c=get(/databases/$(database)/documents/gerencias/$(g)/remisionControls/$(l.remisionId)).data;
      return v.keys().hasAll(['id','lotId','code','remisionId','lotRevision','controlVersion','actor','role','at','declared','registered','missing','excess','openObservations','confirmed','result','comments','reviewerComments'])
-      && v.keys().hasOnly(['id','lotId','code','remisionId','lotRevision','controlVersion','actor','role','at','declared','registered','missing','excess','openObservations','confirmed','result','comments','reviewerComments'])
+      && v.keys().hasOnly(['id','lotId','code','remisionId','lotRevision','controlVersion','actor','role','at','declared','registered','missing','excess','openObservations','confirmed','result','comments','reviewerComments','individualized','countSource'])
       && ident(id) && v.id == id && ident(v.lotId) && v.code == l.code && v.remisionId == l.remisionId
       && r.get('annulment',null) == null && v.lotRevision == l.revision && v.controlVersion == c.version
       && v.actor == request.auth.uid && v.role == profile().role && v.at == request.time
-      && v.declared == l.declared && v.registered is int && v.registered >= 0 && v.registered <= 3000
+      && v.declared == l.declared && v.registered is int && v.registered >= 0 && v.registered <= 1000000
+      && ((!('countSource' in v) && !('individualized' in v) && v.registered <= 3000) || (v.countSource == 'manual' && v.individualized is int && v.individualized >= 0 && v.individualized <= 3000))
       && v.openObservations is int && v.openObservations >= 0 && v.openObservations <= 3000
       && v.missing == (v.declared > v.registered ? v.declared-v.registered : 0)
       && v.excess == (v.registered > v.declared ? v.registered-v.declared : 0)

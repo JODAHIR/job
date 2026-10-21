@@ -772,3 +772,5 @@ dialog:has(#lot-generate-form){width:960px}.lot-type-row>label:first-child{flex-
 .filter-section-fields input,.filter-section-fields select{width:100%;min-width:0}
 .filter-reset{display:flex;justify-content:flex-end;padding-top:12px}
 @media(max-width:700px){.filter-section-fields{grid-template-columns:1fr}.filter-section>summary span{display:block;margin-left:18px}.intel-filter-groups{padding:12px 16px}}
+
+.intel-toolbar{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:16px;align-items:center}.intel-levels{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px}.intel-exports{display:grid;grid-template-columns:repeat(2,minmax(80px,1fr));gap:8px}.intel-toolbar button{min-height:40px;margin:0}.deadline-group{padding:14px 0;border-top:1px solid #dbe5e8}.deadline-group>summary{cursor:pointer;line-height:1.7}.deadline-group article{margin-top:12px}@media(max-width:600px){.intel-toolbar{grid-template-columns:1fr}.intel-exports{justify-self:end}}

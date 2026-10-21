@@ -16,3 +16,8 @@ export function currentVerification(records,lot,control,annulled=false) {
  const latest=rows[0];
  return latest&&!annulled&&latest.lotRevision===lot.revision&&latest.controlVersion===control?.version?latest:null;
 }
+
+export function reconcilePresented(summary, registered) {
+ if(!Number.isSafeInteger(registered)||registered<0||registered>1000000)throw Error('Ingrese una cantidad entera entre 0 y 1000000.');
+ return {...summary,individualized:summary.registered,countSource:'manual',registered,missing:Math.max(0,summary.declared-registered),excess:Math.max(0,registered-summary.declared),complete:summary.declared>0&&registered===summary.declared&&summary.openObservations===0};
+}
