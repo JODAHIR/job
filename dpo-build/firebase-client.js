@@ -1,3 +1,4 @@
+import {sessionDataCache} from './load-cache.js';
 import {readPool} from './read-pool.js';
 import { initializeApp } from "firebase/app";
 import {
@@ -82,6 +83,8 @@ export async function connectFirebase() {
     connectFunctionsEmulator(functions, "127.0.0.1", 5001);
   }
   await auth.authStateReady();
+  let previewStorage;try{previewStorage=sessionStorage;}catch{}
+  const previewCache=sessionDataCache(previewStorage);
   const api = {
     auth,
     store,
@@ -94,6 +97,7 @@ export async function connectFirebase() {
       await signInWithPopup(auth, new GoogleAuthProvider());
     },
     async logout() {
+      previewCache.clear();
       api.profile = null;
       await signOut(auth);
     },
@@ -111,47 +115,62 @@ export async function connectFirebase() {
     async call(name, data) {
       return (await httpsCallable(functions, name)(data)).data;
     },
-    async load() {
+    async loadAdministration(state){
+      const uid=auth.currentUser?.uid;if(!uid)throw Error('Inicie sesión.');
+      const profile=(await getDocFromServer(doc(store,'users',uid))).data();
+      if(!profile?.active||!auth.currentUser?.emailVerified||JSON.stringify(profile)!==JSON.stringify(api.profile))throw Error('Los permisos cambiaron. Actualice la sesión.');
+      const result={users:[],accessRequests:[],catalogAudit:[]};
+      const tasks=[];
+      if(['technical','director'].includes(profile.role))tasks.push(async()=>{result.users=(await getDocsFromServer(collection(store,'users'))).docs.map(d=>({...d.data(),id:d.id}));});
+      if(spark&&profile.role==='technical')tasks.push(async()=>{result.accessRequests=(await getDocsFromServer(collection(store,'accessRequests'))).docs.map(d=>({...d.data(),id:d.id}));});
+      if(spark&&['technical','director'].includes(profile.role))tasks.push(async()=>{result.catalogAudit=(await getDocsFromServer(query(collection(store,'catalogAudit'),orderBy('revision','desc'),limit(50)))).docs.map(d=>d.data());});
+      await readPool(tasks,t=>t());
+      if(auth.currentUser?.uid!==uid)throw Error('La sesión cambió.');
+      Object.assign(state,result,{administrationLoaded:true});
+      return state;
+    },
+    async load({onCached,includeAdministration=true}={}) {
       const user = auth.currentUser;
-      if (!user) throw Error("Inicie sesión.");
+      if (!user) {previewCache.clear();throw Error("Inicie sesión.");}
       const profile = (
         await getDocFromServer(doc(store, "users", user.uid))
       ).data();
-      if (!profile?.active || !user.emailVerified)
-        throw Error(
+      if (!profile?.active || !user.emailVerified){
+        previewCache.clear();throw Error(
           "La cuenta debe tener correo verificado y un perfil activo asignado.",
         );
+      }
+      if(auth.currentUser?.uid!==user.uid)throw Error("La sesión cambió.");
       api.profile = profile;
+      if(onCached){const cached=previewCache.read(user.uid,profile);if(cached){try{validate(cached);onCached(cached);}catch{previewCache.clear();}}}
       const state = empty();
       const globalScope = profile.role === "director" || (spark && profile.role === "technical");
       const tasks = [];
-      if (globalScope || profile.role === "technical") tasks.push(async () => {
+      if (includeAdministration && (globalScope || profile.role === "technical")) tasks.push(async () => {
         state.users = (await getDocsFromServer(collection(store, "users"))).docs.map(s => ({...s.data(), id:s.id}));
       });
-      if (spark && profile.role === "technical") tasks.push(async () => {
+      if (includeAdministration && spark && profile.role === "technical") tasks.push(async () => {
         state.accessRequests = (await getDocsFromServer(collection(store, "accessRequests"))).docs.map(s => ({...s.data(), id:s.id}));
       });
       if (!spark && profile.role === "technical") {
         await readPool(tasks, task => task());
         return state;
       }
-      if (globalScope) tasks.push(async () => {
-        state.gerencias = (await getDocsFromServer(collection(store, "gerencias"))).docs.map(s => s.data());
-      });
-      else {
-        const ids = profile.role === "gerente" ? [profile.gerenciaId] : (profile.gerencias ?? []);
-        tasks.push(async () => {
-          const snapshots = await readPool(ids, id => getDocFromServer(doc(store, "gerencias", id)));
-          state.gerencias = snapshots.filter(s => s.exists()).map(s => s.data());
-        });
-      }
+      const readScope=async()=>{
+        if(globalScope)state.gerencias=(await getDocsFromServer(collection(store,'gerencias'))).docs.map(s=>s.data());
+        else {
+          const ids=profile.role==='gerente'?[profile.gerenciaId]:(profile.gerencias??[]);
+          const snapshots=await readPool(ids,id=>getDocFromServer(doc(store,'gerencias',id)));
+          state.gerencias=snapshots.filter(s=>s.exists()).map(s=>s.data());
+        }
+      };
       if (spark) {
         state.lotVerifications = []; state.lotRequirements = []; state.catalogVersions = []; state.remisionControls = [];
         tasks.push(async () => {
           const snapshot = await getDocFromServer(doc(store, 'documentCatalog/current'));
           state.catalog = snapshot.exists() ? snapshot.data() : null;
         });
-        if (['technical', 'director'].includes(profile.role)) tasks.push(async () => {
+        if (includeAdministration && ['technical', 'director'].includes(profile.role)) tasks.push(async () => {
           state.catalogAudit = (await getDocsFromServer(query(collection(store, 'catalogAudit'), orderBy('revision','desc'), limit(50)))).docs.map(s => s.data());
         });
       }
@@ -163,7 +182,9 @@ export async function connectFirebase() {
           state.calendar = calendar.exists() ? calendar.data() : null;
         }
       });
-      await readPool(tasks, task => task());
+      // Operational reads can start as soon as scope resolves, without waiting for calendars.
+      await Promise.all([readPool(tasks,task=>task()),(async()=>{
+        await readScope();
       const collections = spark ? [...entities, 'remisionControls', 'lotRequirements', 'lotVerifications'] : entities;
       const reads = state.gerencias.flatMap(g => collections.map(entity => ({gerenciaId:g.id, entity})));
       const snapshots = await readPool(reads, ({gerenciaId, entity}) =>
@@ -174,6 +195,7 @@ export async function connectFirebase() {
         const metadata = ['remisionControls','lotRequirements'].includes(entity);
         state[entity].push(...snapshot.docs.map(s => metadata ? {...s.data(), id:s.id, gerenciaId} : s.data()));
       });
+      })()]);
       // Read each immutable calendar actually referenced by authorized remissions.
       // Never substitute the current version for a missing historical version.
       const historicalVersions = [...new Set(state.remisiones.map(r => r.calendarVersion).filter(v => v && v !== state.calendarVersion))];
@@ -189,7 +211,11 @@ export async function connectFirebase() {
         state.catalogVersions = snapshots.filter(s => s.exists()).map(s => s.data());
       }
       state.audit.sort((a,b) => a.at.localeCompare(b.at));
-      return validate(state);
+      if(auth.currentUser?.uid!==user.uid)throw Error('La sesión cambió.');
+      state.administrationLoaded=includeAdministration;
+      const result=validate(state);
+      previewCache.write(user.uid,profile,result);
+      return result;
     },
   };
   if (spark) api.call = sparkAPI(api);

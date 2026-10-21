@@ -125,15 +125,18 @@ async function load() {
     else {$('#app').setAttribute('aria-busy','true');$('#refresh-cloud').disabled=true;showSyncStatus();}
 
     try{
-      if(!cloud){const module=await import('./firebase-client.bundle.js?documentos-20261021');cloud=await module.connectFirebase();let initial=true;stopAuth=cloud.watchAuth(()=>{if(initial){initial=false;return}if(cloudMode()||!cloud.auth.currentUser){mode='cloud';epoch++;db=null;page="dashboard";functionId="list";window.history.replaceState(null,"",routeFor(page));$('#modal').close();load()}});}
+      if(!cloud){const module=await import('./firebase-client.bundle.js?carga-20261021');cloud=await module.connectFirebase();let initial=true;stopAuth=cloud.watchAuth(()=>{if(initial){initial=false;return}if(cloudMode()||!cloud.auth.currentUser){mode='cloud';epoch++;db=null;page="dashboard";functionId="list";window.history.replaceState(null,"",routeFor(page));$('#modal').close();load()}});}
       if(cloud.authOnly){authenticationView();return}
       if(!cloud.auth.currentUser){loginView();return}
-      const result=await cloud.load();if(token!==epoch||!cloudMode())return;db=result;connectionFailed=false;
+      const result=await cloud.load({includeAdministration:false,onCached:cached=>{
+        if(refreshing||token!==epoch||!cloudMode()||!cloud.auth.currentUser)return;
+        db=cached;render();$('#app').inert=true;showSyncStatus();const status=$('#sync-status');if(status)status.textContent='Mostrando datos recientes · Sincronizando…';
+      }});if(token!==epoch||!cloudMode())return;db=result;connectionFailed=false;
       if(stopProfile)stopProfile();const signature=JSON.stringify(cloud.profile);stopProfile=cloud.watchProfile(cloud.auth.currentUser.uid,p=>{if(cloudMode()&&JSON.stringify(p)!==signature){epoch++;db=null;$('#modal').close();load()}});
       if(!visibleModule(cloud.profile,page))page='dashboard';
-      $('#sync-status')?.remove();$('#app').removeAttribute('aria-busy');render();if(refreshing)updateNotice('Actualización realizada');return;
+      $('#app').inert=false;$('#sync-status')?.remove();$('#app').removeAttribute('aria-busy');render();if(refreshing)updateNotice('Actualización realizada');return;
     }catch(error){if(token===epoch){if(['unavailable','deadline-exceeded'].includes(error.code?.replace('firestore/','')))connectionFailed=true;updateConnectionChip();
-      $('#sync-status')?.remove();$('#app').removeAttribute('aria-busy');
+      $('#app').inert=false;$('#sync-status')?.remove();$('#app').removeAttribute('aria-busy');
       if(refreshing && cloud?.auth.currentUser && ['unavailable','deadline-exceeded'].includes(error.code?.replace('firestore/',''))){
         if($('#refresh-cloud'))$('#refresh-cloud').disabled=false;
         updateNotice('No se pudo actualizar. Inténtalo de nuevo.',true);
@@ -462,6 +465,7 @@ function navigate(hash,fromHistory=false){
  activateNavigationFunction(route.fn);
 }
 function activateNavigationFunction(fn){
+ if(cloudMode()&&db&&!db.administrationLoaded&&['access','gerencias','cacs','catalog'].includes(page)){pendingNavigationFunction={fn,page,functionId};return;}
  if(fn?.noSpark&&cloud?.spark){updateNotice('Esta función aún no está disponible en Spark.',true);return;}
  if(fn?.action==='new')form(page);
  else if(fn?.action==='generate')generateRemisiones();
@@ -471,9 +475,11 @@ function activateNavigationFunction(fn){
 window.addEventListener('hashchange',()=>{if(db)navigate(location.hash,true)});
 
 function hidePrivateShell(){
+  $('#app').inert=false;
   $('#sync-status')?.remove();db=null;document.body.classList.remove('nav-open');$('#modal').close();
   const note=document.querySelector('.publication-note');if(note)note.hidden=true;
 }
+let administrationPending=null,pendingNavigationFunction=null;
 function render() {
   if(!cloud?.auth.currentUser||!cloud.profile?.active){loginView();return;}
   const note=document.querySelector('.publication-note');if(note)note.hidden=false;
@@ -481,6 +487,14 @@ function render() {
   if(!routeReady){const route=resolveRoute(location.hash,navigationContext());page=route.page;functionId=route.functionId;routeReady=true;window.history.replaceState(null,'',routeFor(page,functionId));if(route.error)setTimeout(()=>updateNotice(route.error,true),0);else if(route.fn&&!route.fn.click)setTimeout(()=>activateNavigationFunction(route.fn),0);}
 
   if(resolveRoute(routeFor(page,functionId),navigationContext()).error){page="dashboard";functionId="list";window.history.replaceState(null,"",routeFor(page));}
+  if(cloudMode()&&db&&!db.administrationLoaded&&['access','gerencias','cacs','catalog'].includes(page)){
+    if(!administrationPending){
+      const target=db,token=epoch;showSyncStatus();
+      administrationPending=cloud.loadAdministration(target).then(()=>{administrationPending=null;if(token===epoch){$('#sync-status')?.remove();render();}}).catch(error=>{administrationPending=null;if(token===epoch){$('#sync-status')?.remove();updateNotice(error.message,true);}});
+    }
+    return;
+  }
+  if(pendingNavigationFunction){const pending=pendingNavigationFunction;pendingNavigationFunction=null;if(pending.page===page&&pending.functionId===functionId)setTimeout(()=>activateNavigationFunction(pending.fn),0);}
   const current = pages.find((p) => p[0] === page);
   $("#app").innerHTML =
     `${navigationMarkup(page,functionId,navigationContext())}<main><header><button id="nav-mobile" aria-label="Abrir menú" aria-controls="institution-nav" aria-expanded="false">☰</button><div class="header-heading"><strong>CONTROL DOCUMENTO — CAH</strong><div class="breadcrumb"><button class="link" data-route="#/dashboard">Inicio</button>${page!=="dashboard"?` / ${esc(breadcrumb(page,functionId))}`:""}</div></div><div class="header-account">${cloudMode()?`<div class="session-bar header-session"><span>${esc(cloud.auth.currentUser.email)} · ${esc(({technical:"Administrador",director:"Director",gerente:"Gerente",asistente:"Asistente"})[cloud.profile.role]||cloud.profile.role)}</span><button id="refresh-cloud" class="secondary">Actualizar</button><button id="logout" class="secondary">Cerrar sesión</button></div>`:""}<div class="local-chip">${cloudMode()?(cloud.emulator?"◉ Emulador":"◉ Conectado") : "◉ Almacenamiento local"}</div></div></header><div class="content"><div class="title-row"><div><span class="eyebrow">SISTEMA DE CONTROL DOCUMENTAL</span><h1>${current[2]}</h1><p>Seguimiento quincenal · Dirección de Operaciones</p></div>${cloud?.profile?.role==="technical"?`<label class="mode-label">Espacio de trabajo<select id="mode"><option value="demo" ${mode === "demo" ? "selected" : ""}>Demostración</option><option value="local" ${mode === "local" ? "selected" : ""}>Mis registros locales</option><option value="cloud" ${cloudMode()?"selected":""}>Firebase institucional</option></select></label>`:(cloudMode()?"":'<button id="open-institutional" class="secondary">Acceder al sistema</button>')}</div>${mode==="local"?`<div class="session-bar"><button id="export-local" class="secondary">Descargar respaldo para migración</button></div>`:""}${cloudMode()?"":`<div class="notice">${mode==="demo"?"<strong>Datos ficticios.</strong> Espacio de demostración separado.":"<strong>Mis registros locales.</strong> Guardados en este navegador."} Sin sincronización multiusuario.</div>`}${!["audit","access","migration","catalog"].includes(page) ? filters() : ""}${page === "catalog" ? catalogPanel(cloudContext()) : page === "dashboard" ? dashboard() : page === "history" ? history() : ["audit","reports","bulk"].includes(page) ? phase3Panel(page,phase3Context()) : ["access","deadlines","migration"].includes(page)?cloudPanel(page,cloudContext()):collectionView()}<footer>Dirección de Operaciones </footer></div></main>`;
