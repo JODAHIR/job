@@ -11,7 +11,14 @@ import {installTables} from './tables.js?v=cah-lotes-20261019';
 import {validateResponsables,validateContact,assignedUsers,userDescription} from './gerencia-contacts.js?v=cah-lotes-20261019';
 import { visibleModule, manageRecord, manageCacStatus } from './permissions.js?v=cah-lotes-20261019';
 import {phase3Panel,bindPhase3} from './phase3-ui.js?v=cah-lotes-20261019';
-import { metrics, scope, deadlineStatus, mutate, states, integer } from "./domain.js?documentos-20261021']/g,
+import { metrics, scope, deadlineStatus, mutate, states, integer } from "./domain.js?documentos-20261021";
+import { LocalRepository } from "./repository.js?v=cah-lotes-20261019";
+import { demo } from "./seed.js?v=cah-lotes-20261019";
+import { cloudPanel, bindCloudPanel } from "./cloud-ui.js?v=cah-ajustes-20261020";
+const $ = (s) => document.querySelector(s),
+  esc = (v) =>
+    String(v ?? "").replace(
+      /[&<>"']/g,
       (c) =>
         ({
           "&": "&amp;",
