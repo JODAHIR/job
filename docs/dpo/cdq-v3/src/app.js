@@ -1,9 +1,10 @@
+import {connectionState,orderLots} from './presentation-status.js?v=cah-filtros-20261020';
 import {showLotVerification,lotVerificationLabel} from './lot-verification-ui.js?v=cah-verificacion-20261020';
 import {creationActions} from './record-actions.js?v=cah-ajustes-20261020';
-import {dashboardFilters,intelligencePanel,bindIntelligence} from './intelligence-ui.js?v=cah-inteligencia-20261020';
+import {dashboardFilters,intelligencePanel,bindIntelligence} from './intelligence-ui.js?v=cah-filtros-20261020';
 import {catalogPanel,bindCatalog,showLotGenerator,lotDashboard} from './lot-ui.js?v=cah-guardado-directo-20261019';
 import {sortedTypes} from './lot-catalog.js?v=cah-lotes-20261019';
-import {annulPanel,bindAnnulPanel} from './remision-annul-ui.js?v=cah-ajustes-20261020';
+import {annulPanel,bindAnnulPanel} from './remision-annul-ui.js?v=cah-filtros-20261020';
 import {pages,resolveRoute,routeFor} from './navigation.js?v=cah-lotes-20261019';
 import {navigationMarkup,bindNavigation,breadcrumb} from './navigation-ui.js?v=cah-lotes-20261019';
 import {installTables} from './tables.js?v=cah-lotes-20261019';
@@ -118,6 +119,10 @@ function updateNotice(message, error = false) {
 }
 // The reload placeholder contains no account, permissions or document data.
 function syncShell(){return `<aside class="sync-sidebar" aria-hidden="true"><strong>CAH</strong><p>Dirección de Operaciones</p></aside><main class="sync-shell"><header><strong>CONTROL DOCUMENTO — CAH</strong><span role="status">Sincronizando…</span></header><div class="content" aria-hidden="true"><div class="sync-placeholder sync-title"></div><div class="sync-placeholder sync-filters"></div><div class="sync-cards">${'<div class="sync-placeholder"></div>'.repeat(4)}</div></div></main>`;}
+let connectionFailed=false;
+function updateConnectionChip(){const chip=document.querySelector('.local-chip');if(!chip)return;const state=connectionState(mode,navigator.onLine,connectionFailed);chip.className='local-chip connection-'+state.tone;chip.textContent='◉ '+state.label;chip.setAttribute('role','status');}
+window.addEventListener('offline',updateConnectionChip);
+window.addEventListener('online',updateConnectionChip);
 function showSyncStatus(){if($('#sync-status'))return;const status=document.createElement('div');status.id='sync-status';status.setAttribute('role','status');status.textContent='Sincronizando…';document.body.append(status);}
 async function load() {
   const token=++epoch;
@@ -130,11 +135,11 @@ async function load() {
       if(!cloud){const module=await import('./firebase-client.bundle.js?v=cah-verificacion-20261020');cloud=await module.connectFirebase();let initial=true;stopAuth=cloud.watchAuth(()=>{if(initial){initial=false;return}if(cloudMode()||!cloud.auth.currentUser){mode='cloud';epoch++;db=null;page="dashboard";functionId="list";window.history.replaceState(null,"",routeFor(page));$('#modal').close();load()}});}
       if(cloud.authOnly){authenticationView();return}
       if(!cloud.auth.currentUser){loginView();return}
-      const result=await cloud.load();if(token!==epoch||!cloudMode())return;db=result;
+      const result=await cloud.load();if(token!==epoch||!cloudMode())return;db=result;connectionFailed=false;
       if(stopProfile)stopProfile();const signature=JSON.stringify(cloud.profile);stopProfile=cloud.watchProfile(cloud.auth.currentUser.uid,p=>{if(cloudMode()&&JSON.stringify(p)!==signature){epoch++;db=null;$('#modal').close();load()}});
       if(!visibleModule(cloud.profile,page))page='dashboard';
       $('#sync-status')?.remove();$('#app').removeAttribute('aria-busy');render();if(refreshing)updateNotice('Actualización realizada');return;
-    }catch(error){if(token===epoch){
+    }catch(error){if(token===epoch){if(['unavailable','deadline-exceeded'].includes(error.code?.replace('firestore/','')))connectionFailed=true;updateConnectionChip();
       $('#sync-status')?.remove();$('#app').removeAttribute('aria-busy');
       if(refreshing && cloud?.auth.currentUser && ['unavailable','deadline-exceeded'].includes(error.code?.replace('firestore/',''))){
         if($('#refresh-cloud'))$('#refresh-cloud').disabled=false;
@@ -211,7 +216,7 @@ function openRelated(entity,id){
 }
 function lotRows(lots) {
   const counts=new Map();for(const d of db.documentos)counts.set(d.loteId,(counts.get(d.loteId)||0)+1);
-  return lots.map((l) => {
+  return orderLots(lots,db).map((l) => {
     const r = find("remisiones", l.remisionId),
       n = counts.get(l.id)||0,
       diff = n - l.declared;
@@ -482,6 +487,7 @@ function render() {
   $("#app").innerHTML =
     `${navigationMarkup(page,functionId,navigationContext())}<main><header><button id="nav-mobile" aria-label="Abrir menú" aria-controls="institution-nav" aria-expanded="false">☰</button><div class="header-heading"><strong>CONTROL DOCUMENTO — CAH</strong><div class="breadcrumb"><button class="link" data-route="#/dashboard">Inicio</button>${page!=="dashboard"?` / ${esc(breadcrumb(page,functionId))}`:""}</div></div><div class="header-account">${cloudMode()?`<div class="session-bar header-session"><span>${esc(cloud.auth.currentUser.email)} · ${esc(({technical:"Administrador",director:"Director",gerente:"Gerente",asistente:"Asistente"})[cloud.profile.role]||cloud.profile.role)}</span><button id="refresh-cloud" class="secondary">Actualizar</button><button id="logout" class="secondary">Cerrar sesión</button></div>`:""}<div class="local-chip">${cloudMode()?(cloud.emulator?"◉ Emulador":"◉ Conectado") : "◉ Almacenamiento local"}</div></div></header><div class="content"><div class="title-row"><div><span class="eyebrow">SISTEMA DE CONTROL DOCUMENTAL</span><h1>${current[2]}</h1><p>Seguimiento quincenal · Dirección de Operaciones</p></div>${cloud?.profile?.role==="technical"?`<label class="mode-label">Espacio de trabajo<select id="mode"><option value="demo" ${mode === "demo" ? "selected" : ""}>Demostración</option><option value="local" ${mode === "local" ? "selected" : ""}>Mis registros locales</option><option value="cloud" ${cloudMode()?"selected":""}>Firebase institucional</option></select></label>`:(cloudMode()?"":'<button id="open-institutional" class="secondary">Acceder al sistema</button>')}</div>${mode==="local"?`<div class="session-bar"><button id="export-local" class="secondary">Descargar respaldo para migración</button></div>`:""}${cloudMode()?"":`<div class="notice">${mode==="demo"?"<strong>Datos ficticios.</strong> Espacio de demostración separado.":"<strong>Mis registros locales.</strong> Guardados en este navegador."} Sin sincronización multiusuario.</div>`}${!["audit","access","migration","catalog"].includes(page) ? filters() : ""}${page === "catalog" ? catalogPanel(cloudContext()) : page === "dashboard" ? dashboard() : page === "history" ? history() : ["audit","reports","bulk"].includes(page) ? phase3Panel(page,phase3Context()) : ["access","deadlines","migration"].includes(page)?cloudPanel(page,cloudContext()):collectionView()}<footer>Dirección de Operaciones </footer></div></main>`;
   bind();
+  updateConnectionChip();
   installTables();
 }
 function bind() {
