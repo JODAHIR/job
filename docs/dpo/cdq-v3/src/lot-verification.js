@@ -3,7 +3,7 @@ export function reconcileLot(lot,documents,observations=[]) {
  const docs=documents.filter(d=>d.loteId===lot.id),ids=new Set(docs.map(d=>d.id));
  const registered=docs.length,declared=lot.declared;
  if(!Number.isSafeInteger(declared)||declared<0)throw Error('Cantidad declarada inválida.');
- const openObservations=observations.filter(o=>ids.has(o.documentId)&&o.status!=='Regularizada').length;
+ const openObservations=observations.filter(o=>ids.has(o.documentId)&&o.status!=='Regularizada').length+docs.filter(d=>d.state==='Rechazado').length;
  return {declared,registered,missing:Math.max(0,declared-registered),excess:Math.max(0,registered-declared),openObservations,complete:declared>0&&registered===declared&&openObservations===0};
 }
 export function verificationResult(summary,confirmed,comments='') {

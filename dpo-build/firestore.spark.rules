@@ -45,7 +45,7 @@ service cloud.firestore {
        && text(r.receivedOn,10) && text(r.dueOn,10) && text(r.originalDueOn,10) && ident(r.calendarVersion) && r.businessDays == 10 && r.timeZone == 'America/Asuncion'
     : c == 'lotes' ? r.keys().hasOnly(['id','remisionId','code','declared','revision','updatedAt','uniqueKey','typeId','typeCode','typeRequired','catalogVersion','sequence','cacCode']) && existsParent(g,'remisiones',r.remisionId) && part(r.code) && r.declared is int && r.declared >= 0 && r.declared <= 1000000
     : c == 'documentos' ? r.keys().hasOnly(['id','loteId','type','number','state','firstObservationId','revision','updatedAt','uniqueKey']) && existsParent(g,'lotes',r.loteId) && part(r.type) && part(r.number) && (!('typeId' in parent(g,'lotes',r.loteId)) || r.type == parent(g,'lotes',r.loteId).typeCode)
-      && r.state in ['Pendiente','Verificado','Verificado con observación'] && r.firstObservationId is string && r.firstObservationId.size() <= 128
+      && r.state in ['Pendiente','Verificado','Verificado con observación','Rechazado'] && r.firstObservationId is string && r.firstObservationId.size() <= 128
       && (r.firstObservationId == '' ? r.state != 'Verificado con observación' : ident(r.firstObservationId) && r.state == 'Verificado con observación' && getAfter(/databases/$(database)/documents/gerencias/$(g)/observaciones/$(r.firstObservationId)).data.documentId == r.id)
     : c == 'observaciones' && r.keys().hasOnly(['id','documentId','description','date','owner','status','revision','updatedAt','uniqueKey']) && existsParent(g,'documentos',r.documentId)
        && text(r.description,2000) && text(r.owner,150) && r.date is string && civil(r.date) && r.status in ['Pendiente','En proceso','Regularizada']

@@ -1,5 +1,5 @@
 import {connectionState,orderLots} from './presentation-status.js?v=cah-filtros-20261020';
-import {showLotVerification,lotVerificationLabel} from './lot-verification-ui.js?manual-20261021';
+import {showLotVerification,lotVerificationLabel,lotReconciliation} from './lot-verification-ui.js?documentos-20261021';
 import {creationActions} from './record-actions.js?v=cah-ajustes-20261020';
 import {dashboardFilters,intelligencePanel,bindIntelligence,groupModuleFilters} from './intelligence-ui.js?manual-20261021';
 import {catalogPanel,bindCatalog,showLotGenerator,lotDashboard} from './lot-ui.js?v=cah-guardado-directo-20261019';
@@ -11,14 +11,7 @@ import {installTables} from './tables.js?v=cah-lotes-20261019';
 import {validateResponsables,validateContact,assignedUsers,userDescription} from './gerencia-contacts.js?v=cah-lotes-20261019';
 import { visibleModule, manageRecord, manageCacStatus } from './permissions.js?v=cah-lotes-20261019';
 import {phase3Panel,bindPhase3} from './phase3-ui.js?v=cah-lotes-20261019';
-import { metrics, scope, deadlineStatus, mutate, states, integer } from "./domain.js?v=cah-lotes-20261019";
-import { LocalRepository } from "./repository.js?v=cah-lotes-20261019";
-import { demo } from "./seed.js?v=cah-lotes-20261019";
-import { cloudPanel, bindCloudPanel } from "./cloud-ui.js?v=cah-ajustes-20261020";
-const $ = (s) => document.querySelector(s),
-  esc = (v) =>
-    String(v ?? "").replace(
-      /[&<>"']/g,
+import { metrics, scope, deadlineStatus, mutate, states, integer } from "./domain.js?documentos-20261021']/g,
       (c) =>
         ({
           "&": "&amp;",
@@ -132,7 +125,7 @@ async function load() {
     else {$('#app').setAttribute('aria-busy','true');$('#refresh-cloud').disabled=true;showSyncStatus();}
 
     try{
-      if(!cloud){const module=await import('./firebase-client.bundle.js?manual-20261021');cloud=await module.connectFirebase();let initial=true;stopAuth=cloud.watchAuth(()=>{if(initial){initial=false;return}if(cloudMode()||!cloud.auth.currentUser){mode='cloud';epoch++;db=null;page="dashboard";functionId="list";window.history.replaceState(null,"",routeFor(page));$('#modal').close();load()}});}
+      if(!cloud){const module=await import('./firebase-client.bundle.js?documentos-20261021');cloud=await module.connectFirebase();let initial=true;stopAuth=cloud.watchAuth(()=>{if(initial){initial=false;return}if(cloudMode()||!cloud.auth.currentUser){mode='cloud';epoch++;db=null;page="dashboard";functionId="list";window.history.replaceState(null,"",routeFor(page));$('#modal').close();load()}});}
       if(cloud.authOnly){authenticationView();return}
       if(!cloud.auth.currentUser){loginView();return}
       const result=await cloud.load();if(token!==epoch||!cloudMode())return;db=result;connectionFailed=false;
@@ -218,14 +211,14 @@ function lotRows(lots) {
   const counts=new Map();for(const d of db.documentos)counts.set(d.loteId,(counts.get(d.loteId)||0)+1);
   return orderLots(lots,db).map((l) => {
     const r = find("remisiones", l.remisionId),
-      n = counts.get(l.id)||0,
+      n = lotReconciliation(db,l).registered,
       diff = n - l.declared;
     return [
       `<strong>${esc(l.code)}</strong>`,
       esc(name("cacs", r.cacId)),
       esc(period(r)),
       l.declared,
-      n,
+      `${n}<small> · ${counts.get(l.id)||0} fichas individuales</small>`,
       badge(
         diff === 0 ? "Conciliado" : `${diff > 0 ? "+" : ""}${diff} documentos`,
         diff === 0 ? "ok" : "warn",
@@ -352,7 +345,7 @@ function collectionView() {
       "CAC / dependencia",
       "Período",
       "Declarados",
-      "Individualizados",
+      "Registrados / conciliados",
       "Conciliación",
       "",
     ];
@@ -382,6 +375,11 @@ function collectionView() {
       db.observaciones.filter((o) => o.documentId === d.id).length,
       edit(page, d.id),
     ]);
+    for(const lot of s.lots){
+      const {review}=lotReconciliation(db,lot);
+      if(!review||f.verification&&review.result!==f.verification)continue;
+      rows.push([`Verificación total · ${review.registered} documentos`,esc(lot.typeCode||db.catalog?.types?.find(t=>t.id===lot.typeId)?.code||'Lote'),esc(lot.code),badge(review.result,review.result==='Verificado'?'ok':'warn'),`Faltantes: ${review.missing} · Excedentes: ${review.excess}`,`<button class="link" data-verify-lot="${esc(lot.id)}">Consultar revisión e historial</button>`]);
+    }
   }
   if (page === "observaciones") {
     headers = [
@@ -595,6 +593,13 @@ function generateRemisiones() {
 function form(c, id, defaults = {}) {
   if(!canManage(c)||id&&recordAnnulled(c,id))return;
   if(c==='lotes'&&!id&&cloud?.spark){showLotGenerator(cloudContext());return;}
+  if(!id){
+    defaults={year:+f.year,month:+f.month,half:f.half?+f.half:'',gerenciaId:f.gerencia||'',cacId:f.cac||'',...defaults};
+    if(c==='documentos'&&!defaults.loteId){
+      const candidates=metrics(db,f).lots.filter(l=>!recordAnnulled('lotes',l.id));
+      if(candidates.length===1)defaults.loteId=candidates[0].id;
+    }
+  }
   const row = id ? find(c, id) : defaults,
     field = (key, label, type = "text", value = row[key] ?? "") =>
       `<label>${label}<input name="${key}" type="${type}" value="${esc(value)}" required ${type === "number" ? 'min="0" step="1"' : ""} maxlength="${key === "description" ? 2000 : 150}"></label>`,
@@ -659,7 +664,7 @@ function form(c, id, defaults = {}) {
       field("declared", "Cantidad declarada", "number");
   if (c === "documentos")
     fields +=
-      pick("loteId", "Lote · CAC y período", db.lotes.filter(l=>!recordAnnulled('lotes',l.id)), (l) => {
+      pick("loteId", "Lote · CAC y período", db.lotes.filter(l=>!recordAnnulled('lotes',l.id)&&(id||l.id===row.loteId||metrics(db,f).lots.some(x=>x.id===l.id))), (l) => {
         const r = find("remisiones", l.remisionId);
         return `${l.code} · ${name("cacs", r.cacId)} · ${period(r)}`;
       }) +
@@ -700,8 +705,8 @@ function form(c, id, defaults = {}) {
   $("#modal").innerHTML =
     `<form id="record-form"><div class="section-line"><h2>${id ? "Editar" : "Nuevo"} registro</h2><button type="button" id="close" aria-label="Cerrar">✕</button></div><p>${pages.find((p) => p[0] === c)[2]} · ${cloudMode()?"Firebase institucional":mode === "demo" ? "Demostración" : "Mis registros locales"}</p><div class="form-fields">${fields}${cloudMode()?"<p>Responsable: identidad de la sesión autenticada.</p>":field("actor", "Responsable de este registro")}</div><p id="form-error" role="alert"></p><div class="form-actions"><button type="button" id="cancel" class="secondary">Cancelar</button><button class="primary" type="submit">Guardar registro</button></div></form>`;
   if(c==='lotes'&&row.typeId){$('#record-form').elements.code.readOnly=true;$('#record-form').elements.remisionId.disabled=true;}
-  if(c==='documentos'&&cloud?.spark&&db.catalog){
-    const form=$('#record-form');const syncType=()=>{const lot=find('lotes',form.elements.loteId.value);if(lot?.typeCode){if(![...form.elements.type.options].some(o=>o.value===lot.typeCode)){const o=new Option(lot.typeCode,lot.typeCode);form.elements.type.add(o);}form.elements.type.value=lot.typeCode;}};form.elements.loteId.onchange=syncType;syncType();
+  if(c==='documentos'){
+    const form=$('#record-form');const syncType=()=>{const lot=find('lotes',form.elements.loteId.value);if(lot?.typeCode){if(form.elements.type.options&&![...form.elements.type.options].some(o=>o.value===lot.typeCode)){const o=new Option(lot.typeCode,lot.typeCode);form.elements.type.add(o);}form.elements.type.value=lot.typeCode;}};form.elements.loteId.onchange=syncType;syncType();
   }
   $("#close").onclick = $("#cancel").onclick = () => $("#modal").close();
   if(c==='cacs'){

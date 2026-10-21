@@ -1,4 +1,4 @@
-import {currentVerification,reconcilePresented} from './lot-verification.js?manual-20261021';
+import {currentVerification,reconcilePresented} from './lot-verification.js?documentos-20261021';
 export function lotVerificationLabel(db,lot) {
  const control=db.remisionControls?.find(c=>c.id===lot.remisionId),rem=db.remisiones.find(r=>r.id===lot.remisionId);
  return currentVerification(db.lotVerifications||[],lot,control,!!rem?.annulment)?.result||'Pendiente de revisión';
@@ -29,7 +29,7 @@ export async function showLotVerification({cloud,db,esc,load},lotId) {
   try {
    if(quantity.value==='')throw Error('Ingrese la cantidad de documentos.');
    s=reconcilePresented(review.summary,quantity.valueAsNumber);
-   form.querySelector('#verification-counts').textContent=`Faltantes: ${s.missing} · Excedentes: ${s.excess} · Observaciones sin regularizar: ${s.openObservations}`;
+   form.querySelector('#verification-counts').textContent=`Faltantes: ${s.missing} · Excedentes: ${s.excess} · Observaciones o rechazos pendientes: ${s.openObservations}`;
    confirmation.disabled=!s.complete;
    form.elements.comments.required=!s.complete;
    form.querySelector('#verification-eligibility').textContent=s.complete?'Al confirmar se registrará: «Presentación sin inconvenientes, lote completo».':'Puede guardar la revisión, pero las diferencias u observaciones impiden marcar el lote como Verificado.';
@@ -51,4 +51,11 @@ export async function showLotVerification({cloud,db,esc,load},lotId) {
  catch(error){modal.querySelector('#verification-error').textContent=error.message;busy=false;form.querySelectorAll('button,input,textarea').forEach(x=>x.disabled=false);confirmation.disabled=!s.complete;}
  };
  }catch(error){modal.querySelector('p').textContent=error.message;}
+}
+
+export function lotReconciliation(db,lot){
+ const control=db.remisionControls?.find(c=>c.id===lot.remisionId),rem=db.remisiones.find(r=>r.id===lot.remisionId);
+ const review=currentVerification(db.lotVerifications||[],lot,control,!!rem?.annulment);
+ const individualized=db.documentos.filter(d=>d.loteId===lot.id).length;
+ return {review,individualized,registered:review?.registered??individualized};
 }

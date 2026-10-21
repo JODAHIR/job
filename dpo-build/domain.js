@@ -1,3 +1,4 @@
+import {currentVerification} from './lot-verification.js';
 export const empty = () => ({
   version: 1,
   gerencias: [],
@@ -8,7 +9,7 @@ export const empty = () => ({
   observaciones: [],
   audit: [],
 });
-export const states = ["Pendiente", "Verificado", "Verificado con observación"];
+export const states = ["Pendiente", "Verificado", "Verificado con observación", "Rechazado"];
 export function integer(n, label) {
   if (
     !Number.isSafeInteger(Number(n)) ||
@@ -37,12 +38,17 @@ export function scope(db, f) {
   const baseRem=periodRem.filter(r=>f.lifecycle==='all'||(f.lifecycle==='annulled')===!!r.annulment);
   const counts=new Map();
   for(const d of db.documentos)counts.set(d.loteId,(counts.get(d.loteId)||0)+1);
+  const reviews=new Map();
+  for(const lot of db.lotes){
+    const review=currentVerification(db.lotVerifications||[],lot,db.remisionControls?.find(c=>c.id===lot.remisionId),!!db.remisiones.find(r=>r.id===lot.remisionId)?.annulment);
+    if(review){reviews.set(lot.id,review);counts.set(lot.id,review.registered);}
+  }
   let rem=baseRem.filter(r=>f.remission!=='Pendiente'&&(!f.deadline||deadlineStatus(r,f.today)===f.deadline));
   let rids=new Set(rem.map(r=>r.id));
   let lots=db.lotes.filter(l=>rids.has(l.remisionId)&&(!f.documentType||l.typeId===f.documentType)&&(!f.reconciliation||(f.reconciliation==='Conciliado')===((counts.get(l.id)||0)===l.declared)));
   let lids=new Set(lots.map(l=>l.id));
   let docs=db.documentos.filter(d=>lids.has(d.loteId)&&(!f.verification||d.state===f.verification)&&(!f.observation||db.observaciones.some(o=>o.documentId===d.id&&o.status===f.observation)));
-  if(f.verification||f.observation){lids=new Set(docs.map(d=>d.loteId));lots=lots.filter(l=>lids.has(l.id));}
+  if(f.verification||f.observation){lids=new Set(docs.map(d=>d.loteId));if(f.verification&&!f.observation)for(const [lotId,review] of reviews)if(review.result===f.verification)lids.add(lotId);lots=lots.filter(l=>lids.has(l.id));}
   if(f.documentType||f.reconciliation||f.verification||f.observation){rids=new Set(lots.map(l=>l.remisionId));rem=rem.filter(r=>rids.has(r.id));}
   const dids=new Set(docs.map(d=>d.id));
   const observations=db.observaciones.filter(o=>dids.has(o.documentId)&&(!f.observation||o.status===f.observation));
