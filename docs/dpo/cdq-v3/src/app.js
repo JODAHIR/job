@@ -1,3 +1,4 @@
+import {initialFilters,createFilterSession} from './filter-session.js?v=filtros-20261021';
 import {connectionState,orderLots} from './presentation-status.js?v=cah-filtros-20261020';
 import {showLotVerification,lotVerificationLabel,lotReconciliation} from './lot-verification-ui.js?documentos-20261021';
 import {creationActions} from './record-actions.js?v=cah-ajustes-20261020';
@@ -42,12 +43,14 @@ const months = [
   "Noviembre",
   "Diciembre",
 ];
+let filterStorage;try{filterStorage=sessionStorage;}catch{}
+const filterSession=createFilterSession(filterStorage);
 let mode = "cloud",
   repo,
   db,
   page = "dashboard",
   query = "",
-  f = { year: 2026, month: 10, half: "1", gerencia: "", cac: "" };
+  f = initialFilters();
 const find = (c, id) => db[c].find((x) => x.id === id),
   name = (c, id) => find(c, id)?.name || "—";
 const period = (r) => `${months[r.month - 1]} ${r.year} · ${r.half}ª quincena`;
@@ -482,6 +485,7 @@ function activateNavigationFunction(fn){
 window.addEventListener('hashchange',()=>{if(db)navigate(location.hash,true)});
 
 function hidePrivateShell(){
+  filterSession.clear();f=initialFilters();
   $('#app').inert=false;
   $('#sync-status')?.remove();db=null;document.body.classList.remove('nav-open');$('#modal').close();
   const note=document.querySelector('.publication-note');if(note)note.hidden=true;
@@ -502,6 +506,7 @@ function render() {
     return;
   }
   if(pendingNavigationFunction){const pending=pendingNavigationFunction;pendingNavigationFunction=null;if(pending.page===page&&pending.functionId===functionId)setTimeout(()=>activateNavigationFunction(pending.fn),0);}
+  filterSession.save(f);
   const current = pages.find((p) => p[0] === page);
   $("#app").innerHTML =
     `${navigationMarkup(page,functionId,navigationContext())}<main><header><button id="nav-mobile" aria-label="Abrir menú" aria-controls="institution-nav" aria-expanded="false">☰</button><div class="header-heading"><strong>CONTROL DOCUMENTO — CAH</strong><div class="breadcrumb"><button class="link" data-route="#/dashboard">Inicio</button>${page!=="dashboard"?` / ${esc(breadcrumb(page,functionId))}`:""}</div></div><div class="header-account">${cloudMode()?`<div class="session-bar header-session"><span>${esc(cloud.auth.currentUser.email)} · ${esc(({technical:"Administrador",director:"Director",gerente:"Gerente",asistente:"Asistente"})[cloud.profile.role]||cloud.profile.role)}</span><button id="refresh-cloud" class="secondary">Actualizar</button><button id="logout" class="secondary">Cerrar sesión</button></div>`:""}<div class="local-chip">${cloudMode()?(cloud.emulator?"◉ Emulador":"◉ Conectado") : "◉ Almacenamiento local"}</div></div></header><div class="content"><div class="title-row"><div><span class="eyebrow">SISTEMA DE CONTROL DOCUMENTAL</span><h1>${current[2]}</h1><p>Seguimiento quincenal · Dirección de Operaciones</p></div>${cloud?.profile?.role==="technical"?`<label class="mode-label">Espacio de trabajo<select id="mode"><option value="demo" ${mode === "demo" ? "selected" : ""}>Demostración</option><option value="local" ${mode === "local" ? "selected" : ""}>Mis registros locales</option><option value="cloud" ${cloudMode()?"selected":""}>Firebase institucional</option></select></label>`:(cloudMode()?"":'<button id="open-institutional" class="secondary">Acceder al sistema</button>')}</div>${mode==="local"?`<div class="session-bar"><button id="export-local" class="secondary">Descargar respaldo para migración</button></div>`:""}${cloudMode()?"":`<div class="notice">${mode==="demo"?"<strong>Datos ficticios.</strong> Espacio de demostración separado.":"<strong>Mis registros locales.</strong> Guardados en este navegador."} Sin sincronización multiusuario.</div>`}${!["audit","access","migration","catalog"].includes(page) ? filters() : ""}${page === "catalog" ? catalogPanel(cloudContext()) : page === "dashboard" ? dashboard() : page === "history" ? history() : ["audit","reports","bulk"].includes(page) ? phase3Panel(page,phase3Context()) : ["access","deadlines","migration"].includes(page)?cloudPanel(page,cloudContext()):collectionView()}<footer>Dirección de Operaciones </footer></div></main>`;
@@ -522,7 +527,7 @@ function bind() {
   if($('#clear-context'))$('#clear-context').onclick=()=>{contextFilter=null;render()};
   document.querySelectorAll('[data-related]').forEach(b=>b.onclick=()=>openRelated(b.dataset.related,b.dataset.id));
   if($("#open-institutional"))$("#open-institutional").onclick=()=>{mode="cloud";sessionStorage.setItem("cdq:workspace",mode);page="dashboard";load().catch(fatal)};
-  if($('#clear-filters'))$('#clear-filters').onclick=()=>{contextFilter=null;const now=new Date(),parts=new Intl.DateTimeFormat('en-CA',{timeZone:'America/Asuncion',year:'numeric',month:'2-digit',day:'2-digit'}).format(now).split('-');f={year:+parts[0],month:+parts[1],half:+parts[2]<=15?'1':'2',gerencia:cloudMode()&&cloud.profile.role==='gerente'?cloud.profile.gerenciaId:'',cac:''};query='';render();};
+  if($('#clear-filters'))$('#clear-filters').onclick=()=>{contextFilter=null;f=initialFilters();if(cloudMode()&&cloud.profile.role==='gerente')f.gerencia=cloud.profile.gerenciaId;query='';render();};
   document.querySelectorAll('[data-indicator]').forEach(b=>b.onclick=()=>indicatorDetail(+b.dataset.indicator));
 
   if(["audit","reports","bulk"].includes(page))bindPhase3(page,phase3Context());
