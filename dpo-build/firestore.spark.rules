@@ -182,9 +182,21 @@ service cloud.firestore {
    }
    // Immutable signed review; quantities are the authorized reviewer's attestation.
    // Inventory is recalculated by the client, fenced against concurrent operational writes.
+   match /lotVerificationComments/{id} {
+    allow read: if readScope(g);
+    allow create: if lotWrite(g) && validComment(request.resource.data);
+    function validComment(v){
+     let review=get(/databases/$(database)/documents/gerencias/$(g)/lotVerifications/$(v.verificationId)).data;
+     return v.keys().hasAll(['id','lotId','verificationId','comments','actor','role','at'])
+      && v.keys().hasOnly(['id','lotId','verificationId','comments','actor','role','at'])
+      && ident(id) && v.id==id && ident(v.lotId) && ident(v.verificationId)
+      && review.lotId==v.lotId && review.result=='Verificado'
+      && text(v.comments,2000) && v.actor==request.auth.uid && v.role==profile().role && v.at==request.time;
+    }
+   }
    match /lotVerifications/{id} {
     allow read: if readScope(g);
-    allow create: if lotWrite(g) && validVerification(request.resource.data);
+    allow create: if role('technical') && validVerification(request.resource.data);
     function validVerification(v) {
      let l=get(/databases/$(database)/documents/gerencias/$(g)/lotes/$(v.lotId)).data;
      let r=get(/databases/$(database)/documents/gerencias/$(g)/remisiones/$(l.remisionId)).data;

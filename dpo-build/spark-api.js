@@ -1,4 +1,4 @@
-import {reviewLot,verifyLot,lotVerificationHistory} from './spark-verification.js';
+import {reviewLot,verifyLot,lotVerificationHistory,addVerificationComment,verificationComments} from './spark-verification.js';
 import {saveCatalog,initializeCatalog,catalogHistory} from './spark-catalog.js';
 import {generateLots} from './spark-lots.js';
 import {initializeControl,previewAnnulments,annulRemisiones} from './spark-lifecycle.js';
@@ -18,6 +18,8 @@ export function sparkAPI(api) {
  api.requestAccess=requestAccess;
  api.spark=true;
  return async(name,input)=>{
+  if(name==='addVerificationComment')return addVerificationComment(store,auth,input);
+  if(name==='verificationComments')return verificationComments(store,input);
   if(name==='reviewLot')return reviewLot(store,auth,input);
   if(name==='verifyLot')return verifyLot(store,auth,input);
   if(name==='lotVerificationHistory')return lotVerificationHistory(store,input);

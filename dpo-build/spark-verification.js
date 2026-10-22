@@ -29,7 +29,7 @@ export async function verifyLot(store,auth,{review,confirmed=false,comments='',o
  const target=doc(store,base,'lotVerifications',op);
  const [existing,ps,ls,cs,rs]=await Promise.all([tx.get(target),tx.get(doc(store,'users',auth.currentUser.uid)),tx.get(doc(store,base,'lotes',l)),tx.get(doc(store,base,'remisionControls',fresh.lot.remisionId)),tx.get(doc(store,base,'remisiones',fresh.lot.remisionId))]);
  if(existing.exists()){if(existing.data().actor!==auth.currentUser.uid)throw Error('Operación ajena.');return existing.data();}
- if(!lotPermission(ps.data(),g))throw Error('Sin permisos para verificar este lote.');
+ if(!lotPermission(ps.data(),g)||ps.data().role!=='technical')throw Error('Solo el Administrador puede cambiar el estado del lote.');
  if(!ls.exists()||ls.data().revision!==fresh.lot.revision||cs.data()?.version!==fresh.controlVersion||!rs.exists()||rs.data().annulment)throw Error('El lote cambió. Vuelva a conciliar.');
  const {complete,...counts}=summary;
  const record={id:op,lotId:l,code:fresh.lot.code,remisionId:fresh.lot.remisionId,lotRevision:fresh.lot.revision,controlVersion:fresh.controlVersion,actor:auth.currentUser.uid,role:ps.data().role,at:serverTimestamp(),...counts,...result};
@@ -39,5 +39,24 @@ export async function verifyLot(store,auth,{review,confirmed=false,comments='',o
 export async function lotVerificationHistory(store,{gerenciaId,lotId}) {
  const snap=await getDocsFromServer(query(collection(store,`gerencias/${id(gerenciaId)}/lotVerifications`),where('lotId','==',id(lotId)),limit(3001)));
  if(snap.size>3000)throw Error('Historial extenso: consulta incompleta bloqueada.');
+ return snap.docs.map(d=>d.data()).sort((a,b)=>b.at.seconds-a.at.seconds||b.at.nanoseconds-a.at.nanoseconds);
+}
+
+export async function addVerificationComment(store,auth,{gerenciaId,lotId,verificationId,comments,operationId}){
+ const g=id(gerenciaId),l=id(lotId),v=id(verificationId),op=id(operationId),base=`gerencias/${g}`;
+ if(typeof comments!=='string'||!comments.trim()||comments.trim().length>2000)throw Error('Ingrese un comentario de hasta 2000 caracteres.');
+ return runTransaction(store,async tx=>{
+  const target=doc(store,base,'lotVerificationComments',op);
+  const [existing,profile,review]=await Promise.all([tx.get(target),tx.get(doc(store,'users',auth.currentUser.uid)),tx.get(doc(store,base,'lotVerifications',v))]);
+  if(!lotPermission(profile.data(),g))throw Error('Sin permisos para comentar este lote.');
+  if(existing.exists()){if(existing.data().actor!==auth.currentUser.uid)throw Error('Operación ajena.');return existing.data();}
+  if(!review.exists()||review.data().lotId!==l||review.data().result!=='Verificado')throw Error('Seleccione una verificación válida.');
+  const record={id:op,lotId:l,verificationId:v,comments:comments.trim(),actor:auth.currentUser.uid,role:profile.data().role,at:serverTimestamp()};
+  tx.set(target,record);return record;
+ });
+}
+export async function verificationComments(store,{gerenciaId,lotId}){
+ const snap=await getDocsFromServer(query(collection(store,`gerencias/${id(gerenciaId)}/lotVerificationComments`),where('lotId','==',id(lotId)),limit(3001)));
+ if(snap.size>3000)throw Error('Historial de comentarios incompleto.');
  return snap.docs.map(d=>d.data()).sort((a,b)=>b.at.seconds-a.at.seconds||b.at.nanoseconds-a.at.nanoseconds);
 }
