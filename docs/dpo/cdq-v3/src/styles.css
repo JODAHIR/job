@@ -788,3 +788,20 @@ dialog:has(#lot-generate-form){width:960px}.lot-type-row>label:first-child{flex-
 .verification-history-counts dd{margin:4px 0 0;font-size:18px;font-weight:700}
 .verification-history-comment{white-space:pre-wrap;overflow-wrap:anywhere;color:#203e49!important;margin:10px 0 0!important}
 @media(max-width:520px){.verification-history-counts{grid-template-columns:repeat(2,1fr)}}
+
+#verification-form .verification-total-summary{text-align:center}
+#verification-form .verification-quantity-row{display:flex;align-items:center;justify-content:space-between;gap:14px}
+#verification-form .verification-quantity-row input{flex:0 0 90px;width:90px;margin:0;text-align:center}
+.verification-status-cards{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.verification-status-card{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;padding:14px 8px;border-radius:10px;background:#f1f5f6;text-align:center}
+.verification-status-card strong{font-size:24px;color:#203e49}
+.verification-status-card span{font-size:12px;line-height:1.4;color:#607782}
+.verification-status-card.has-pending{background:#fff3df}
+.verification-status-card.has-pending strong{color:#985700}
+#verification-eligibility[hidden]{display:none}
+@media(max-width:480px){#verification-form .verification-quantity-row{gap:8px}#verification-form .verification-quantity-row input{flex-basis:70px;width:70px}.verification-status-cards{gap:6px}.verification-status-card{padding:10px 5px}}
+
+#verification-counts[hidden]{display:none}
+#verification-form label.verification-quantity-row{display:flex;flex-direction:row;align-items:center;justify-content:space-between;text-align:left;gap:14px}
+#verification-form .verification-quantity-row span{flex:1;min-width:0}
+#verification-form .verification-quantity-row input{flex:0 0 90px;width:90px;height:40px;min-height:40px;box-sizing:border-box;margin:0;padding:8px 10px}

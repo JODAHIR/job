@@ -23,6 +23,7 @@ export async function verifyLot(store,auth,{review,confirmed=false,comments='',o
  const fresh=await reviewLot(store,auth,{gerenciaId:g,lotId:l});
  if(fresh.controlVersion!==review.controlVersion||fresh.lot.revision!==review.lot.revision)throw Error('El lote cambió desde su revisión. Vuelva a conciliar.');
  const summary=registered===undefined?fresh.summary:reconcilePresented(fresh.summary,registered);
+ if(fresh.summary.registered>0&&!comments.trim())throw Error('Ingrese un comentario sobre los documentos individualizados.');
  const result=verificationResult(summary,confirmed,comments);
  if(!confirmed&&!comments.trim())throw Error('Describa el resultado de la revisión.');
  return runTransaction(store,async tx=>{

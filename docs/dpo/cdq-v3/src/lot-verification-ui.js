@@ -54,26 +54,29 @@ export async function showLotVerification({cloud,db,esc,load},lotId,adminEdit=fa
  if(!administrator){modal.innerHTML=`<h2>Revisión de ${esc(lot.code)}</h2><p>Solo el Administrador puede cambiar el estado del lote. Cuando esté verificado podrá agregar comentarios.</p><button class="secondary verification-close" id="verify-close">Cerrar</button>`;modal.querySelector('#verify-close').onclick=close;return;}
  let s=review.summary;
  const previous=history.find(v=>v.countSource==='manual');
- const initial=previous?.registered??s.registered;
- modal.innerHTML=`<form id="verification-form" class="form-fields"><h2>Conciliar y verificar lote · ${esc(lot.code)}</h2><p>Declarados: <strong>${s.declared}</strong> · Individualizados en el sistema: <strong>${s.registered}</strong></p><label>Documentos registrados / presentados para esta revisión<input name="registered" type="number" min="0" max="1000000" step="1" required value="${initial}"></label><p>Ingrese la cantidad comprobada. Este dato no crea documentos individualizados.${previous?' Se propone la cantidad de la última revisión manual.':''}</p><p id="verification-counts" aria-live="polite"></p><label>Comentarios de la revisión<textarea name="comments" maxlength="2000" rows="3"></textarea></label><label class="check-label" id="verification-confirm"><input type="checkbox" name="confirmed">Confirmo que revisé los documentos y que el lote está completo y sin inconvenientes.</label><p id="verification-eligibility"></p><p id="verification-error" role="alert"></p><button class="primary" type="submit">Guardar revisión</button><button class="secondary" type="submit" value="observations">Guardar comentarios sin verificar</button><button class="secondary verification-close" id="verify-close" type="button">Cerrar</button><details><summary>Historial de verificaciones (${history.length})</summary>${historyMarkup(history)}</details></form>`;
+ const initial=s.declared;
+ const hasIndividualized=s.registered>0;
+ modal.innerHTML=`<form id="verification-form" class="form-fields"><h2>Conciliar y verificar lote · ${esc(lot.code)}</h2><p class="verification-total-summary">Declarados: <strong>${s.declared}</strong> · Individualizados en el sistema: <strong>${s.registered}</strong></p><label class="verification-quantity-row"><span>Documentos registrados / presentados para esta revisión</span><input name="registered" type="number" min="0" max="1000000" step="1" required value="${initial}"></label><p>Ingrese la cantidad comprobada. Se propone el total declarado del lote; confirme la cantidad efectivamente presentada. Este dato no crea documentos individualizados.</p><div id="verification-counts" class="verification-status-cards" hidden></div><label>Comentarios de la revisión<textarea name="comments" maxlength="2000" rows="3"></textarea></label>${hasIndividualized?'<p>Este lote tiene documentos individualizados. Debe ingresar un comentario sobre la revisión.</p>':''}<button class="secondary" type="submit" value="observations">Guardar comentarios sin verificar</button><label class="check-label" id="verification-confirm"><input type="checkbox" name="confirmed">Confirmo que revisé los documentos y que el lote está completo y sin inconvenientes.</label><p id="verification-eligibility" hidden></p><p id="verification-error" role="alert"></p><button class="primary" type="submit">Guardar revisión</button><button class="secondary verification-close" id="verify-close" type="button">Cerrar</button><details><summary>Historial de verificaciones (${history.length})</summary>${historyMarkup(history)}</details></form>`;
  const form=modal.querySelector('form');modal.querySelector('#verify-close').onclick=close;
  const quantity=form.elements.registered,confirmation=form.elements.confirmed;
- const refresh=()=>{
+ const refresh=(initialLoad=false)=>{
   confirmation.checked=false;
   try {
    if(quantity.value==='')throw Error('Ingrese la cantidad de documentos.');
    s=reconcilePresented(review.summary,quantity.valueAsNumber);
-   form.querySelector('#verification-counts').textContent=`Faltantes: ${s.missing} · Excedentes: ${s.excess} · Observaciones o rechazos pendientes: ${s.openObservations}`;
+   form.querySelector('#verification-counts').innerHTML=[['Faltantes',s.missing],['Excedentes',s.excess],['Observaciones o rechazos pendientes',s.openObservations]].map(([label,value])=>`<div class="verification-status-card ${value>0?'has-pending':''}"><strong>${esc(value)}</strong><span>${label}</span></div>`).join('');
    confirmation.disabled=!s.complete;
-   form.elements.comments.required=!s.complete;
+   form.elements.comments.required=hasIndividualized||!s.complete;
+   confirmation.checked=initialLoad===true&&!hasIndividualized&&s.complete;
    form.querySelector('#verification-eligibility').textContent=s.complete?'Al confirmar se registrará: «Presentación sin inconvenientes, lote completo».':'Puede guardar la revisión, pero las diferencias u observaciones impiden marcar el lote como Verificado.';
    form.querySelector('#verification-error').textContent='';
   }catch(error){confirmation.disabled=true;form.querySelector('#verification-counts').textContent='';form.querySelector('#verification-error').textContent=error.message;}
  };
- quantity.addEventListener('input',refresh);refresh();
+ quantity.addEventListener('input',()=>refresh(false));refresh(true);
  const operations=new Map();
  let busy=false;const prevent=e=>{if(busy)e.preventDefault();};modal.addEventListener('cancel',prevent);modal.addEventListener('close',()=>modal.removeEventListener('cancel',prevent),{once:true});
  form.onsubmit=async e=>{e.preventDefault();if(busy)return;const values=new FormData(form),confirmed=e.submitter?.value!=='observations'&&values.get('confirmed')==='on',comments=values.get('comments')||'';
+ if(hasIndividualized&&!comments.trim()){form.querySelector('#verification-error').textContent='Ingrese un comentario sobre los documentos individualizados.';return;}
  if(s.complete&&!confirmed&&e.submitter?.value!=='observations'){modal.querySelector('#verification-error').textContent='Confirme manualmente la revisión para marcar el lote como Verificado.';return;}
  const registered=quantity.valueAsNumber;
  try{reconcilePresented(review.summary,registered);}catch(error){form.querySelector('#verification-error').textContent=error.message;return;}
