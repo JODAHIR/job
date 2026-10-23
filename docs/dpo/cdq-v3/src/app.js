@@ -368,34 +368,18 @@ function collectionView() {
     rows = lotRows(s.lots);
   }
   if (page === "documentos") {
-    headers = [
-      "Documento",
-      "Tipo",
-      "Lote",
-      "Verificación",
-      "Observaciones",
-      "",
-    ];
-    rows = s.docs.map((d) => [
-      esc(d.number),
-      esc(d.type),
-      esc(find("lotes", d.loteId).code),
-      badge(
-        d.state,
-        d.state === "Verificado"
-          ? "ok"
-          : d.state === "Pendiente"
-            ? "neutral"
-            : "warn",
-      ),
-      db.observaciones.filter((o) => o.documentId === d.id).length,
-      edit(page, d.id),
-    ]);
+    headers=['Documento','Tipo','Lote','Verificación','Cantidad verificada','Observaciones','Fecha de observación','Regularización','Responsable','Acciones'];
+    rows=s.docs.map(d=>{
+      const observations=db.observaciones.filter(o=>o.documentId===d.id).sort((a,b)=>(b.date||'').localeCompare(a.date||'')),last=observations[0];
+      const add=canManage('observaciones')&&!recordAnnulled('documentos',d.id)?` <button class="secondary" data-add-document-observation="${esc(d.id)}">Agregar observación</button>`:'';
+      return [esc(d.number),esc(d.type),esc(find('lotes',d.loteId).code),badge(d.state,d.state==='Verificado'?'ok':'warn'),d.state==='Pendiente'?'—':'1 documento revisado',observations.length,esc(last?.date||'—'),esc(last?.status||'Sin observaciones'),esc(last?.owner||'—'),edit(page,d.id)+add];
+    });
     for(const lot of s.lots){
-      const {review}=lotReconciliation(db,lot);
-      if(!review||f.verification&&review.result!==f.verification)continue;
-      rows.push([`Verificación total · ${review.registered} documentos`,esc(lot.typeCode||db.catalog?.types?.find(t=>t.id===lot.typeId)?.code||'Lote'),esc(lot.code),badge(review.result,review.result==='Verificado'?'ok':'warn'),`Faltantes: ${review.missing} · Excedentes: ${review.excess}`,`<button class="link" data-verify-lot="${esc(lot.id)}">Consultar revisión e historial</button>`]);
+      const {review}=lotReconciliation(db,lot);if(!review||f.verification&&review.result!==f.verification)continue;
+      const person=db.users?.find(u=>u.id===review.actor)||(cloud?.profile?.id===review.actor?cloud.profile:null);
+      rows.push(['Verificación total del lote',esc(lot.typeCode||db.catalog?.types?.find(t=>t.id===lot.typeId)?.code||'Lote'),esc(lot.code),badge(review.result,review.result==='Verificado'?'ok':'warn'),review.result==='Verificado'?`${review.registered} documentos`:'Revisión con diferencias',review.openObservations,'—','No aplica',esc(person?.description||'Responsable de revisión'),`<button class="link" data-verify-lot="${esc(lot.id)}">Consultar revisión e historial</button>`]);
     }
+    rows.sort((a,b)=>a[2].localeCompare(b[2],'es',{numeric:true})||a[1].localeCompare(b[1],'es')||a[3].localeCompare(b[3],'es'));
   }
   if (page === "observaciones") {
     headers = [
@@ -421,7 +405,12 @@ function collectionView() {
   const filtered = rows.filter((r) =>
     r.join(" ").toLowerCase().includes(esc(query.toLowerCase())),
   );
-  return `<section class="panel">${contextFilter?.child===page?'<p>Mostrando registros vinculados. <button id="clear-context" class="link">Ver todos los registros del período</button></p>':""}<div class="section-line"><div><h2>${pages.find((p) => p[0] === page)[2]}</h2><p>${page === "gerencias" || page === "cacs" ? "Catálogo institucional · independiente del período" : "Registros del período y ámbito seleccionados"}</p></div>${creationActions(collection,canManage(collection),cloud?.spark)}</div><input class="search" id="search" placeholder="Buscar en esta tabla…" value="${esc(query)}" aria-label="Buscar en la tabla">${table(headers, filtered)}<p class="footnote">${filtered.length} resultados · ${cloudMode()?"Persistencia en Firestore · permisos validados en servidor":"Cambios guardados únicamente en este navegador."}</p></section>${page==='remisiones'&&cloudMode()?annulPanel({...cloudContext(),render}):''}`;
+  let tableMarkup=table(headers,filtered);
+  if(page==='documentos'){
+    const groups=new Map();for(const row of filtered){const key=JSON.stringify([row[2],row[1],row[3]]);if(!groups.has(key))groups.set(key,[]);groups.get(key).push(row);}
+    tableMarkup=[...groups.values()].map(group=>`<details class="document-group" open><summary>${group[0][2]} · ${group[0][1]} · ${group[0][3]}</summary>${table(headers,group)}</details>`).join('')||'<p>Sin documentos para esta selección.</p>';
+  }
+  return `<section class="panel">${contextFilter?.child===page?'<p>Mostrando registros vinculados. <button id="clear-context" class="link">Ver todos los registros del período</button></p>':""}<div class="section-line"><div><h2>${pages.find((p) => p[0] === page)[2]}</h2><p>${page === "gerencias" || page === "cacs" ? "Catálogo institucional · independiente del período" : "Registros del período y ámbito seleccionados"}</p></div>${creationActions(collection,canManage(collection),cloud?.spark)}</div><input class="search" id="search" placeholder="Buscar en esta tabla…" value="${esc(query)}" aria-label="Buscar en la tabla">${tableMarkup}<p class="footnote">${filtered.length} resultados · ${cloudMode()?"Persistencia en Firestore · permisos validados en servidor":"Cambios guardados únicamente en este navegador."}</p></section>${page==='remisiones'&&cloudMode()?annulPanel({...cloudContext(),render}):''}`;
 }
 function history() {
   const keys = [
@@ -572,6 +561,7 @@ function bind() {
   document
     .querySelectorAll("[data-new]")
     .forEach((b) => (b.onclick = () => form(b.dataset.new)));
+  document.querySelectorAll('[data-add-document-observation]').forEach(b=>b.onclick=()=>form('observaciones',null,{documentId:b.dataset.addDocumentObservation}));
   document
     .querySelectorAll("[data-edit]")
     .forEach((b) => (b.onclick = () => form(b.dataset.edit, b.dataset.id)));
@@ -693,18 +683,18 @@ function form(c, id, defaults = {}) {
       field("declared", "Cantidad declarada", "number");
   if (c === "documentos")
     fields +=
+      (cloud?.spark&&db.catalog?pick("type", "Tipo de documento",sortedTypes(db.catalog).filter(t=>t.enabled||t.code===row.type).map(t=>({id:t.code,name:t.code+' · '+t.description})).concat(row.type&&!sortedTypes(db.catalog).some(t=>t.code===row.type)?[{id:row.type,name:row.type+' · Histórico'}]:[]),t=>t.name):field("type", "Tipo de documento")) +
       pick("loteId", "Lote · CAC y período", db.lotes.filter(l=>!recordAnnulled('lotes',l.id)&&(id||l.id===row.loteId||metrics(db,f).lots.some(x=>x.id===l.id))), (l) => {
         const r = find("remisiones", l.remisionId);
         return `${l.code} · ${name("cacs", r.cacId)} · ${period(r)}`;
       }) +
-      (cloud?.spark&&db.catalog?pick("type", "Tipo de documento",sortedTypes(db.catalog).filter(t=>t.enabled||t.code===row.type).map(t=>({id:t.code,name:t.code+' · '+t.description})).concat(row.type&&!sortedTypes(db.catalog).some(t=>t.code===row.type)?[{id:row.type,name:row.type+' · Histórico'}]:[]),t=>t.name):field("type", "Tipo de documento")) +
       field("number", "Número de documento") +
       pick(
         "state",
         "Estado de verificación",
         states.map((s) => ({ id: s, name: s })),
         (r) => r.name,
-        row.state ?? "Pendiente",
+        "Pendiente",
       ) +
       '<p class="footnote">Para verificar con observación, registre primero el documento y luego agregue una observación. El estado se actualizará automáticamente.</p>';
   if (c === "observaciones")
@@ -735,7 +725,7 @@ function form(c, id, defaults = {}) {
     `<form id="record-form"><div class="section-line"><h2>${id ? "Editar" : "Nuevo"} registro</h2><button type="button" id="close" aria-label="Cerrar">✕</button></div><p>${pages.find((p) => p[0] === c)[2]} · ${cloudMode()?"Firebase institucional":mode === "demo" ? "Demostración" : "Mis registros locales"}</p><div class="form-fields">${fields}${cloudMode()?"<p>Responsable: identidad de la sesión autenticada.</p>":field("actor", "Responsable de este registro")}</div><p id="form-error" role="alert"></p><div class="form-actions"><button type="button" id="cancel" class="secondary">Cancelar</button><button class="primary" type="submit">Guardar registro</button></div></form>`;
   if(c==='lotes'&&row.typeId){$('#record-form').elements.code.readOnly=true;$('#record-form').elements.remisionId.disabled=true;}
   if(c==='documentos'){
-    const form=$('#record-form');const syncType=()=>{const lot=find('lotes',form.elements.loteId.value);if(lot?.typeCode){if(form.elements.type.options&&![...form.elements.type.options].some(o=>o.value===lot.typeCode)){const o=new Option(lot.typeCode,lot.typeCode);form.elements.type.add(o);}form.elements.type.value=lot.typeCode;}};form.elements.loteId.onchange=syncType;syncType();
+    const form=$('#record-form');if(id){form.elements.loteId.disabled=true;}const syncType=()=>{const lot=find('lotes',form.elements.loteId.value);if(lot?.typeCode){if(form.elements.type.options&&![...form.elements.type.options].some(o=>o.value===lot.typeCode)){const o=new Option(lot.typeCode,lot.typeCode);form.elements.type.add(o);}form.elements.type.value=lot.typeCode;}};form.elements.loteId.onchange=syncType;syncType();
   }
   $("#close").onclick = $("#cancel").onclick = () => $("#modal").close();
   if(c==='cacs'){
@@ -755,6 +745,7 @@ function form(c, id, defaults = {}) {
       const actor = cloudMode()?cloud.auth.currentUser.uid:data.actor.trim();
       delete data.actor;
       if(c==='lotes'&&row.typeId)data.remisionId=row.remisionId;
+      if(c==='documentos'&&id)data.loteId=row.loteId;
       for (const k in data) data[k] = data[k].trim();
       if(c==='cacs'){
         data.contacto=validateContact(Object.fromEntries(['nombre','cargo','correo','interno','celular'].map(k=>{const key='cac_'+k,value=data[key];delete data[key];return [k,value];})));
