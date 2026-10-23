@@ -40,7 +40,7 @@ export function scope(db, f) {
   for(const d of db.documentos)counts.set(d.loteId,(counts.get(d.loteId)||0)+1);
   const reviews=new Map();
   for(const lot of db.lotes){
-    const review=currentVerification(db.lotVerifications||[],lot,db.remisionControls?.find(c=>c.id===lot.remisionId),!!db.remisiones.find(r=>r.id===lot.remisionId)?.annulment);
+    const review=currentVerification(db.lotVerifications||[],lot,db.remisionControls?.find(c=>c.id===lot.remisionId),!!db.remisiones.find(r=>r.id===lot.remisionId)?.annulment,db);
     if(review){reviews.set(lot.id,review);counts.set(lot.id,review.registered);}
   }
   let rem=baseRem.filter(r=>f.remission!=='Pendiente'&&(!f.deadline||deadlineStatus(r,f.today)===f.deadline));

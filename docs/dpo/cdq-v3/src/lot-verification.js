@@ -11,10 +11,19 @@ export function verificationResult(summary,confirmed,comments='') {
  if(confirmed&&!summary.complete)throw Error('El lote tiene diferencias, observaciones pendientes o está vacío.');
  return {confirmed:confirmed===true,result:confirmed&&summary.complete?'Verificado':'Con observaciones',comments:confirmed&&summary.complete?COMPLETE_COMMENT:comments.trim(),reviewerComments:comments.trim()};
 }
-export function currentVerification(records,lot,control,annulled=false) {
+export function currentVerification(records,lot,control,annulled=false,inventory=null) {
  const rows=records.filter(v=>v.lotId===lot.id).sort((a,b)=>(b.at?.seconds||0)-(a.at?.seconds||0)||(b.at?.nanoseconds||0)-(a.at?.nanoseconds||0));
  const latest=rows[0];
- return latest&&!annulled&&latest.lotRevision===lot.revision&&latest.controlVersion===control?.version?latest:null;
+ if(!latest||annulled||latest.lotRevision!==lot.revision)return null;
+ if(latest.controlVersion===control?.version)return latest;
+ // A remisión fence also changes for sibling lots. Reuse a review only with
+ // complete inventory and server timestamps proving its own dependencies unchanged.
+ if(!inventory||!Array.isArray(inventory.documentos)||!Array.isArray(inventory.observaciones))return null;
+ const stamp=t=>Number.isFinite(t?.seconds)?[t.seconds,t.nanoseconds||0]:null;
+ const reviewed=stamp(latest.at);if(!reviewed)return null;
+ const docs=inventory.documentos.filter(d=>d.loteId===lot.id),ids=new Set(docs.map(d=>d.id));
+ const related=[lot,...docs,...inventory.observaciones.filter(o=>ids.has(o.documentId))];
+ return related.every(row=>{const t=stamp(row.updatedAt);return t&&(t[0]<reviewed[0]||t[0]===reviewed[0]&&t[1]<=reviewed[1]);})?latest:null;
 }
 
 export function reconcilePresented(summary, registered) {

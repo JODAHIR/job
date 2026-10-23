@@ -1,6 +1,6 @@
 import {initialFilters,createFilterSession} from './filter-session.js?v=filtros-20261021';
 import {connectionState,orderLots} from './presentation-status.js?v=cah-filtros-20261020';
-import {showLotVerification,lotVerificationLabel,lotReconciliation} from './lot-verification-ui.js?verificado-20261021';
+import {showLotVerification,lotVerificationLabel,lotReconciliation} from './lot-verification-ui.js?conciliacion-20261023';
 import {creationActions} from './record-actions.js?v=cah-ajustes-20261020';
 import {dashboardFilters,intelligencePanel,bindIntelligence,groupModuleFilters} from './intelligence-ui.js?manual-20261021';
 import {catalogPanel,bindCatalog,showLotGenerator,lotDashboard} from './lot-ui.js?v=cah-guardado-directo-20261019';
@@ -12,7 +12,7 @@ import {installTables} from './tables.js?v=cah-lotes-20261019';
 import {validateResponsables,validateContact,assignedUsers,userDescription} from './gerencia-contacts.js?v=cah-lotes-20261019';
 import { visibleModule, manageRecord, manageCacStatus } from './permissions.js?v=cah-lotes-20261019';
 import {phase3Panel,bindPhase3} from './phase3-ui.js?v=cah-lotes-20261019';
-import { metrics, scope, deadlineStatus, mutate, states, integer } from "./domain.js?documentos-20261021";
+import { metrics, scope, deadlineStatus, mutate, states, integer } from "./domain.js?conciliacion-20261023";
 import { LocalRepository } from "./repository.js?v=cah-lotes-20261019";
 import { demo } from "./seed.js?v=cah-lotes-20261019";
 import { cloudPanel, bindCloudPanel } from "./cloud-ui.js?v=cah-ajustes-20261020";
@@ -135,7 +135,7 @@ async function load() {
     else {$('#app').setAttribute('aria-busy','true');$('#refresh-cloud').disabled=true;showSyncStatus();}
 
     try{
-      if(!cloud){const module=await import('./firebase-client.bundle.js?verificado-20261021');cloud=await module.connectFirebase();let initial=true;stopAuth=cloud.watchAuth(()=>{if(initial){initial=false;return}if(cloudMode()||!cloud.auth.currentUser){mode='cloud';epoch++;db=null;page="dashboard";functionId="list";window.history.replaceState(null,"",routeFor(page));$('#modal').close();load()}});}
+      if(!cloud){const module=await import('./firebase-client.bundle.js?conciliacion-20261023');cloud=await module.connectFirebase();let initial=true;stopAuth=cloud.watchAuth(()=>{if(initial){initial=false;return}if(cloudMode()||!cloud.auth.currentUser){mode='cloud';epoch++;db=null;page="dashboard";functionId="list";window.history.replaceState(null,"",routeFor(page));$('#modal').close();load()}});}
       if(cloud.authOnly){authenticationView();return}
       if(!cloud.auth.currentUser){loginView();return}
       const result=await cloud.load({includeAdministration:false,onCached:cached=>{

@@ -15,7 +15,7 @@ export async function reviewLot(store,auth,{gerenciaId,lotId}) {
  if(ds.size>3000||os.size>3000)throw Error('Inventario incompleto: revisión bloqueada.');
  if(before.data().version!==end.data().version)throw Error('Los documentos cambiaron. Revise nuevamente.');
  if(!rs.exists()||rs.data().annulment)throw Error('La remisión está anulada o no existe.');
- return {gerenciaId:g,lotId:l,lot,controlVersion:end.data().version,summary:reconcileLot(lot,ds.docs.map(d=>d.data()),os.docs.map(d=>d.data()))};
+ return {gerenciaId:g,lotId:l,lot,controlVersion:end.data().version,inventory:{documentos:ds.docs.map(d=>d.data()),observaciones:os.docs.map(d=>d.data())},summary:reconcileLot(lot,ds.docs.map(d=>d.data()),os.docs.map(d=>d.data()))};
 }
 export async function verifyLot(store,auth,{review,confirmed=false,comments='',operationId,registered}) {
  const g=id(review.gerenciaId),l=id(review.lotId),op=id(operationId),base=`gerencias/${g}`;
