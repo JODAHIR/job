@@ -1,8 +1,8 @@
-import {initialFilters,createFilterSession} from './filter-session.js?v=filtros-20261021';
+import {initialFilters,createFilterSession} from './filter-session.js?v=filtros-vacios-20261023';
 import {connectionState,orderLots} from './presentation-status.js?v=cah-filtros-20261020';
 import {showLotVerification,lotVerificationLabel,lotReconciliation} from './lot-verification-ui.js?formulario-20261023';
 import {creationActions} from './record-actions.js?v=cah-ajustes-20261020';
-import {dashboardFilters,intelligencePanel,bindIntelligence,groupModuleFilters} from './intelligence-ui.js?manual-20261021';
+import {dashboardFilters,intelligencePanel,bindIntelligence,groupModuleFilters} from './intelligence-ui.js?filtros-vacios-20261023';
 import {catalogPanel,bindCatalog,showLotGenerator,lotDashboard} from './lot-ui.js?v=cah-guardado-directo-20261019';
 import {sortedTypes} from './lot-catalog.js?v=cah-lotes-20261019';
 import {annulPanel,bindAnnulPanel} from './remision-annul-ui.js?v=cah-filtros-20261020';
@@ -12,7 +12,7 @@ import {installTables} from './tables.js?v=cah-lotes-20261019';
 import {validateResponsables,validateContact,assignedUsers,userDescription} from './gerencia-contacts.js?v=cah-lotes-20261019';
 import { visibleModule, manageRecord, manageCacStatus } from './permissions.js?v=cah-lotes-20261019';
 import {phase3Panel,bindPhase3} from './phase3-ui.js?v=cah-lotes-20261019';
-import { metrics, scope, deadlineStatus, mutate, states, integer } from "./domain.js?conciliacion-20261023";
+import { metrics, scope, deadlineStatus, mutate, states, integer } from "./domain.js?filtros-vacios-20261023";
 import { LocalRepository } from "./repository.js?v=cah-lotes-20261019";
 import { demo } from "./seed.js?v=cah-lotes-20261019";
 import { cloudPanel, bindCloudPanel } from "./cloud-ui.js?v=cah-ajustes-20261020";
@@ -50,7 +50,7 @@ let mode = "cloud",
   db,
   page = "dashboard",
   query = "",
-  f = initialFilters();
+  f = filterSession.read();
 const find = (c, id) => db[c].find((x) => x.id === id),
   name = (c, id) => find(c, id)?.name || "—";
 const period = (r) => `${months[r.month - 1]} ${r.year} · ${r.half}ª quincena`;
@@ -176,14 +176,17 @@ function filters() {
         ...db.remisiones.map((r) => r.year),
       ]),
     )
+      .filter(Boolean)
       .sort((a, b) => b - a)
       .map((n) => ({ id: n, name: n })),
     f.year,
+    "Todos los años",
   )}${select(
     "month",
     "Mes",
     months.map((n, i) => ({ id: i + 1, name: n })),
     f.month,
+    "Todos los meses",
   )}${select(
     "half",
     "Quincena",
@@ -597,7 +600,7 @@ async function toggleCac(id) {
  catch(e){alert(e.message);}
 }
 function generateRemisiones() {
- if(!f.gerencia || !f.half){updateNotice('Seleccione una gerencia y una quincena antes de generar.',true);return;}
+ if(!f.gerencia || !f.year || !f.month || !f.half){updateNotice('Seleccione gerencia, año, mes y quincena antes de generar.',true);return;}
  const cacs=db.cacs.filter(c=>c.gerenciaId===f.gerencia && c.active!==false);
  const gerenciaId=f.gerencia,year=+f.year,month=+f.month,half=+f.half;
  $('#modal').innerHTML=`<form id="generate-form"><h2>Generar remisiones de ${esc(name('gerencias',gerenciaId))}</h2><p>${esc(period({year,month,half}))} · ${cacs.length} CAC activos. Se omiten remisiones existentes. Los siguientes datos se aplican a cada remisión nueva de esta gerencia, independientemente del filtro de CAC.</p><div class="form-fields"><label>Número de expediente<input name="expediente" required maxlength="150"></label><label>Fecha de remisión<input name="remittedOn" type="date" required></label><label>Fecha de recepción<input name="receivedOn" type="date" required></label></div><p>Se registra cada CAC por separado. Si hay un error, se informa el resultado y puede reintentar sin duplicar los registros guardados.</p><p id="generation-result" role="status"></p><div class="form-actions"><button type="button" id="generation-close">Cerrar</button><button class="primary">Generar pendientes</button></div></form>`;

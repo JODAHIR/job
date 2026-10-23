@@ -1,11 +1,7 @@
-const KEY='cdq:filters:current-page';
-export function initialFilters(now=new Date()){
- const parts=new Intl.DateTimeFormat('en-CA',{timeZone:'America/Asuncion',year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(now);
- const value=type=>Number(parts.find(p=>p.type===type).value);
- return {year:value('year'),month:value('month'),half:value('day')<=15?'1':'2',gerencia:'',cac:''};
-}
+const KEY='cdq:filters:empty-start-v2';
+const fields=['year','month','half','gerencia','cac','dateField','from','to','remission','reconciliation','verification','observation','deadline','documentType','lifecycle'];
+export function initialFilters(){return {year:'',month:'',half:'',gerencia:'',cac:''};}
 export function createFilterSession(storage){
  const clear=()=>{try{storage?.removeItem(KEY);}catch{}};
- clear(); // A new page load always discards the previous selection, not the data cache.
- return {clear,save(filters){try{storage?.setItem(KEY,JSON.stringify(filters));}catch{}}};
+ return {clear,read(){try{const value=JSON.parse(storage?.getItem(KEY)||'null');if(!value||typeof value!=='object'||Array.isArray(value))return initialFilters();return {...initialFilters(),...Object.fromEntries(fields.filter(k=>typeof value[k]==='string'||typeof value[k]==='number').map(k=>[k,value[k]]))};}catch{return initialFilters();}},save(filters){try{storage?.setItem(KEY,JSON.stringify(filters));}catch{}}};
 }

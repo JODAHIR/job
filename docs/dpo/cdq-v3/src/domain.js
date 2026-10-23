@@ -54,7 +54,7 @@ export function scope(db, f) {
   const observations=db.observaciones.filter(o=>dids.has(o.documentId)&&(!f.observation||o.status===f.observation));
   const expectedRows=[];
   const months=f.month?[+f.month]:Array.from({length:12},(_,i)=>i+1);
-  for(const c of cacs)for(const month of months)for(const half of f.half?[+f.half]:[1,2]){
+  for(const c of (f.year?cacs:[]))for(const month of months)for(const half of f.half?[+f.half]:[1,2]){
     const existing=periodRem.find(r=>r.cacId===c.id&&r.month===month&&r.half===half);
     if((c.active!==false||existing)&&(f.lifecycle==='annulled'?!!existing?.annulment:!existing?.annulment||f.lifecycle==='all'))expectedRows.push({cacId:c.id,year:+f.year,month,half,existing});
   }
