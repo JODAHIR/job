@@ -407,8 +407,16 @@ function collectionView() {
   );
   let tableMarkup=table(headers,filtered);
   if(page==='documentos'){
-    const groups=new Map();for(const row of filtered){const key=JSON.stringify([row[2],row[1],row[3]]);if(!groups.has(key))groups.set(key,[]);groups.get(key).push(row);}
-    tableMarkup=[...groups.values()].map(group=>`<details class="document-group" open><summary>${group[0][2]} · ${group[0][1]} · ${group[0][3]}</summary>${table(headers,group)}</details>`).join('')||'<p>Sin documentos para esta selección.</p>';
+    const groups=new Map();for(const row of filtered){const key=JSON.stringify([row[2],row[1]]);if(!groups.has(key))groups.set(key,[]);groups.get(key).push(row);}
+    tableMarkup=[...groups.values()].map(group=>{
+      const individual=group.filter(row=>row[0]!=='Verificación total del lote'),review=group.find(row=>row[0]==='Verificación total del lote');
+      const states=new Map();for(const row of individual)states.set(row[3],(states.get(row[3])||0)+1);
+      const summary=[...states].map(([state,count])=>`${state} · ${count}`).join(' · ');
+      const lot=db.lotes.find(l=>esc(l.code)===group[0][2]);
+      const type=db.catalog?.types?.find(t=>t.id===lot?.typeId||esc(t.code)===group[0][1]);
+      const title=esc(type?.description||'Descripción del tipo documental no disponible');
+      return `<details class="document-group"><summary>${title} · ${individual.length} ${individual.length===1?'documento individualizado':'documentos individualizados'}${review?` · Cantidad verificada del lote: ${review[4]}`:''}${summary?`<span class="document-group-states">${summary}</span>`:''}${review?`<span class="document-group-states">Revisión del lote: ${review[3]}</span>`:''}</summary>${table(headers,group)}<p class="footnote">La verificación total y los documentos individualizados no se suman.</p></details>`;
+    }).join('')||'<p>Sin documentos para esta selección.</p>';
   }
   return `<section class="panel">${contextFilter?.child===page?'<p>Mostrando registros vinculados. <button id="clear-context" class="link">Ver todos los registros del período</button></p>':""}<div class="section-line"><div><h2>${pages.find((p) => p[0] === page)[2]}</h2><p>${page === "gerencias" || page === "cacs" ? "Catálogo institucional · independiente del período" : "Registros del período y ámbito seleccionados"}</p></div>${creationActions(collection,canManage(collection),cloud?.spark)}</div><input class="search" id="search" placeholder="Buscar en esta tabla…" value="${esc(query)}" aria-label="Buscar en la tabla">${tableMarkup}<p class="footnote">${filtered.length} resultados · ${cloudMode()?"Persistencia en Firestore · permisos validados en servidor":"Cambios guardados únicamente en este navegador."}</p></section>${page==='remisiones'&&cloudMode()?annulPanel({...cloudContext(),render}):''}`;
 }
