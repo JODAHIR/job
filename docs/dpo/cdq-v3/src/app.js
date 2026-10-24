@@ -377,7 +377,7 @@ function collectionView() {
     for(const lot of s.lots){
       const {review}=lotReconciliation(db,lot);if(!review||f.verification&&review.result!==f.verification)continue;
       const person=db.users?.find(u=>u.id===review.actor)||(cloud?.profile?.id===review.actor?cloud.profile:null);
-      rows.push(['Verificación total del lote',esc(lot.typeCode||db.catalog?.types?.find(t=>t.id===lot.typeId)?.code||'Lote'),esc(lot.code),badge(review.result,review.result==='Verificado'?'ok':'warn'),review.result==='Verificado'?`${review.registered} documentos`:'Revisión con diferencias',review.openObservations,'—','No aplica',esc(person?.description||'Responsable de revisión'),`<button class="link" data-verify-lot="${esc(lot.id)}">Consultar revisión e historial</button>`]);
+      rows.push(['Verificación total del lote',esc(lot.typeCode||sortedTypes(db.catalog).find(t=>t.id===lot.typeId)?.code||'Lote'),esc(lot.code),badge(review.result,review.result==='Verificado'?'ok':'warn'),review.result==='Verificado'?`${review.registered} documentos`:'Revisión con diferencias',review.openObservations,'—','No aplica',esc(person?.description||'Responsable de revisión'),`<button class="link" data-verify-lot="${esc(lot.id)}">Consultar revisión e historial</button>`]);
     }
     rows.sort((a,b)=>a[2].localeCompare(b[2],'es',{numeric:true})||a[1].localeCompare(b[1],'es')||a[3].localeCompare(b[3],'es'));
   }
@@ -413,7 +413,7 @@ function collectionView() {
       const states=new Map();for(const row of individual)states.set(row[3],(states.get(row[3])||0)+1);
       const summary=[...states].map(([state,count])=>`${state} · ${count}`).join(' · ');
       const lot=db.lotes.find(l=>esc(l.code)===group[0][2]);
-      const type=db.catalog?.types?.find(t=>t.id===lot?.typeId||esc(t.code)===group[0][1]);
+      const type=sortedTypes(db.catalog).find(t=>t.id===lot?.typeId||esc(t.code)===group[0][1]);
       const title=esc(type?.description||'Descripción del tipo documental no disponible');
       return `<details class="document-group"><summary>${title} · ${individual.length} ${individual.length===1?'documento individualizado':'documentos individualizados'}${review?` · Cantidad verificada del lote: ${review[4]}`:''}${summary?`<span class="document-group-states">${summary}</span>`:''}${review?`<span class="document-group-states">Revisión del lote: ${review[3]}</span>`:''}</summary>${table(headers,group)}<p class="footnote">La verificación total y los documentos individualizados no se suman.</p></details>`;
     }).join('')||'<p>Sin documentos para esta selección.</p>';
