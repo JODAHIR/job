@@ -98,8 +98,8 @@ export function makeReport(
   }
   if (["diferencias", "faltantes"].includes(type)) {
     headers = ["Gerencia", "CAC", "Tipo de documento", "Declarados",
-      "Individualizados", "Presentados / conciliados", "Saldo de conciliación", "Faltantes"];
-    rows = s.lots.map(l => {
+      "Individualizados", "Presentados / conciliados", "Saldo de conciliación", "Faltantes", "Verificados correctamente"];
+    rows = [...s.lots].sort((a,b) => String(a.code || "").localeCompare(String(b.code || ""), "es", {numeric:true})).map(l => {
       const rem = rs.get(l.remisionId);
       const review = currentVerification(db.lotVerifications || [], l,
         db.remisionControls?.find(c => c.id === l.remisionId), !!rem.annulment, db);
@@ -110,7 +110,7 @@ export function makeReport(
         (db.lotVerifications?.some(v => v.lotId === l.id) ? "Requiere nueva revisión" : "Sin conciliación registrada");
       return [...ctx(l).slice(0, 2), documentType?.description || l.typeCode || "Sin clasificación",
         l.declared, individual, presented, presented - l.declared,
-        Math.max(0, l.declared - presented), status];
+        Math.max(0, l.declared - presented), l.declared - (individual + Math.max(0, l.declared - presented)), status];
     }).filter(r => type === "faltantes" ? r[7] > 0 : true);
     note = "Saldo de conciliación = presentados / conciliados menos declarados. Se utiliza la última revisión vigente; sin revisión vigente, se cuentan los documentos individualizados. Un saldo negativo indica faltantes y uno positivo excedentes. El informe de conciliación incluye todos los lotes seleccionados, incluso los de saldo cero. El informe de faltantes muestra solo saldos negativos.";
   }

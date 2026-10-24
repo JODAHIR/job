@@ -62,14 +62,13 @@ export function pdfBytes(report, {user = 'Usuario no identificado', filters = re
   pdf.setFontSize(15);
   const title = pdf.splitTextToSize(report.title, width);
   pdf.setFontSize(9);
-  const responsible = pdf.splitTextToSize('Responsable de la impresión: ' + user, width);
+  const responsible = pdf.splitTextToSize('Responsable de la verificación: ' + user, width);
   const headerBottom = 13 + title.length * 6 + 6 + responsible.length * 4 + 4;
-  const metadata = pdf.splitTextToSize([report.source, report.scopeLabel, report.note].filter(Boolean).join('\n'), width);
-  pdf.setTextColor(70);
-  pdf.text(metadata,14,headerBottom + 4);
+  const visibleColumns = report.headers.map((label,index)=>({label,index}))
+    .filter(({label})=>!['Presentados / conciliados','Saldo de conciliación'].includes(label));
   autoTable(pdf, {
-    startY: headerBottom + 8 + metadata.length * 4,
-    head: [report.headers], body: report.rows,
+    startY: headerBottom + 4,
+    head: [visibleColumns.map(c=>c.label)], body: report.rows.map(row=>visibleColumns.map(c=>row[c.index])),
     styles: {font:"helvetica",fontSize:8,overflow:"linebreak",cellPadding:2},
     headStyles:{fillColor:[18,91,97]},
     margin:{top:headerBottom + 4,bottom:26,left:14,right:14},
