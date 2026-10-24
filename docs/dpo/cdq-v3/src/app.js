@@ -6,12 +6,12 @@ import {dashboardFilters,intelligencePanel,bindIntelligence,groupModuleFilters} 
 import {catalogPanel,bindCatalog,showLotGenerator,lotDashboard} from './lot-ui.js?v=cah-guardado-directo-20261019';
 import {sortedTypes} from './lot-catalog.js?v=cah-lotes-20261019';
 import {annulPanel,bindAnnulPanel} from './remision-annul-ui.js?v=cah-filtros-20261020';
-import {pages,resolveRoute,routeFor} from './navigation.js?v=cah-lotes-20261019';
-import {navigationMarkup,bindNavigation,breadcrumb} from './navigation-ui.js?v=cah-lotes-20261019';
+import {pages,resolveRoute,routeFor} from './navigation.js?resumen-gerencia-20261024';
+import {navigationMarkup,bindNavigation,breadcrumb} from './navigation-ui.js?resumen-gerencia-20261024';
 import {installTables} from './tables.js?v=filas20-20261023';
 import {validateResponsables,validateContact,assignedUsers,userDescription} from './gerencia-contacts.js?v=cah-lotes-20261019';
 import { visibleModule, manageRecord, manageCacStatus } from './permissions.js?v=cah-lotes-20261019';
-import {phase3Panel,bindPhase3} from './phase3-ui.js?verificados-20261024';
+import {phase3Panel,bindPhase3} from './phase3-ui.js?resumen-gerencia-20261024';
 import { metrics, scope, deadlineStatus, mutate, states, integer } from "./domain.js?filtros-vacios-20261023";
 import { LocalRepository } from "./repository.js?v=cah-lotes-20261019";
 import { demo } from "./seed.js?v=cah-lotes-20261019";
@@ -135,7 +135,7 @@ async function load() {
     else {$('#app').setAttribute('aria-busy','true');$('#refresh-cloud').disabled=true;showSyncStatus();}
 
     try{
-      if(!cloud){const module=await import('./firebase-client.bundle.js?verificados-20261024');cloud=await module.connectFirebase();let initial=true;stopAuth=cloud.watchAuth(()=>{if(initial){initial=false;return}if(cloudMode()||!cloud.auth.currentUser){mode='cloud';epoch++;db=null;page="dashboard";functionId="list";window.history.replaceState(null,"",routeFor(page));$('#modal').close();load()}});}
+      if(!cloud){const module=await import('./firebase-client.bundle.js?resumen-gerencia-20261024');cloud=await module.connectFirebase();let initial=true;stopAuth=cloud.watchAuth(()=>{if(initial){initial=false;return}if(cloudMode()||!cloud.auth.currentUser){mode='cloud';epoch++;db=null;page="dashboard";functionId="list";window.history.replaceState(null,"",routeFor(page));$('#modal').close();load()}});}
       if(cloud.authOnly){authenticationView();return}
       if(!cloud.auth.currentUser){loginView();return}
       const result=await cloud.load({includeAdministration:false,onCached:cached=>{

@@ -1,7 +1,9 @@
+import {managementSummary} from './management-summary.js';
 import {currentVerification} from './lot-verification.js';
 import {sortedTypes,lotTracking} from './lot-catalog.js';
 import { scope, metrics } from "./domain.js";
 export const reportTypes = {
+  gerencias: "Resumen por gerencia",
   lotes: "Lotes por tipo documental",
   seguimiento: "Seguimiento de carga por CAC",
   documentos: "Documentos por estado",
@@ -226,10 +228,14 @@ export function makeReport(
     rows=lotTracking(db,f).map(r=>[gs.get(r.gerenciaId)?.name,cs.get(r.cacId)?.name,`${r.year}-${r.month} Q${r.half}`,r.status,r.lots,r.declared,r.received,r.reviewed,r.observed,r.missing,r.pending,r.status==='Anulada'?'Anulada':'Vigente']);
     note='Carga completa no significa verificada. Exclusiones sin descuento: procedimiento pendiente.';
   }
-  if(type !== 'comparativo')headers.push(['diferencias','faltantes'].includes(type)?'Estado del lote':'Estado administrativo');
+  if(type === 'gerencias'){
+    ({headers,rows}=managementSummary(db,f));
+    note='Resumen por tipo documental del ámbito seleccionado. Verificados correctamente = declarados menos individualizados y faltantes.';
+  }
+  if(!['comparativo','gerencias'].includes(type))headers.push(['diferencias','faltantes'].includes(type)?'Estado del lote':'Estado administrativo');
   note += ' Ámbito administrativo: '+(f.lifecycle==='all'?'incluye anuladas':f.lifecycle==='annulled'?'solo anuladas (histórico)':'solo vigentes; anuladas excluidas')+'. La anulación conserva fechas y documentos; no equivale a regularización.';
   return {
-    title: reportTypes[type],
+    title: type==='gerencias' ? reportTypes[type]+' - '+(f.gerencia ? gs.get(f.gerencia)?.name || 'Gerencia seleccionada' : 'Todas las gerencias') : reportTypes[type],
     headers,
     rows,
     note,

@@ -1,5 +1,6 @@
+import {managementFilters} from './management-summary.js';
 import { template, prepareBulk, applyBulkLocal } from "./bulk.js?v=cah-lotes-20261019";
-import { makeReport, reportTypes } from "./reports.js?verificados-20261024";
+import { makeReport, reportTypes } from "./reports.js?resumen-gerencia-20261024";
 import { states } from "./domain.js?v=cah-lotes-20261019";
 const settings = {
   type: "documentos",
@@ -18,7 +19,7 @@ const opts = (items, value, esc) =>
 export function phase3Panel(page, c) {
   const { db, esc, table, f, cloud, mode } = c;
   if (page === "reports") {
-    const r = makeReport(db, f, {
+    const r = makeReport(db, settings.type==='gerencias'?managementFilters(f,cloud?.profile,db.gerencias):f, {
       ...settings,
       source:
         mode === "demo"
@@ -90,10 +91,10 @@ export function bindPhase3(page, c) {
             const report =
               mode === "cloud"
                 ? await cloud.call("report", {
-                    filters: { ...f },
+                    filters: settings.type==='gerencias'?managementFilters(f,cloud?.profile,db.gerencias):{ ...f },
                     options: { ...settings },
                   })
-                : makeReport(db, f, {
+                : makeReport(db, settings.type==='gerencias'?managementFilters(f,cloud?.profile,db.gerencias):f, {
                     ...settings,
                     source:
                       mode === "demo" ? "Datos ficticios" : "Registros locales",
