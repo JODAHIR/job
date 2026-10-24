@@ -11,7 +11,7 @@ import {navigationMarkup,bindNavigation,breadcrumb} from './navigation-ui.js?v=c
 import {installTables} from './tables.js?v=filas20-20261023';
 import {validateResponsables,validateContact,assignedUsers,userDescription} from './gerencia-contacts.js?v=cah-lotes-20261019';
 import { visibleModule, manageRecord, manageCacStatus } from './permissions.js?v=cah-lotes-20261019';
-import {phase3Panel,bindPhase3} from './phase3-ui.js?v=cah-lotes-20261019';
+import {phase3Panel,bindPhase3} from './phase3-ui.js?informes-20261024';
 import { metrics, scope, deadlineStatus, mutate, states, integer } from "./domain.js?filtros-vacios-20261023";
 import { LocalRepository } from "./repository.js?v=cah-lotes-20261019";
 import { demo } from "./seed.js?v=cah-lotes-20261019";
@@ -415,7 +415,7 @@ function collectionView() {
       const lot=db.lotes.find(l=>esc(l.code)===group[0][2]);
       const type=sortedTypes(db.catalog).find(t=>t.id===lot?.typeId||esc(t.code)===group[0][1]);
       const title=esc(type?.description||'Descripción del tipo documental no disponible');
-      return `<details class="document-group"><summary>${title} · ${individual.length} ${individual.length===1?'documento individualizado':'documentos individualizados'}${review?` · Cantidad verificada del lote: ${review[4]}`:''}${summary?`<span class="document-group-states">${summary}</span>`:''}${review?`<span class="document-group-states">Revisión del lote: ${review[3]}</span>`:''}</summary>${table(headers,group)}<p class="footnote">La verificación total y los documentos individualizados no se suman.</p></details>`;
+      return `<details class="document-group"><summary><strong>${title}</strong> · ${individual.length} ${individual.length===1?'documento individualizado':'documentos individualizados'}${review?` · Cantidad verificada del lote: ${review[4]}`:''}${summary?` <span class="document-group-states">${summary}</span>`:''}${review?` <span class="document-group-states">Estado del lote: ${review[3]}</span>`:''}</summary>${table(headers,group)}<p class="footnote">La verificación total y los documentos individualizados no se suman.</p></details>`;
     }).join('')||'<p>Sin documentos para esta selección.</p>';
   }
   return `<section class="panel">${contextFilter?.child===page?'<p>Mostrando registros vinculados. <button id="clear-context" class="link">Ver todos los registros del período</button></p>':""}<div class="section-line"><div><h2>${pages.find((p) => p[0] === page)[2]}</h2><p>${page === "gerencias" || page === "cacs" ? "Catálogo institucional · independiente del período" : "Registros del período y ámbito seleccionados"}</p></div>${creationActions(collection,canManage(collection),cloud?.spark)}</div><input class="search" id="search" placeholder="Buscar en esta tabla…" value="${esc(query)}" aria-label="Buscar en la tabla">${tableMarkup}<p class="footnote">${filtered.length} resultados · ${cloudMode()?"Persistencia en Firestore · permisos validados en servidor":"Cambios guardados únicamente en este navegador."}</p></section>${page==='remisiones'&&cloudMode()?annulPanel({...cloudContext(),render}):''}`;

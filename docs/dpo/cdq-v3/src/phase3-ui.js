@@ -1,5 +1,5 @@
 import { template, prepareBulk, applyBulkLocal } from "./bulk.js?v=cah-lotes-20261019";
-import { makeReport, reportTypes } from "./reports.js?v=cah-lotes-20261019";
+import { makeReport, reportTypes } from "./reports.js?informes-20261024";
 import { states } from "./domain.js?v=cah-lotes-20261019";
 const settings = {
   type: "documentos",

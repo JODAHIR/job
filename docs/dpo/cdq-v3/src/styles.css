@@ -807,3 +807,5 @@ dialog:has(#lot-generate-form){width:960px}.lot-type-row>label:first-child{flex-
 #verification-form .verification-quantity-row input{flex:0 0 90px;width:90px;height:40px;min-height:40px;box-sizing:border-box;margin:0;padding:8px 10px}
 
 .document-group{padding:18px;margin:14px 0;border:1px solid #dbe5e8;border-radius:12px}.document-group summary{cursor:pointer;font-weight:700}.document-group table{margin-top:14px}
+
+.document-group summary{font-weight:400}.document-group summary strong{font-weight:700}.document-group-states{margin-left:.5em}

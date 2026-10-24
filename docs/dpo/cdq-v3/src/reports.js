@@ -1,4 +1,5 @@
-import {lotTracking} from './lot-catalog.js?v=cah-lotes-20261019';
+import {currentVerification} from './lot-verification.js?informes-20261024';
+import {sortedTypes,lotTracking} from './lot-catalog.js?v=cah-lotes-20261019';
 import { scope, metrics } from "./domain.js?v=cah-lotes-20261019";
 export const reportTypes = {
   lotes: "Lotes por tipo documental",
@@ -96,32 +97,24 @@ export function makeReport(
       ]);
   }
   if (["diferencias", "faltantes"].includes(type)) {
-    headers = [
-      "Gerencia",
-      "CAC",
-      "Período",
-      "Lote",
-      "Declarados",
-      "Individualizados",
-      "Diferencia",
-      "Faltantes",
-    ];
-    rows = s.lots
-      .map((l) => {
-        const n = counts.get(l.id) || 0;
-        return [
-          ...ctx(l),
-          l.declared,
-          n,
-          n - l.declared,
-          Math.max(0, l.declared - n),
-          rs.get(l.remisionId).annulment ? "Anulada" : "Vigente",
-        ];
-      })
-      .filter((r) => (type === "faltantes" ? r[7] > 0 : r[6] !== 0));
-    note =
-      "Los faltantes son cantidades sin identidad documental; no se inventan números. Los sobrantes no compensan faltantes de otro lote. Las cantidades se calculan con todos los documentos de cada lote seleccionado.";
+    headers = ["Gerencia", "CAC", "Tipo de documento", "Declarados",
+      "Individualizados", "Presentados / conciliados", "Saldo de conciliación", "Faltantes"];
+    rows = s.lots.map(l => {
+      const rem = rs.get(l.remisionId);
+      const review = currentVerification(db.lotVerifications || [], l,
+        db.remisionControls?.find(c => c.id === l.remisionId), !!rem.annulment, db);
+      const individual = counts.get(l.id) || 0;
+      const presented = review?.registered ?? individual;
+      const documentType = sortedTypes(db.catalog).find(t => t.id === l.typeId || t.code === l.typeCode);
+      const status = rem.annulment ? "Anulado" : review?.result ||
+        (db.lotVerifications?.some(v => v.lotId === l.id) ? "Requiere nueva revisión" : "Sin conciliación registrada");
+      return [...ctx(l).slice(0, 2), documentType?.description || l.typeCode || "Sin clasificación",
+        l.declared, individual, presented, presented - l.declared,
+        Math.max(0, l.declared - presented), status];
+    }).filter(r => type === "faltantes" ? r[7] > 0 : r[6] !== 0);
+    note = "Saldo de conciliación = presentados / conciliados menos declarados. Se utiliza la última revisión vigente; sin revisión vigente, se cuentan los documentos individualizados. Un saldo negativo indica faltantes y uno positivo excedentes. Los lotes conciliados sin diferencias no aparecen en este informe.";
   }
+
   if (type === "plazos") {
     headers = [
       "Gerencia",
@@ -233,7 +226,7 @@ export function makeReport(
     rows=lotTracking(db,f).map(r=>[gs.get(r.gerenciaId)?.name,cs.get(r.cacId)?.name,`${r.year}-${r.month} Q${r.half}`,r.status,r.lots,r.declared,r.received,r.reviewed,r.observed,r.missing,r.pending,r.status==='Anulada'?'Anulada':'Vigente']);
     note='Carga completa no significa verificada. Exclusiones sin descuento: procedimiento pendiente.';
   }
-  if(type !== 'comparativo')headers.push('Estado administrativo');
+  if(type !== 'comparativo')headers.push(['diferencias','faltantes'].includes(type)?'Estado del lote':'Estado administrativo');
   note += ' Ámbito administrativo: '+(f.lifecycle==='all'?'incluye anuladas':f.lifecycle==='annulled'?'solo anuladas (histórico)':'solo vigentes; anuladas excluidas')+'. La anulación conserva fechas y documentos; no equivale a regularización.';
   return {
     title: reportTypes[type],
@@ -243,6 +236,6 @@ export function makeReport(
     generatedAt: new Date().toISOString(),
     source,
     filters: { ...f, state, comparison, horizon },
-    scopeLabel: `Año ${f.year}; mes ${f.month}; quincena ${f.half || "ambas"}; gerencia ${f.gerencia ? gs.get(f.gerencia)?.name || f.gerencia : "todas las autorizadas"}; CAC ${f.cac ? cs.get(f.cac)?.name || f.cac : "todos los autorizados"}; estado ${state || "todos"}; tipo ${f.documentType || "todos"}; remisión ${f.remission || "todas"}; conciliación ${f.reconciliation || "todas"}; verificación ${f.verification || "todas"}; observación ${f.observation || "todas"}; plazo ${f.deadline || "todos"}; administrativo ${f.lifecycle || "vigentes"}`,
+    scopeLabel: `Año ${f.year || "todos"}; mes ${f.month || "todos"}; quincena ${f.half || "ambas"}; gerencia ${f.gerencia ? gs.get(f.gerencia)?.name || f.gerencia : "todas las autorizadas"}; CAC ${f.cac ? cs.get(f.cac)?.name || f.cac : "todos los autorizados"}; estado ${state || "todos"}; tipo ${f.documentType || "todos"}; remisión ${f.remission || "todas"}; conciliación ${f.reconciliation || "todas"}; verificación ${f.verification || "todas"}; observación ${f.observation || "todas"}; plazo ${f.deadline || "todos"}; administrativo ${f.lifecycle || "vigentes"}`,
   };
 }
