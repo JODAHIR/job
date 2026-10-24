@@ -45,40 +45,51 @@ export async function excelBytes(report) {
   };
   return book.xlsx.writeBuffer();
 }
-export function pdfBytes(report) {
+export function printPeriod(f = {}) {
+  const year = Number(f.year), month = Number(f.month), half = Number(f.half);
+  const date = (m,d) => `${year}-${String(m).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+  const bounded = year > 0;
+  return {
+    from: f.from || (bounded ? date(month || 1, month && half === 2 ? 16 : 1) : 'Sin límite'),
+    to: f.to || (bounded ? date(month || 12, month && half === 1 ? 15 : new Date(Date.UTC(year,month || 12,0)).getUTCDate()) : 'Sin límite')
+  };
+}
+export function pdfBytes(report, {user = 'Usuario no identificado', filters = report.filters || {}, now = new Date()} = {}) {
   const pdf = new jsPDF({ orientation: "landscape", unit: "mm", format: "a4" });
-  pdf.setFontSize(16);
-  pdf.setTextColor(18, 91, 97);
-  pdf.text(report.title, 14, 16);
+  const period = printPeriod(filters);
+  const emitted = new Intl.DateTimeFormat('es-PY', {timeZone:'America/Asuncion',dateStyle:'short',timeStyle:'medium'}).format(now);
+  const width = 269;
+  pdf.setFontSize(15);
+  const title = pdf.splitTextToSize(report.title, width);
   pdf.setFontSize(9);
-  pdf.setTextColor(30);
-  const metadata = pdf.splitTextToSize(
-    `${report.source}\n${report.scopeLabel}\nGenerado: ${report.generatedAt}\n${report.note}`,
-    268,
-  );
-  pdf.text(metadata, 14, 23);
+  const responsible = pdf.splitTextToSize('Responsable de la impresión: ' + user, width);
+  const headerBottom = 13 + title.length * 6 + 6 + responsible.length * 4 + 4;
+  const metadata = pdf.splitTextToSize([report.source, report.scopeLabel, report.note].filter(Boolean).join('\n'), width);
+  pdf.setTextColor(70);
+  pdf.text(metadata,14,headerBottom + 4);
   autoTable(pdf, {
-    startY: 26 + metadata.length * 4,
-    head: [report.headers],
-    body: report.rows,
-    styles: {
-      font: "helvetica",
-      fontSize: 8,
-      overflow: "linebreak",
-      cellPadding: 2,
-    },
-    headStyles: { fillColor: [18, 91, 97] },
-    margin: { top: 15, bottom: 15 },
-    rowPageBreak: "avoid",
-    didDrawPage: () => {
-      pdf.setFontSize(8);
-      pdf.text(
-        `Dirección de Operaciones · Página ${pdf.getNumberOfPages()}`,
-        14,
-        202,
-      );
-    },
+    startY: headerBottom + 8 + metadata.length * 4,
+    head: [report.headers], body: report.rows,
+    styles: {font:"helvetica",fontSize:8,overflow:"linebreak",cellPadding:2},
+    headStyles:{fillColor:[18,91,97]},
+    margin:{top:headerBottom + 4,bottom:26,left:14,right:14},
+    rowPageBreak:"avoid"
   });
+  const pages = pdf.getNumberOfPages();
+  for(let page=1;page<=pages;page++){
+    pdf.setPage(page);
+    pdf.setTextColor(18,91,97);pdf.setFont('helvetica','bold');pdf.setFontSize(15);
+    pdf.text(title,14,13);
+    pdf.setFont('helvetica','normal');pdf.setTextColor(40);pdf.setFontSize(9);
+    pdf.text(`Fecha desde: ${period.from}    Hasta: ${period.to}`,14,13+title.length*6);
+    pdf.text(responsible,14,19+title.length*6);
+    pdf.setDrawColor(190);pdf.line(14,headerBottom,283,headerBottom);
+    pdf.line(14,186,283,186);pdf.setFontSize(8);
+    pdf.text('DPO/UNIDAD DE OPERACIONES',14,193);
+    const footer=pdf.splitTextToSize(`Generado: ${emitted} · Usuario: ${user}`,170);
+    pdf.text(footer,283,193,{align:'right'});
+    pdf.text(`Página ${page} de ${pages}`,283,193+footer.length*3.5,{align:'right'});
+  }
   return pdf.output("arraybuffer");
 }
 export function download(bytes, name, type) {

@@ -80,9 +80,9 @@ export function bindIntelligence({db,f,render,setLevel,openRecord,cloud,mode}) {
    const fresh=mode==='cloud'?await cloud.load():db;
    if(mode==='cloud'&&(!uid||cloud.auth.currentUser?.uid!==uid||!cloud.profile?.active))throw Error('La sesión cambió. Inicia sesión nuevamente.');
    const report=intelligenceReport(fresh,filters,section,mode==='cloud'?'Firestore · datos autorizados':mode==='demo'?'DATOS FICTICIOS · demostración':'Registros locales');
-   const exporters=await import('./exporters.bundle.js');
+   const exporters=await import('./exporters.bundle.js?pdf-lotes-20261024');
    if(mode==='cloud'&&(cloud.auth.currentUser?.uid!==uid||!cloud.profile?.active))throw Error('La sesión cambió.');
-   const bytes=format==='xlsx'?await exporters.excelBytes(report):exporters.pdfBytes(report);
+   const bytes=format==='xlsx'?await exporters.excelBytes(report):exporters.pdfBytes(report,{filters:f,user:cloud?.profile?.description || cloud?.auth?.currentUser?.email || (mode==='demo'?'Usuario de demostración':'Usuario local')});
    if(mode==='cloud'&&(cloud.auth.currentUser?.uid!==uid||!cloud.profile?.active))throw Error('La sesión cambió.');
    exporters.download(bytes,`CAH-inteligencia-${section}.${format}`,format==='xlsx'?'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet':'application/pdf');
    message('Informe generado.');

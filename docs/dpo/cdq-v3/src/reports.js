@@ -7,7 +7,7 @@ export const reportTypes = {
   documentos: "Documentos por estado",
   observados: "Documentos observados",
   pendientes: "Pendientes de verificación",
-  diferencias: "Lotes con diferencias",
+  diferencias: "Verificación de lotes",
   faltantes: "Faltantes por lote",
   plazos: "Plazos próximos y vencidos",
   comparativo: "Comparativo de períodos",
@@ -111,8 +111,8 @@ export function makeReport(
       return [...ctx(l).slice(0, 2), documentType?.description || l.typeCode || "Sin clasificación",
         l.declared, individual, presented, presented - l.declared,
         Math.max(0, l.declared - presented), status];
-    }).filter(r => type === "faltantes" ? r[7] > 0 : r[6] !== 0);
-    note = "Saldo de conciliación = presentados / conciliados menos declarados. Se utiliza la última revisión vigente; sin revisión vigente, se cuentan los documentos individualizados. Un saldo negativo indica faltantes y uno positivo excedentes. Los lotes conciliados sin diferencias no aparecen en este informe.";
+    }).filter(r => type === "faltantes" ? r[7] > 0 : true);
+    note = "Saldo de conciliación = presentados / conciliados menos declarados. Se utiliza la última revisión vigente; sin revisión vigente, se cuentan los documentos individualizados. Un saldo negativo indica faltantes y uno positivo excedentes. El informe de conciliación incluye todos los lotes seleccionados, incluso los de saldo cero. El informe de faltantes muestra solo saldos negativos.";
   }
 
   if (type === "plazos") {
