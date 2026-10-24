@@ -70,16 +70,7 @@ export function makeReport(
     rows = [],
     note = "";
   if (["documentos", "observados", "pendientes"].includes(type)) {
-    headers = [
-      "Gerencia",
-      "CAC",
-      "Período",
-      "Lote",
-      "Tipo",
-      "Número",
-      "Estado",
-      "Observaciones",
-    ];
+    headers = ["Gerencia", "CAC", "Tipo de documento", "Número", "Estado", "Observaciones"];
     rows = s.docs
       .filter(
         (d) =>
@@ -88,14 +79,13 @@ export function makeReport(
           (type !== "pendientes" || d.state === "Pendiente"),
       )
       .map((d) => [
-        ...ctx(ls.get(d.loteId)),
-        d.type,
+        ...ctx(ls.get(d.loteId)).slice(0, 2),
+        sortedTypes(db.catalog).find(t => t.id === ls.get(d.loteId)?.typeId || t.code === d.type || t.code === ls.get(d.loteId)?.typeCode)?.description || d.type || "Sin clasificación",
         d.number,
         d.state,
         (obs.get(d.id) || [])
-          .map((o) => `${o.description} (${o.date}; ${o.owner}; ${o.status})`)
+          .map((o) => o.description)
           .join("\n"),
-        rs.get(ls.get(d.loteId).remisionId).annulment ? "Anulada" : "Vigente",
       ]);
   }
   if (["diferencias", "faltantes"].includes(type)) {
@@ -232,7 +222,7 @@ export function makeReport(
     ({headers,rows}=managementSummary(db,f));
     note='Resumen por tipo documental del ámbito seleccionado. Verificados correctamente = declarados menos individualizados y faltantes.';
   }
-  if(!['comparativo','gerencias'].includes(type))headers.push(['diferencias','faltantes'].includes(type)?'Estado del lote':'Estado administrativo');
+  if(!['comparativo','gerencias','documentos','observados','pendientes'].includes(type))headers.push(['diferencias','faltantes'].includes(type)?'Estado del lote':'Estado administrativo');
   note += ' Ámbito administrativo: '+(f.lifecycle==='all'?'incluye anuladas':f.lifecycle==='annulled'?'solo anuladas (histórico)':'solo vigentes; anuladas excluidas')+'. La anulación conserva fechas y documentos; no equivale a regularización.';
   return {
     title: type==='gerencias' ? reportTypes[type]+' - '+(f.gerencia ? gs.get(f.gerencia)?.name || 'Gerencia seleccionada' : 'Todas las gerencias') : reportTypes[type],
