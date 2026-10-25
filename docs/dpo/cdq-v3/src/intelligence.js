@@ -1,3 +1,4 @@
+import {currentVerification} from './lot-verification.js';
 // Pure analytical layer. Missing evidence never becomes a favourable/negative score.
 export const INTELLIGENCE_POLICY = Object.freeze({nearBusinessDays:2,oldObservationBusinessDays:10,volumeVariation:0.30,volumeMinimum:20,minimumPeriods:3});
 export function civilDate(value) {
@@ -56,7 +57,14 @@ export function executiveMetrics(db,filters={},today=asuncionDate()) {
  const period=r=>(!filters.year||r.year===+filters.year)&&(!filters.month||r.month===+filters.month)&&(!filters.half||r.half===+filters.half);
  let rem=(db.remisiones||[]).filter(r=>cacIds.has(r.cacId)&&!r.annulment&&period(r));
  const evidence=new Map();
- for(const r of rem)for(const l of allLots.get(r.id)||[]){const ds=documents.get(l.id)||[];evidence.set(l.id,lotEvidence(l,ds,ds.flatMap(d=>observations.get(d.id)||[]),controls.get(l.id)));}
+ for(const r of rem)for(const l of allLots.get(r.id)||[]){const ds=documents.get(l.id)||[];const item=lotEvidence(l,ds,ds.flatMap(d=>observations.get(d.id)||[]),controls.get(l.id));
+ const review=currentVerification(db.lotVerifications||[],l,db.remisionControls?.find(c=>c.id===r.id),!!r.annulment,db);
+ const date=Number.isFinite(review?.at?.seconds)?asuncionDate(new Date(review.at.seconds*1000)):null;
+ if(review&&date&&review.actor&&Number.isSafeInteger(review.registered)&&review.registered>=0&&!item.invalid){
+  Object.assign(item,{finished:true,exception:true,closedOn:date,reviewId:review.id,reviewer:review.actor,reviewResult:review.result,controlled:Math.min(l.declared,review.registered),conforming:Math.max(0,Math.min(l.declared,review.registered)-item.observed)});
+ }
+ item.pendingDocuments=item.invalid?0:Math.max(0,l.declared-item.controlled);
+ evidence.set(l.id,item);}
  const controlState=r=>{const lots=allLots.get(r.id)||[];return lots.length&&lots.every(l=>evidence.get(l.id).finished)?'closed':lots.some(l=>evidence.get(l.id).exception)?'pending':'unknown';};
  if(filters.control)rem=rem.filter(r=>controlState(r)===filters.control);
  const eventDate=r=>{
@@ -93,8 +101,8 @@ export function executiveMetrics(db,filters={},today=asuncionDate()) {
   return true;
  });
  const heatmap=obligations.map(o=>{const r=(db.remisiones||[]).find(r=>!r.annulment&&r.cacId===o.cacId&&r.year===o.year&&r.month===o.month&&r.half===o.half);return {...o,...deliveryEvidence(o,r,calendars.get(o.calendarVersion),today)};});
- const rankings=cacs.map(c=>{const ids=new Set(rem.filter(r=>r.cacId===c.id).map(r=>r.id)),rs=rows.filter(l=>ids.has(l.remisionId)),ok=rs.filter(l=>!l.invalid),finished=ok.filter(l=>l.finished),base=sum(finished,'declared');return {id:c.id,name:c.name,gerenciaId:c.gerenciaId,declared:sum(ok,'declared'),observed:sum(ok,'observed'),controlled:sum(ok,'controlled'),observationRate:percentage(sum(finished,'observed'),base),rateDenominator:base,pendingControls:ok.filter(l=>l.exception&&!l.finished).length,legacy:ok.filter(l=>!l.exception).length};}).sort((a,b)=>b.declared-a.declared);
- return {today,filters,remissions:rem,lotEvidence:rows,declared,controlled,conforming:valid.some(r=>r.finished)?conforming:null,observed:sum(valid,'observed'),observations:obs.length,regularized:sum(valid,'regularized'),pendingObserved:sum(valid,'pending'),progress:rows.some(r=>r.invalid)||valid.some(r=>!r.exception)?null:percentage(controlled,declared),legacyLots:valid.filter(r=>!r.exception).length,invalidLots:rows.filter(r=>r.invalid).map(r=>r.id),closedLots:valid.filter(r=>r.finished).length,lots:lots.length,ages,durations,alerts,rankings,pareto,heatmap,igd:{value:null,state:'Metodología pendiente de aprobación'},records:{documents:docs.map(d=>d.id),observations:obs.map(o=>o.id)},observationRows:obs,documentRows:docs};
+ const rankings=cacs.map(c=>{const ids=new Set(rem.filter(r=>r.cacId===c.id).map(r=>r.id)),rs=rows.filter(l=>ids.has(l.remisionId)),ok=rs.filter(l=>!l.invalid),finished=ok.filter(l=>l.finished),base=sum(finished,'declared');return {id:c.id,name:c.name,gerenciaId:c.gerenciaId,declared:sum(ok,'declared'),observed:sum(ok,'observed'),controlled:sum(ok,'controlled'),observationRate:percentage(sum(finished,'observed'),base),rateDenominator:base,pendingDocuments:sum(ok,'pendingDocuments'),pendingControls:ok.filter(l=>!l.finished).length,legacy:ok.filter(l=>!l.exception).length};}).sort((a,b)=>b.declared-a.declared);
+ return {today,filters,remissions:rem,lotEvidence:rows,declared,controlled,conforming:valid.some(r=>r.finished)?conforming:null,observed:sum(valid,'observed'),observations:obs.length,regularized:sum(valid,'regularized'),pendingObserved:sum(valid,'pending'),pendingDocuments:sum(valid,'pendingDocuments'),progress:rows.some(r=>r.invalid)||valid.some(r=>!r.exception)?null:percentage(controlled,declared),legacyLots:valid.filter(r=>!r.exception).length,invalidLots:rows.filter(r=>r.invalid).map(r=>r.id),closedLots:valid.filter(r=>r.finished).length,lots:lots.length,ages,durations,alerts,rankings,pareto,heatmap,igd:{value:null,state:'Metodología pendiente de aprobación'},records:{documents:docs.map(d=>d.id),observations:obs.map(o=>o.id)},observationRows:obs,documentRows:docs};
 }
 export function comparableVariation(current,previous,{sameModel=false,complete=false}={}) {
  if(!sameModel||!complete||!Number.isFinite(current)||!Number.isFinite(previous)||previous<=0)return null;

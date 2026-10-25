@@ -5,12 +5,12 @@ export function bars(items,{label,value,action='cac'}={}) {
  const max=Math.max(1,...items.map(r=>Number(r[value])||0));
  return `<div class="intel-bars">${items.slice(0,15).map((r,i)=>`<button class="intel-bar" data-intel-${action}="${escapeHTML(r.id)}"><span>${escapeHTML(r[label])}</span><span class="intel-bar-track"><span style="width:${Math.max(0,r[value]/max*100)}%;background:${colors[i%colors.length]}"></span></span><strong>${escapeHTML(r[value])}</strong></button>`).join('')}</div>${items.length?'':'<p class="empty">Sin registros para esta selección.</p>'}`;
 }
-export function ring(items,title) {
+export function ring(items,title,palette=colors) {
  const total=items.reduce((sum,r)=>sum+r.value,0);let offset=0;
  if(!total)return '<p class="empty">Sin datos evaluables.</p>';
  return `<div class="intel-ring"><svg viewBox="0 0 160 160" role="img" aria-label="${escapeHTML(title)}">${items.map((r,i)=>{
-  const length=r.value/total*100,part=`<circle cx="80" cy="80" r="60" fill="none" stroke="${colors[i%colors.length]}" stroke-width="22" pathLength="100" stroke-dasharray="${length} ${100-length}" stroke-dashoffset="${-offset}" transform="rotate(-90 80 80)"><title>${escapeHTML(r.label)}: ${r.value}</title></circle>`;offset+=length;return part;
- }).join('')}<text x="80" y="85" text-anchor="middle">${total}</text></svg><ul>${items.map((r,i)=>`<li><span class="intel-dot" style="background:${colors[i%colors.length]}"></span>${escapeHTML(r.label)}: <strong>${r.value}</strong> (${(r.value/total*100).toFixed(1)} %)</li>`).join('')}</ul></div>`;
+  const length=r.value/total*100,part=`<circle cx="80" cy="80" r="60" fill="none" stroke="${palette[i%palette.length]}" stroke-width="22" pathLength="100" stroke-dasharray="${length} ${100-length}" stroke-dashoffset="${-offset}" transform="rotate(-90 80 80)"><title>${escapeHTML(r.label)}: ${r.value}</title></circle>`;offset+=length;return part;
+ }).join('')}<text x="80" y="85" text-anchor="middle">${total}</text></svg><ul>${items.map((r,i)=>`<li><span class="intel-dot" style="background:${palette[i%palette.length]}"></span>${escapeHTML(r.label)}: <strong>${r.value}</strong> (${(r.value/total*100).toFixed(1)} %)</li>`).join('')}</ul></div>`;
 }
 export function lines(items,key,title) {
  const max=Math.max(1,...items.map(r=>r[key])),x=i=>30+i*88,y=r=>130-r[key]/max*100;

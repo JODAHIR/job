@@ -5,7 +5,7 @@ import {initialFilters,createFilterSession} from './filter-session.js?v=filtros-
 import {connectionState,orderLots} from './presentation-status.js?v=cah-filtros-20261020';
 import {showLotVerification,lotVerificationLabel,lotReconciliation} from './lot-verification-ui.js?formulario-20261023';
 import {creationActions} from './record-actions.js?v=cah-ajustes-20261020';
-import {dashboardFilters,intelligencePanel,bindIntelligence,groupModuleFilters} from './intelligence-ui.js?verificados-20261024';
+import {dashboardFilters,intelligencePanel,bindIntelligence,groupModuleFilters} from './intelligence-ui.js?dashboard-20261025';
 import {catalogPanel,bindCatalog,showLotGenerator,lotDashboard} from './lot-ui.js?v=cah-guardado-directo-20261019';
 import {sortedTypes} from './lot-catalog.js?v=cah-lotes-20261019';
 import {annulPanel,bindAnnulPanel} from './remision-annul-ui.js?v=cah-filtros-20261020';

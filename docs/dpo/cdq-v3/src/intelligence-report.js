@@ -1,4 +1,4 @@
-import {intelligenceDashboard,intelligenceFilters,civilDate} from './intelligence.js';
+import {intelligenceDashboard,intelligenceFilters,civilDate} from './intelligence.js?dashboard-20261025';
 export const indicatorDefinitions=[
  ['declared','Documentos declarados','Suma de cantidades declaradas de los lotes válidos seleccionados.','lotes'],
  ['observed','Documentos observados','Documentos únicos con estado observado o al menos una observación; incluye regularizados.','documentos'],
@@ -6,12 +6,10 @@ export const indicatorDefinitions=[
  ['remissions','Remisiones recibidas','Remisiones vigentes con fecha de recepción válida en el ámbito y período seleccionados.','remisiones'],
  ['lots','Lotes documentales','Cantidad de lotes de las remisiones seleccionadas.','lotes'],
  ['pendingControls','Remisiones pendientes de control','Remisiones con control por excepción abierto; excluye controles históricos sin evidencia.','remisiones'],
- ['closedLots','Controles finalizados','Lotes con cierre explícito válido y cantidad declarada coincidente con el cierre.','lotes'],
+ ['closedLots','Controles finalizados','Lotes con revisión vigente guardada, fecha y responsable; pueden conservar observaciones pendientes.','lotes'],
  ['pendingObserved','Documentos por regularizar','Documentos observados con alguna observación no regularizada o sin evidencia de regularización.','documentos'],
  ['regularized','Documentos regularizados','Documentos observados cuyas observaciones están todas regularizadas. Conservan el historial.','documentos'],
- ['conforming','Conformes por defecto','Declarados menos observados únicos, exclusivamente en lotes con control cerrado válido.','lotes'],
- ['progress','Avance del control','100 × declarados de lotes cerrados / declarados totales. No evaluable si hay lotes históricos sin cierre o inconsistencias.','lotes'],
- ['regularizationDays','Regularización · días hábiles','Promedio entre apertura y regularización, solo observaciones con fecha propia y calendario histórico con cobertura.','observaciones'],
+ ['progress','Avance del control','100 × documentos revisados (hasta el total declarado de cada lote) / declarados. Una revisión con observaciones también acredita revisión.','lotes'],
 ];
 export function indicatorValue(model,key) {
  if(key==='remissions')return model.remissions.filter(r=>civilDate(r.receivedOn)).length;
@@ -21,7 +19,7 @@ export function indicatorValue(model,key) {
 export function intelligenceReport(db,filters,section='summary',source='Datos autorizados') {
  const m=intelligenceDashboard(db,intelligenceFilters(filters)),name=(c,id)=>db[c]?.find(r=>r.id===id)?.name||id;
  let headers,rows;
- if(section==='rankings'){headers=['Gerencia','CAC','Declarados','Observados','Tasa en controles cerrados (%)','Base tasa','Controles pendientes','Históricos sin cierre'];rows=m.rankings.map(r=>[name('gerencias',r.gerenciaId),r.name,r.declared,r.observed,r.observationRate??'No evaluable',r.rateDenominator,r.pendingControls,r.legacy]);}
+ if(section==='rankings'){headers=['Gerencia','CAC','Declarados','Observados','Documentos pendientes','Históricos sin cierre'];rows=m.rankings.map(r=>[name('gerencias',r.gerenciaId),r.name,r.declared,r.observed,r.pendingDocuments,r.legacy]);}
  else if(section==='evolution'){headers=['Período','Remisiones','Declarados','Observaciones','Documentos regularizados','Cobertura'];rows=m.evolution.map(r=>[r.label,r.remissions,r.declared,r.observations,r.regularized,r.registered?'Registros disponibles':'Sin remisiones registradas']);}
  else if(section==='observations'){headers=['Documento','Descripción','Fecha','Responsable','Estado','Regularización'];rows=m.observationRows.map(o=>[m.documentRows.find(d=>d.id===o.documentId)?.number||o.documentId,o.description,o.date,o.owner,o.status,o.regularizedOn||'Sin fecha documentada']);}
  else if(section==='deadlines'){headers=['Remisión','CAC','Estado control','Días hábiles','Cierre','Cumplimiento'];rows=m.durations.map(r=>[r.id,name('cacs',m.remissions.find(x=>x.id===r.id)?.cacId),r.state==='unknown'?'Sin evidencia de cierre':r.state==='closed'?'Finalizado':'Pendiente',r.elapsed??'No evaluable',r.closedOn||'Sin fecha documentada',r.onTime===null?'No evaluable':r.onTime?'En plazo':'Fuera de plazo']);}
