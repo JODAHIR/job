@@ -1,8 +1,8 @@
-import {visibleModule,manageRecord} from './permissions.js?v=cah-lotes-20261019';
+import {visibleModule,manageRecord} from './permissions.js?catalogo-observaciones-20261024';
 const list={id:'list',label:'Consultar',action:'view'};
 const records=(id,label)=>({id,label,functions:[list,{id:'new',label:'Registrar',action:'new',write:id}]});
 export const groups=[
- {id:'administracion',label:'ADMINISTRACIÓN',modules:[records('gerencias','Gerencia'),records('cacs','CAC'),{id:'catalog',label:'Tipos documentales',functions:[]},
+ {id:'administracion',label:'ADMINISTRACIÓN',modules:[records('gerencias','Gerencia'),records('cacs','CAC'),{id:'catalog',label:'Tipos documentales',functions:[]},{id:'observationCatalog',label:'Catálogo de observaciones',functions:[]},
  {id:'access',label:'Usuarios y permisos',functions:[list,{id:'requests',label:'Solicitudes de acceso',target:'#access-requests',admin:true,sparkOnly:true},{id:'assign',label:'Asignar responsables',target:'#assignment-form'},{id:'profiles',label:'Administrar perfiles',target:'#profile-form',admin:true}]},
  {id:'deadlines',label:'Plazos y excepciones',functions:[{id:'list',label:'Consultar vencimientos',target:'#deadline-list'},{id:'calendar',label:'Calendario registrado',target:'#calendar-view'},{id:'approve',label:'Aprobar calendario',target:'#calendar-form'},{id:'exception',label:'Autorizar excepción',target:'#exception-form',noSpark:true}]},
  {id:'bulk',label:'Importar CSV',functions:[{id:'list',label:'Importar y validar CSV',action:'view'},{id:'template',label:'Descargar plantilla',target:'#bulk-template',click:true,noSpark:true},{id:'migration',label:'Migración local',page:'migration',admin:true,cloudOnly:true}]},
@@ -12,7 +12,7 @@ export const groups=[
 ];
 export const modules=groups.flatMap(g=>g.modules.map(m=>({...m,group:g.id,groupLabel:g.label})));
 export const pages=[['dashboard','◫','Inicio'],...modules.map(m=>[m.id,'▤',m.label]),['migration','⇧','Migración local']];
-export const allowed=(page,ctx)=>ctx.mode==='cloud'?visibleModule(ctx.profile,page):!['access','deadlines','migration','catalog'].includes(page);
+export const allowed=(page,ctx)=>ctx.mode==='cloud'?visibleModule(ctx.profile,page):!['access','deadlines','migration','catalog','observationCatalog'].includes(page);
 export function functionsFor(module,ctx){return module.functions.filter(fn=>(!fn.admin||ctx.profile?.role==='technical')&&(!fn.write||ctx.mode!=='cloud'||manageRecord(ctx.profile,fn.write))&&(!fn.cloudOnly||ctx.mode==='cloud')&&(!fn.sparkOnly||ctx.spark)&&(!fn.page||allowed(fn.page,ctx)));}
 export function resolveRoute(hash,ctx){
  const parts=hash.replace(/^#\/?/,'').split('/');

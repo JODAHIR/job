@@ -5,7 +5,7 @@ export const visibleModule = (p, page) => {
  if (admin(p)) return true;
  const modules = {
  gerente: ['dashboard','lotes','remisiones','documentos','observaciones','history'],
- director: ['catalog','dashboard','documentos','observaciones','history','reports','lotes','remisiones','access','cacs','deadlines'],
+ director: ['observationCatalog','catalog','dashboard','documentos','observaciones','history','reports','lotes','remisiones','access','cacs','deadlines'],
  asistente: ['dashboard','remisiones','lotes','documentos','observaciones','history'],
  };
  return (modules[p.role] ?? []).includes(page);

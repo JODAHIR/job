@@ -132,6 +132,43 @@ service cloud.firestore {
      && control.collection == 'lotes' && control.recordId == id && control.updatedAt == request.time
      && locked(g,'lotes',r,'gerencias/'+g+'/lotes/'+id) && audited(g,'lotes',id,r);
   }
+  // Catalogue entries preserve historical aliases. Only directors/admins manage them.
+  function validObservationCatalog(c) {
+    let e=c.entries[c.changedId];
+    let a=getAfter(/databases/$(database)/documents/observationCatalogAudit/$(string(c.revision))).data;
+    return c.keys().hasOnly(['entries','revision','changedId','actor','updatedAt'])
+      && c.revision is int && c.revision>0 && ident(c.changedId)
+      && c.entries is map && c.entries.size()<=300
+      && c.actor==request.auth.uid && c.updatedAt==request.time
+      && e.keys().hasOnly(['id','description','active','sources'])
+      && e.id==c.changedId && text(e.description,2000) && e.active is bool
+      && e.sources is list && e.sources.size()>0 && e.sources.size()<=100
+      && a.after==e && a.actor==request.auth.uid && a.at==request.time;
+  }
+  match /observationCatalog/current {
+    allow read: if signed() && profile().active;
+    allow create: if catalogManager() && validObservationCatalog(request.resource.data)
+      && request.resource.data.revision==1 && request.resource.data.entries.size()==1;
+    allow update: if catalogManager() && validObservationCatalog(request.resource.data)
+      && request.resource.data.revision==resource.data.revision+1
+      && request.resource.data.entries.keys().hasAll(resource.data.entries.keys())
+      && request.resource.data.entries.diff(resource.data.entries).affectedKeys().hasOnly([request.resource.data.changedId])
+      && (!(request.resource.data.changedId in resource.data.entries)
+        || request.resource.data.entries[request.resource.data.changedId].sources.hasAll(resource.data.entries[request.resource.data.changedId].sources));
+  }
+  match /observationCatalogAudit/{version} {
+    allow read: if catalogManager();
+    allow create: if catalogManager()
+      && request.resource.data.keys().hasOnly(['revision','actor','at','before','after'])
+      && version==string(request.resource.data.revision)
+      && request.resource.data.actor==request.auth.uid && request.resource.data.at==request.time
+      && getAfter(/databases/$(database)/documents/observationCatalog/current).data.revision==request.resource.data.revision
+      && getAfter(/databases/$(database)/documents/observationCatalog/current).data.entries[request.resource.data.after.id]==request.resource.data.after
+      && ((!exists(/databases/$(database)/documents/observationCatalog/current) && request.resource.data.before==null)
+        || (exists(/databases/$(database)/documents/observationCatalog/current)
+          && request.resource.data.before==get(/databases/$(database)/documents/observationCatalog/current).data.entries.get(request.resource.data.after.id,null)));
+  }
+
   function catalogManager() { return role('director') || role('technical'); }
   function validCatalog(c) {
     let t=c.types[c.changedId];

@@ -165,6 +165,7 @@ export async function connectFirebase() {
         }
       };
       if (spark) {
+        tasks.push(async()=>{const snap=await getDocFromServer(doc(store,'observationCatalog/current'));state.observationCatalog=snap.exists()?snap.data():{revision:0,entries:{}};});
         state.lotVerifications = []; state.lotRequirements = []; state.catalogVersions = []; state.remisionControls = [];
         tasks.push(async () => {
           const snapshot = await getDocFromServer(doc(store, 'documentCatalog/current'));

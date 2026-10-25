@@ -1,3 +1,5 @@
+import {observationCatalog,observationKey} from './observation-catalog.js';
+import {observationCatalogPanel,bindObservationCatalog} from './observation-catalog-ui.js';
 import {initialFilters,createFilterSession} from './filter-session.js?v=filtros-vacios-20261023';
 import {connectionState,orderLots} from './presentation-status.js?v=cah-filtros-20261020';
 import {showLotVerification,lotVerificationLabel,lotReconciliation} from './lot-verification-ui.js?formulario-20261023';
@@ -6,11 +8,11 @@ import {dashboardFilters,intelligencePanel,bindIntelligence,groupModuleFilters} 
 import {catalogPanel,bindCatalog,showLotGenerator,lotDashboard} from './lot-ui.js?v=cah-guardado-directo-20261019';
 import {sortedTypes} from './lot-catalog.js?v=cah-lotes-20261019';
 import {annulPanel,bindAnnulPanel} from './remision-annul-ui.js?v=cah-filtros-20261020';
-import {pages,resolveRoute,routeFor} from './navigation.js?resumen-gerencia-20261024';
-import {navigationMarkup,bindNavigation,breadcrumb} from './navigation-ui.js?resumen-gerencia-20261024';
+import {pages,resolveRoute,routeFor} from './navigation.js?catalogo-observaciones-20261024';
+import {navigationMarkup,bindNavigation,breadcrumb} from './navigation-ui.js?catalogo-observaciones-20261024';
 import {installTables} from './tables.js?v=filas20-20261023';
 import {validateResponsables,validateContact,assignedUsers,userDescription} from './gerencia-contacts.js?v=cah-lotes-20261019';
-import { visibleModule, manageRecord, manageCacStatus } from './permissions.js?v=cah-lotes-20261019';
+import { visibleModule, manageRecord, manageCacStatus } from './permissions.js?catalogo-observaciones-20261024';
 import {phase3Panel,bindPhase3} from './phase3-ui.js?documental-20261024';
 import { metrics, scope, deadlineStatus, mutate, states, integer } from "./domain.js?filtros-vacios-20261023";
 import { LocalRepository } from "./repository.js?v=cah-lotes-20261019";
@@ -135,7 +137,7 @@ async function load() {
     else {$('#app').setAttribute('aria-busy','true');$('#refresh-cloud').disabled=true;showSyncStatus();}
 
     try{
-      if(!cloud){const module=await import('./firebase-client.bundle.js?documental-20261024');cloud=await module.connectFirebase();let initial=true;stopAuth=cloud.watchAuth(()=>{if(initial){initial=false;return}if(cloudMode()||!cloud.auth.currentUser){mode='cloud';epoch++;db=null;page="dashboard";functionId="list";window.history.replaceState(null,"",routeFor(page));$('#modal').close();load()}});}
+      if(!cloud){const module=await import('./firebase-client.bundle.js?catalogo-observaciones-20261024');cloud=await module.connectFirebase();let initial=true;stopAuth=cloud.watchAuth(()=>{if(initial){initial=false;return}if(cloudMode()||!cloud.auth.currentUser){mode='cloud';epoch++;db=null;page="dashboard";functionId="list";window.history.replaceState(null,"",routeFor(page));$('#modal').close();load()}});}
       if(cloud.authOnly){authenticationView();return}
       if(!cloud.auth.currentUser){loginView();return}
       const result=await cloud.load({includeAdministration:false,onCached:cached=>{
@@ -509,7 +511,7 @@ function render() {
   filterSession.save(f);
   const current = pages.find((p) => p[0] === page);
   $("#app").innerHTML =
-    `${navigationMarkup(page,functionId,navigationContext())}<main><header><button id="nav-mobile" aria-label="Abrir menú" aria-controls="institution-nav" aria-expanded="false">☰</button><div class="header-heading"><strong>CONTROL DOCUMENTO — CAH</strong><div class="breadcrumb"><button class="link" data-route="#/dashboard">Inicio</button>${page!=="dashboard"?` / ${esc(breadcrumb(page,functionId))}`:""}</div></div><div class="header-account">${cloudMode()?`<div class="session-bar header-session"><span>${esc(cloud.auth.currentUser.email)} · ${esc(({technical:"Administrador",director:"Director",gerente:"Gerente",asistente:"Asistente"})[cloud.profile.role]||cloud.profile.role)}</span><button id="refresh-cloud" class="secondary">Actualizar</button><button id="logout" class="secondary">Cerrar sesión</button></div>`:""}<div class="local-chip">${cloudMode()?(cloud.emulator?"◉ Emulador":"◉ Conectado") : "◉ Almacenamiento local"}</div></div></header><div class="content"><div class="title-row"><div><span class="eyebrow">SISTEMA DE CONTROL DOCUMENTAL</span><h1>${current[2]}</h1><p>Seguimiento quincenal · Dirección de Operaciones</p></div>${cloud?.profile?.role==="technical"?`<label class="mode-label">Espacio de trabajo<select id="mode"><option value="demo" ${mode === "demo" ? "selected" : ""}>Demostración</option><option value="local" ${mode === "local" ? "selected" : ""}>Mis registros locales</option><option value="cloud" ${cloudMode()?"selected":""}>Firebase institucional</option></select></label>`:(cloudMode()?"":'<button id="open-institutional" class="secondary">Acceder al sistema</button>')}</div>${mode==="local"?`<div class="session-bar"><button id="export-local" class="secondary">Descargar respaldo para migración</button></div>`:""}${cloudMode()?"":`<div class="notice">${mode==="demo"?"<strong>Datos ficticios.</strong> Espacio de demostración separado.":"<strong>Mis registros locales.</strong> Guardados en este navegador."} Sin sincronización multiusuario.</div>`}${!["audit","access","migration","catalog"].includes(page) ? filters() : ""}${page === "catalog" ? catalogPanel(cloudContext()) : page === "dashboard" ? dashboard() : page === "history" ? history() : ["audit","reports","bulk"].includes(page) ? phase3Panel(page,phase3Context()) : ["access","deadlines","migration"].includes(page)?cloudPanel(page,cloudContext()):collectionView()}<footer>Dirección de Operaciones </footer></div></main>`;
+    `${navigationMarkup(page,functionId,navigationContext())}<main><header><button id="nav-mobile" aria-label="Abrir menú" aria-controls="institution-nav" aria-expanded="false">☰</button><div class="header-heading"><strong>CONTROL DOCUMENTO — CAH</strong><div class="breadcrumb"><button class="link" data-route="#/dashboard">Inicio</button>${page!=="dashboard"?` / ${esc(breadcrumb(page,functionId))}`:""}</div></div><div class="header-account">${cloudMode()?`<div class="session-bar header-session"><span>${esc(cloud.auth.currentUser.email)} · ${esc(({technical:"Administrador",director:"Director",gerente:"Gerente",asistente:"Asistente"})[cloud.profile.role]||cloud.profile.role)}</span><button id="refresh-cloud" class="secondary">Actualizar</button><button id="logout" class="secondary">Cerrar sesión</button></div>`:""}<div class="local-chip">${cloudMode()?(cloud.emulator?"◉ Emulador":"◉ Conectado") : "◉ Almacenamiento local"}</div></div></header><div class="content"><div class="title-row"><div><span class="eyebrow">SISTEMA DE CONTROL DOCUMENTAL</span><h1>${current[2]}</h1><p>Seguimiento quincenal · Dirección de Operaciones</p></div>${cloud?.profile?.role==="technical"?`<label class="mode-label">Espacio de trabajo<select id="mode"><option value="demo" ${mode === "demo" ? "selected" : ""}>Demostración</option><option value="local" ${mode === "local" ? "selected" : ""}>Mis registros locales</option><option value="cloud" ${cloudMode()?"selected":""}>Firebase institucional</option></select></label>`:(cloudMode()?"":'<button id="open-institutional" class="secondary">Acceder al sistema</button>')}</div>${mode==="local"?`<div class="session-bar"><button id="export-local" class="secondary">Descargar respaldo para migración</button></div>`:""}${cloudMode()?"":`<div class="notice">${mode==="demo"?"<strong>Datos ficticios.</strong> Espacio de demostración separado.":"<strong>Mis registros locales.</strong> Guardados en este navegador."} Sin sincronización multiusuario.</div>`}${!["audit","access","migration","catalog","observationCatalog"].includes(page) ? filters() : ""}${page === "observationCatalog" ? observationCatalogPanel(cloudContext()) : page === "catalog" ? catalogPanel(cloudContext()) : page === "dashboard" ? dashboard() : page === "history" ? history() : ["audit","reports","bulk"].includes(page) ? phase3Panel(page,phase3Context()) : ["access","deadlines","migration"].includes(page)?cloudPanel(page,cloudContext()):collectionView()}<footer>Dirección de Operaciones </footer></div></main>`;
   bind();
   updateConnectionChip();
   installTables();
@@ -530,6 +532,7 @@ function bind() {
   if($('#clear-filters'))$('#clear-filters').onclick=()=>{contextFilter=null;f=initialFilters();if(cloudMode()&&cloud.profile.role==='gerente')f.gerencia=cloud.profile.gerenciaId;query='';render();};
   document.querySelectorAll('[data-indicator]').forEach(b=>b.onclick=()=>indicatorDetail(+b.dataset.indicator));
 
+  if(page==="observationCatalog")bindObservationCatalog(cloudContext());
   if(["audit","reports","bulk"].includes(page))bindPhase3(page,phase3Context());
   if($('#export-local'))$('#export-local').onclick=()=>{const blob=new Blob([JSON.stringify({source:'local-user',snapshot:db},null,2)],{type:'application/json'});const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='control-documental-local.json';a.click();URL.revokeObjectURL(url)};
   if(cloudMode()){
@@ -713,7 +716,7 @@ function form(c, id, defaults = {}) {
         db.documentos.filter(d=>!recordAnnulled('documentos',d.id)),
         (d) => `${d.type} ${d.number} · ${find("lotes", d.loteId).code}`,
       ) +
-      field("description", "Descripción") +
+      (cloudMode()?'<label>Descripción del catálogo<select name="description" required><option value="">Seleccione una descripción</option>'+observationCatalog(db.observaciones,db.observationCatalog).filter(t=>t.active).map(t=>'<option value="'+esc(t.description)+'" '+(t.description===row.description?'selected':'')+'>'+esc(t.description)+'</option>').join('')+(id&&!observationCatalog(db.observaciones,db.observationCatalog).some(t=>t.active&&t.description===row.description)?'<option selected value="'+esc(row.description)+'">'+esc(row.description)+' · Texto histórico</option>':'')+'</select></label>':field("description", "Descripción")) +
       field(
         "date",
         "Fecha",
@@ -755,6 +758,7 @@ function form(c, id, defaults = {}) {
       if(c==='lotes'&&row.typeId)data.remisionId=row.remisionId;
       if(c==='documentos'&&id)data.loteId=row.loteId;
       for (const k in data) data[k] = data[k].trim();
+      if(c==='observaciones'&&db.observaciones.some(o=>o.id!==id&&o.documentId===data.documentId&&observationKey(o.description)===observationKey(data.description)))throw Error('Este documento ya tiene esa observación.');
       if(c==='cacs'){
         data.contacto=validateContact(Object.fromEntries(['nombre','cargo','correo','interno','celular'].map(k=>{const key='cac_'+k,value=data[key];delete data[key];return [k,value];})));
       }
