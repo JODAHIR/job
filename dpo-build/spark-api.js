@@ -1,3 +1,4 @@
+import {registerDocument} from './spark-document-registration.js';
 import {readObservationCatalog,saveObservationCatalog} from './spark-observation-catalog.js';
 import {reviewLot,verifyLot,lotVerificationHistory,addVerificationComment,verificationComments} from './spark-verification.js';
 import {saveCatalog,initializeCatalog,catalogHistory} from './spark-catalog.js';
@@ -36,6 +37,7 @@ export function sparkAPI(api) {
   if(name==='annulRemisiones')return annulRemisiones(store,auth,input);
   if(name==='publishCalendar') return publishSparkCalendar(store,auth,input);
   if(name==='generateRemisiones') return generateRemisiones(store,auth,input);
+  if(name==='registerDocument')return registerDocument(store,auth,input);
   if(name==='saveRecord') return save(input);
   if(name==='setCacActive') {
    const snap=await getDocFromServer(doc(store,`gerencias/${input.gerenciaId}/cacs/${input.id}`));

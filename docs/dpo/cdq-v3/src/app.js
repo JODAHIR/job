@@ -1,3 +1,4 @@
+import {documentLots,selectedDocumentLot} from './document-lot-selection.js';
 import {observationCatalog,observationKey} from './observation-catalog.js';
 import {observationCatalogPanel,bindObservationCatalog} from './observation-catalog-ui.js';
 import {initialFilters,createFilterSession} from './filter-session.js?v=filtros-vacios-20261023';
@@ -137,7 +138,7 @@ async function load() {
     else {$('#app').setAttribute('aria-busy','true');$('#refresh-cloud').disabled=true;showSyncStatus();}
 
     try{
-      if(!cloud){const module=await import('./firebase-client.bundle.js?catalogo-observaciones-20261024');cloud=await module.connectFirebase();let initial=true;stopAuth=cloud.watchAuth(()=>{if(initial){initial=false;return}if(cloudMode()||!cloud.auth.currentUser){mode='cloud';epoch++;db=null;page="dashboard";functionId="list";window.history.replaceState(null,"",routeFor(page));$('#modal').close();load()}});}
+      if(!cloud){const module=await import('./firebase-client.bundle.js?registro-integrado-20261024');cloud=await module.connectFirebase();let initial=true;stopAuth=cloud.watchAuth(()=>{if(initial){initial=false;return}if(cloudMode()||!cloud.auth.currentUser){mode='cloud';epoch++;db=null;page="dashboard";functionId="list";window.history.replaceState(null,"",routeFor(page));$('#modal').close();load()}});}
       if(cloud.authOnly){authenticationView();return}
       if(!cloud.auth.currentUser){loginView();return}
       const result=await cloud.load({includeAdministration:false,onCached:cached=>{
@@ -635,6 +636,7 @@ function form(c, id, defaults = {}) {
       `<label>${label}<input name="${key}" type="${type}" value="${esc(value)}" required ${type === "number" ? 'min="0" step="1"' : ""} maxlength="${key === "description" ? 2000 : 150}"></label>`,
     pick = (key, label, rows, labeler, selected = row[key] ?? "") =>
       `<label>${label}<select name="${key}" required><option value="">Seleccionar…</option>${options(rows, (r) => r.id, labeler, selected)}</select></label>`;
+  let registrationDraft=null;
   let fields = "";
   if (c === "gerencias" || c === "cacs") fields += field("name", "Nombre");
   if(c === "gerencias"){
@@ -707,7 +709,7 @@ function form(c, id, defaults = {}) {
         (r) => r.name,
         "Pendiente",
       ) +
-      '<p class="footnote">Para verificar con observación, registre primero el documento y luego agregue una observación. El estado se actualizará automáticamente.</p>';
+      (cloud?.spark&&!id?'<fieldset><legend>Observación del documento</legend><label>Descripción del catálogo<select name="inlineDescription"><option value="">Sin observación</option>'+observationCatalog(db.observaciones,db.observationCatalog).filter(t=>t.active).map(t=>'<option value="'+esc(t.description)+'">'+esc(t.description)+'</option>').join('')+'</select></label><label>Fecha<input name="inlineDate" type="date" value="'+new Intl.DateTimeFormat('en-CA',{timeZone:'America/Asuncion'}).format(new Date())+'"></label><label>Responsable<input name="inlineOwner" readonly value="'+esc(cloud.profile?.description?.trim()||'')+'" placeholder="Complete la descripción en Usuarios y permisos"></label><label>Regularización<select name="inlineStatus"><option>Pendiente</option><option>En proceso</option><option>Regularizada</option></select></label></fieldset>':'');
   if (c === "observaciones")
     fields +=
       pick(
@@ -724,7 +726,7 @@ function form(c, id, defaults = {}) {
         row.date ??
           `${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, "0")}-${String(new Date().getDate()).padStart(2, "0")}`,
       ) +
-      field("owner", "Responsable de la observación") +
+      field("owner", "Responsable de la observación", "text", row.owner ?? (db.users?.find(u=>u.id===cloud?.auth?.currentUser?.uid)?.description?.trim() || cloud?.profile?.description?.trim() || "")) +
       pick(
         "status",
         "Regularización",
@@ -736,7 +738,18 @@ function form(c, id, defaults = {}) {
     `<form id="record-form"><div class="section-line"><h2>${id ? "Editar" : "Nuevo"} registro</h2><button type="button" id="close" aria-label="Cerrar">✕</button></div><p>${pages.find((p) => p[0] === c)[2]} · ${cloudMode()?"Firebase institucional":mode === "demo" ? "Demostración" : "Mis registros locales"}</p><div class="form-fields">${fields}${cloudMode()?"<p>Responsable: identidad de la sesión autenticada.</p>":field("actor", "Responsable de este registro")}</div><p id="form-error" role="alert"></p><div class="form-actions"><button type="button" id="cancel" class="secondary">Cancelar</button><button class="primary" type="submit">Guardar registro</button></div></form>`;
   if(c==='lotes'&&row.typeId){$('#record-form').elements.code.readOnly=true;$('#record-form').elements.remisionId.disabled=true;}
   if(c==='documentos'){
-    const form=$('#record-form');if(id){form.elements.loteId.disabled=true;}const syncType=()=>{const lot=find('lotes',form.elements.loteId.value);if(lot?.typeCode){if(form.elements.type.options&&![...form.elements.type.options].some(o=>o.value===lot.typeCode)){const o=new Option(lot.typeCode,lot.typeCode);form.elements.type.add(o);}form.elements.type.value=lot.typeCode;}};form.elements.loteId.onchange=syncType;syncType();
+    const form=$('#record-form'),lotSelect=form.elements.loteId,typeSelect=form.elements.type;
+    const available=db.lotes.filter(l=>!recordAnnulled('lotes',l.id)&&(id?l.id===row.loteId:metrics(db,f).lots.some(x=>x.id===l.id)||l.id===row.loteId));
+    const syncLot=()=>{
+      const candidates=documentLots(available,sortedTypes(db.catalog),typeSelect.value);
+      const selected=selectedDocumentLot(candidates,lotSelect.value);
+      lotSelect.innerHTML='<option value="">'+(candidates.length?'Seleccione el lote compatible':'No hay lotes compatibles con los filtros')+'</option>'+candidates.map(l=>{const r=find('remisiones',l.remisionId);return '<option value="'+esc(l.id)+'">'+esc(l.code+' · '+name('cacs',r.cacId)+' · '+period(r))+'</option>';}).join('');
+      lotSelect.value=selected;
+    };
+    const initial=find('lotes',lotSelect.value);
+    if(initial?.typeCode)typeSelect.value=initial.typeCode;
+    if(initial?.typeId){const t=sortedTypes(db.catalog).find(t=>t.id===initial.typeId);if(t)typeSelect.value=t.code;}
+    if(id){lotSelect.disabled=true;typeSelect.disabled=true;}else{typeSelect.addEventListener('change',syncLot);syncLot();}
   }
   $("#close").onclick = $("#cancel").onclick = () => $("#modal").close();
   if(c==='cacs'){
@@ -756,7 +769,7 @@ function form(c, id, defaults = {}) {
       const actor = cloudMode()?cloud.auth.currentUser.uid:data.actor.trim();
       delete data.actor;
       if(c==='lotes'&&row.typeId)data.remisionId=row.remisionId;
-      if(c==='documentos'&&id)data.loteId=row.loteId;
+      if(c==='documentos'&&id){data.loteId=row.loteId;data.type=row.type;}
       for (const k in data) data[k] = data[k].trim();
       if(c==='observaciones'&&db.observaciones.some(o=>o.id!==id&&o.documentId===data.documentId&&observationKey(o.description)===observationKey(data.description)))throw Error('Este documento ya tiene esa observación.');
       if(c==='cacs'){
@@ -770,6 +783,15 @@ function form(c, id, defaults = {}) {
         for (const k of ["year", "month", "half"]) data[k] = Number(data[k]);
       if (c === "lotes")
         data.declared = integer(data.declared, "Cantidad declarada");
+      if(cloudMode()&&cloud.spark&&c==='documentos'&&!id){
+        if(!registrationDraft){
+          const {inlineDescription,inlineDate,inlineOwner,inlineStatus,...documentData}=data;
+          if(inlineDescription&&!cloud.profile?.description?.trim())throw Error('El usuario no tiene descripción registrada. Complétela en Usuarios y permisos.');
+          registrationDraft={gerenciaId:gerenciaFor(c,documentData),row:{...documentData,id:crypto.randomUUID(),state:'Pendiente'},observation:inlineDescription?{id:crypto.randomUUID(),description:inlineDescription,date:inlineDate,status:inlineStatus}:null};
+        }
+        await cloud.call('registerDocument',registrationDraft);
+        $('#modal').close();await load();return;
+      }
       if(cloudMode()){
         const cloudRow={...data,id:id||crypto.randomUUID()};
         if(c==='remisiones'&&!id)cloudRow.origin='manual';
@@ -797,6 +819,7 @@ function form(c, id, defaults = {}) {
       render();
     } catch (err) {
       $("#form-error").textContent = err.message;
+      if(registrationDraft)$("#record-form").querySelectorAll("input,select,textarea").forEach(el=>el.disabled=true);
       submit.disabled = false;
     }
   };
