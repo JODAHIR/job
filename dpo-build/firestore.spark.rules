@@ -12,7 +12,7 @@ service cloud.firestore {
   function readScope(g) { return signed() && profile().active == true && (profile().role in ['director','technical'] || (profile().role == 'asistente' && g in profile().gerencias) || (profile().role == 'gerente' && profile().gerenciaId == g)); }
   function writeScope(g) { let p=profile(); return signed() && p.active && (p.role == 'technical' || p.role == 'asistente' && g in p.gerencias); }
   function lotWrite(g) { let p=profile(); return signed() && p.active && (p.role in ['technical','director'] || p.role == 'gerente' && p.gerenciaId == g || p.role == 'asistente' && g in p.gerencias); }
-  function entityWrite(g,c) { return c == 'lotes' ? lotWrite(g) : writeScope(g); }
+  function entityWrite(g,c) { return c in ['lotes','remisiones'] ? lotWrite(g) : writeScope(g); }
   function ident(v) { return v is string && v.matches('^[A-Za-z0-9_-]{1,128}$'); }
   function text(v,n) { return v is string && v.size() > 0 && v.size() <= n; }
   function part(v) { return v.matches('^\\S(.*\\S)?$') && text(v,150) && !v.matches('.*[/|].*'); }
@@ -78,7 +78,7 @@ service cloud.firestore {
     return c == 'cacs' || fenced(g,c,r,creating) && (c != 'remisiones' || r.get('annulment',null) == null);
   }
   function canAnnul(g,control) {
-    return role('technical') || control.lots == 0 && (role('director') || role('gerente') && profile().gerenciaId == g);
+    return role('technical') || role('director') || role('gerente') && profile().gerenciaId == g;
   }
   function annulChange(g,id,r,b) {
     let a=r.annulment;
@@ -207,7 +207,7 @@ service cloud.firestore {
     && (resource == null ? request.resource.data.revision == 1 : request.resource.data.revision == resource.data.revision + 1);
    match /{c}/{id} {
     allow read: if c in ['cacs','remisiones','lotes','documentos','observaciones','audit'] && readScope(g) && exists(/databases/$(database)/documents/gerencias/$(g));
-    allow create: if c in ['cacs','remisiones','lotes','documentos','observaciones'] && entityWrite(g,c) && (c != 'cacs' || role('technical')) && exists(/databases/$(database)/documents/gerencias/$(g))
+    allow create: if c in ['cacs','remisiones','lotes','documentos','observaciones'] && (c != 'remisiones' || !role('asistente')) && entityWrite(g,c) && (c != 'cacs' || role('technical')) && exists(/databases/$(database)/documents/gerencias/$(g))
       && (c != 'lotes' || !exists(/databases/$(database)/documents/documentCatalog/current) && !('typeId' in request.resource.data))
       && operational(g,c,request.resource.data,true) && basic(g,c,id,request.resource.data,'gerencias/'+g+'/'+c+'/'+id) && schema(g,c,request.resource.data) && request.resource.data.revision == 1
       && (c != 'remisiones' || receipt(request.resource.data) && get(/databases/$(database)/documents/gerencias/$(g)/cacs/$(request.resource.data.cacId)).data.get('active',true) == true);
@@ -298,7 +298,7 @@ service cloud.firestore {
        && r.observations == resource.data.observations + (r.collection == 'observaciones' && added ? 1 : 0);
     }
     allow create: if validControl(request.resource.data) && request.resource.data.version == 1 && (
-      writeScope(g) && request.resource.data.collection == 'remisiones' && request.resource.data.recordId == id
+      lotWrite(g) && !role('asistente') && request.resource.data.collection == 'remisiones' && request.resource.data.recordId == id
       && !exists(/databases/$(database)/documents/gerencias/$(g)/remisiones/$(id))
       && getAfter(/databases/$(database)/documents/gerencias/$(g)/remisiones/$(id)).data.revision == 1
       && request.resource.data.revision == 1 && request.resource.data.lots == 0 && request.resource.data.documents == 0 && request.resource.data.observations == 0
@@ -349,7 +349,7 @@ service cloud.firestore {
        && (a.collection != 'remisiones' || a.after.get('annulment',null) == null || a.reason == a.after.annulment.reason)
        && event == a.collection+'_'+a.recordId+'_'+string(a.after.revision) && a.after == getAfter(p).data && (exists(p) ? a.before == get(p).data && a.after.revision == a.before.revision+1 : a.before == null && a.after.revision == 1);
     }
-    allow create: if (request.resource.data.collection == 'lotes' && lotWrite(g) || role('director') || writeScope(g) || role('gerente') && profile().gerenciaId == g && request.resource.data.collection == 'remisiones' && getAfter(/databases/$(database)/documents/gerencias/$(g)/remisiones/$(request.resource.data.recordId)).data.annulment.actor == request.auth.uid) && validAudit();
+    allow create: if (request.resource.data.collection in ['lotes','remisiones'] && lotWrite(g) || role('director') || writeScope(g) || role('gerente') && profile().gerenciaId == g && request.resource.data.collection == 'remisiones' && getAfter(/databases/$(database)/documents/gerencias/$(g)/remisiones/$(request.resource.data.recordId)).data.annulment.actor == request.auth.uid) && validAudit();
    }
   }
   match /sparkIds/{k} {

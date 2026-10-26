@@ -6,7 +6,6 @@ export function annulEligibility(profile, gerenciaId, remision, control) {
   if (profile.role === 'gerente' && profile.gerenciaId !== gerenciaId) return 'Gerencia no autorizada';
   if (isAnnulled(remision)) return 'Ya anulada';
   if (!control) return 'Requiere inicialización administrativa';
-  if (profile.role !== 'technical' && control.lots > 0) return 'Solo Administrador: tiene lotes';
   return '';
 }
 export function treeCounts(db, remisionId) {

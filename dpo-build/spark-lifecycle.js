@@ -1,3 +1,4 @@
+import {assertRemisionEditable} from './spark-remision-guard.js';
 import {doc,collection,getDocsFromServer,getDocFromServer,setDoc,query,limit,runTransaction,serverTimestamp} from 'firebase/firestore';
 import {ANNUL_LIMIT,annulEligibility,treeCounts} from './remision-lifecycle.js';
 const path=(g,r)=>`gerencias/${g}/remisionControls/${r}`;
@@ -67,6 +68,9 @@ export async function annulRemisiones(store,auth,{preview,reason,confirmed}) {
   if(confirmed!==true||!reason?.trim()||reason.trim().length>2000)throw Error('Confirmación explícita y motivo obligatorio (máximo 2000 caracteres).');
   if(!preview||preview.actor!==auth.currentUser.uid||Date.now()-preview.createdAt>300000)throw Error('La revisión venció; vuelva a verificar la selección.');
   const {gerenciaId:g,rows,operationId}=preview;id(g);id(operationId);
+  const completed=await getDocFromServer(doc(store,`gerencias/${g}/annulOperations/${operationId}`));
+  if(completed.exists()){if(completed.data().actor!==auth.currentUser.uid)throw Error('Operación ajena.');return completed.data();}
+  for(const row of rows.filter(r=>!r.omitted))await assertRemisionEditable(store,g,row.id);
   if(!rows?.length||rows.length>ANNUL_LIMIT)throw Error('Selección inválida.');
   return runTransaction(store,async tx=>{
     const opref=doc(store,`gerencias/${g}/annulOperations/${operationId}`),existing=await tx.get(opref);

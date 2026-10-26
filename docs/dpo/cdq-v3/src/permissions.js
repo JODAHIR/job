@@ -10,5 +10,5 @@ export const visibleModule = (p, page) => {
  };
  return (modules[p.role] ?? []).includes(page);
 };
-export const manageRecord = (p, entity) => admin(p) || (p?.active && ['director','gerente'].includes(p.role) && entity==='lotes') || (p?.active && p.role === 'asistente' && ['remisiones','lotes','documentos','observaciones'].includes(entity));
+export const manageRecord = (p, entity) => admin(p) || (p?.active && ['director','gerente'].includes(p.role) && ['lotes','remisiones'].includes(entity)) || (p?.active && p.role === 'asistente' && ['remisiones','lotes','documentos','observaciones'].includes(entity));
 export const manageCacStatus = p => admin(p) || (p?.active && p.role === 'director');

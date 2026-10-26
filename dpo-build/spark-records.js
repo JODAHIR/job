@@ -1,3 +1,4 @@
+import {assertRemisionEditable} from './spark-remision-guard.js';
 import {lifecycleFence} from './spark-lifecycle.js';
 import {validateResponsables,validateContact} from './gerencia-contacts.js';
 import { doc, runTransaction, serverTimestamp } from 'firebase/firestore';
@@ -40,6 +41,7 @@ export function sparkWriter(store, auth) {
     if (!/^[A-Za-z0-9_-]{1,128}$/.test(g)) throw Error('Gerencia inválida.');
     if (!Number.isSafeInteger(expectedRevision) || expectedRevision < 0) throw Error('Revisión inválida.');
     const path = entity === 'gerencias' ? `gerencias/${g}` : `gerencias/${g}/${entity}/${row.id}`;
+    const remisionVersion=entity==='remisiones'&&expectedRevision>0?await assertRemisionEditable(store,g,row.id):null;
     return runTransaction(store, async tx => {
       const profile=(await tx.get(doc(store,'users',auth.currentUser.uid))).data();
       const ref = doc(store,path), snap = await tx.get(ref), before = snap.exists() ? snap.data() : null;
@@ -55,6 +57,7 @@ export function sparkWriter(store, auth) {
       const parent = { cacs:'gerenciaId',remisiones:'cacId',lotes:'remisionId',documentos:'loteId',observaciones:'documentId' }[entity];
       if (before && parent && before[parent] !== after[parent]) throw Error('La relación histórica no puede cambiar.');
       if (entity === 'remisiones') {
+        if(!before&&profile.role==='asistente')throw Error('El Asistente no puede crear remisiones.');
         if (before && ['year','month','half','receivedOn'].some(k => before[k] !== after[k])) throw Error('El período y la recepción son inmutables.');
         if (!before) {
           const cac=await tx.get(doc(store,`gerencias/${g}/cacs/${row.cacId}`));
@@ -67,6 +70,7 @@ export function sparkWriter(store, auth) {
         }
       }
       const fence=await lifecycleFence(tx,store,g,entity,after,before);
+      if(remisionVersion!=null&&fence?.after.version!==remisionVersion+1)throw Error('La remisión cambió. Actualice antes de guardar.');
       let related = null;
       if (entity === 'observaciones') {
         const dref = doc(store,`gerencias/${g}/documentos/${row.documentId}`), ds = await tx.get(dref);

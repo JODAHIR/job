@@ -1,4 +1,4 @@
-import {groups,modules,functionsFor,allowed,routeFor} from './navigation.js?catalogo-observaciones-20261024';
+import {groups,modules,functionsFor,allowed,routeFor} from './navigation.js?remisiones-20261026';
 let expandedGroup='',expandedModule='',lastRoute='',compact=sessionStorage.getItem('cdq:nav-compact')==='true';
 const icon=(kind)=>`<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8"><path d="${({dashboard:'M3 3h7v7H3z M14 3h7v7h-7z M3 14h7v7H3z M14 14h7v7h-7z',administracion:'M4 21V5l8-3 8 3v16M2 21h20M8 8h2m4 0h2M8 12h2m4 0h2M10 21v-5h4v5',operativo:'M4 4h6l2 3h8v13H4z M8 11h8M8 15h5',informes:'M4 3v18h17M8 17v-5M13 17V7M18 17v-8',module:'M6 3h8l4 4v14H6z M14 3v5h4M9 12h6M9 16h6'})[kind]||'M4 6h16M4 12h16M4 18h16'}"/></svg>`;
 export function navigationMarkup(page,functionId,ctx){

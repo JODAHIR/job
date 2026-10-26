@@ -9,7 +9,7 @@ export async function generateRemisiones(store,auth,input){
  dateOnly(receivedOn);dateOnly(remittedOn);
  if(remittedOn>receivedOn)throw Error('La fecha de remisión no puede ser posterior a la recepción.');
  const profile=(await getDocFromServer(doc(store,'users',auth.currentUser.uid))).data();
- if(!profile?.active||!(profile.role==='technical'||profile.role==='asistente'&&profile.gerencias.includes(gerenciaId)))throw Error('No tiene permisos de registro en esta gerencia.');
+ if(!profile?.active||!(['technical','director'].includes(profile.role)||profile.role==='gerente'&&profile.gerenciaId===gerenciaId))throw Error('No tiene permisos de registro en esta gerencia.');
  const cacs=(await getDocsFromServer(collection(store,`gerencias/${gerenciaId}/cacs`))).docs.map(d=>d.data()).filter(c=>c.active!==false);
  if(cacs.length>200)throw Error('La generación admite hasta 200 CAC activos por gerencia.');
  const existing=(await getDocsFromServer(collection(store,`gerencias/${gerenciaId}/remisiones`))).docs.map(d=>d.data());

@@ -1,3 +1,4 @@
+import {remisionState,canCreateRemision,remisionBadge,managementActions,bindRemisionManagement,unifyCollectionToolbar} from './remision-management.js';
 import {documentLots,selectedDocumentLot} from './document-lot-selection.js';
 import {observationCatalog,observationKey} from './observation-catalog.js';
 import {observationCatalogPanel,bindObservationCatalog} from './observation-catalog-ui.js';
@@ -9,11 +10,11 @@ import {dashboardFilters,intelligencePanel,bindIntelligence,groupModuleFilters} 
 import {catalogPanel,bindCatalog,showLotGenerator,lotDashboard} from './lot-ui.js?v=cah-guardado-directo-20261019';
 import {sortedTypes} from './lot-catalog.js?v=cah-lotes-20261019';
 import {annulPanel,bindAnnulPanel} from './remision-annul-ui.js?v=cah-filtros-20261020';
-import {pages,resolveRoute,routeFor} from './navigation.js?catalogo-observaciones-20261024';
-import {navigationMarkup,bindNavigation,breadcrumb} from './navigation-ui.js?catalogo-observaciones-20261024';
+import {pages,resolveRoute,routeFor} from './navigation.js?remisiones-20261026';
+import {navigationMarkup,bindNavigation,breadcrumb} from './navigation-ui.js?remisiones-20261026';
 import {installTables} from './tables.js?v=filas20-20261023';
 import {validateResponsables,validateContact,assignedUsers,userDescription} from './gerencia-contacts.js?v=cah-lotes-20261019';
-import { visibleModule, manageRecord, manageCacStatus } from './permissions.js?catalogo-observaciones-20261024';
+import { visibleModule, manageRecord, manageCacStatus } from './permissions.js?remisiones-20261026';
 import {phase3Panel,bindPhase3} from './phase3-ui.js?documental-20261024';
 import { metrics, scope, deadlineStatus, mutate, states, integer } from "./domain.js?filtros-vacios-20261023";
 import { LocalRepository } from "./repository.js?v=cah-lotes-20261019";
@@ -138,7 +139,7 @@ async function load() {
     else {$('#app').setAttribute('aria-busy','true');$('#refresh-cloud').disabled=true;showSyncStatus();}
 
     try{
-      if(!cloud){const module=await import('./firebase-client.bundle.js?registro-integrado-20261024');cloud=await module.connectFirebase();let initial=true;stopAuth=cloud.watchAuth(()=>{if(initial){initial=false;return}if(cloudMode()||!cloud.auth.currentUser){mode='cloud';epoch++;db=null;page="dashboard";functionId="list";window.history.replaceState(null,"",routeFor(page));$('#modal').close();load()}});}
+      if(!cloud){const module=await import('./firebase-client.bundle.js?remisiones-20261026');cloud=await module.connectFirebase();let initial=true;stopAuth=cloud.watchAuth(()=>{if(initial){initial=false;return}if(cloudMode()||!cloud.auth.currentUser){mode='cloud';epoch++;db=null;page="dashboard";functionId="list";window.history.replaceState(null,"",routeFor(page));$('#modal').close();load()}});}
       if(cloud.authOnly){authenticationView();return}
       if(!cloud.auth.currentUser){loginView();return}
       const result=await cloud.load({includeAdministration:false,onCached:cached=>{
@@ -346,8 +347,8 @@ function collectionView() {
       esc(period(r)),
       esc(r.expediente ?? "—"), esc(r.remittedOn ?? "—"), esc(r.receivedOn ?? "—"), esc(r.dueOn ?? "—"),
       db.lotes.filter((l) => l.remisionId === r.id).length,
-      badge(r.annulment ? "Anulada" : "Registrada", r.annulment ? "warn" : "ok"),
-      edit(page, r.id),
+      remisionBadge(remisionState(db,r),esc),
+      managementActions(db,r,cloud?.profile||{active:true,role:"technical"},esc),
     ]);
     for (const pending of s.pendingRows)
         { const c=find("cacs",pending.cacId),half=pending.half;
@@ -356,8 +357,8 @@ function collectionView() {
             esc(period({ year: +f.year, month: +f.month, half })),
             "—", "—", "—", "—",
             0,
-            badge("Pendiente", "warn"),
-            canManage("remisiones") && c.active !== false ? `<button class="link" data-register-remision="${esc(c.id)}" data-half="${half}">Registrar remisión ↗</button>` : "—",
+            remisionBadge("Pendiente",esc),
+            (canManage("remisiones") && (!cloudMode()||canCreateRemision(cloud.profile))) && c.active !== false ? `<button class="link" data-register-remision="${esc(c.id)}" data-half="${half}">Registrar remisión ↗</button>` : "—",
           ]); }
   }
   if (page === "lotes") {
@@ -423,7 +424,7 @@ function collectionView() {
       return `<details class="document-group"><summary><strong>${title}</strong> · ${individual.length} ${individual.length===1?'documento individualizado':'documentos individualizados'}${review?` · Cantidad verificada del lote: ${review[4]}`:''}${summary?` <span class="document-group-states">${summary}</span>`:''}${review?` <span class="document-group-states">Estado del lote: ${review[3]}</span>`:''}</summary>${table(headers,group)}<p class="footnote">La verificación total y los documentos individualizados no se suman.</p></details>`;
     }).join('')||'<p>Sin documentos para esta selección.</p>';
   }
-  return `<section class="panel">${contextFilter?.child===page?'<p>Mostrando registros vinculados. <button id="clear-context" class="link">Ver todos los registros del período</button></p>':""}<div class="section-line"><div><h2>${pages.find((p) => p[0] === page)[2]}</h2><p>${page === "gerencias" || page === "cacs" ? "Catálogo institucional · independiente del período" : "Registros del período y ámbito seleccionados"}</p></div>${creationActions(collection,canManage(collection),cloud?.spark)}</div><input class="search" id="search" placeholder="Buscar en esta tabla…" value="${esc(query)}" aria-label="Buscar en la tabla">${tableMarkup}<p class="footnote">${filtered.length} resultados · ${cloudMode()?"":"Cambios guardados únicamente en este navegador."}</p></section>${page==='remisiones'&&cloudMode()?annulPanel({...cloudContext(),render}):''}`;
+  return `<section class="panel">${contextFilter?.child===page?'<p>Mostrando registros vinculados. <button id="clear-context" class="link">Ver todos los registros del período</button></p>':""}<div class="section-line"><div><h2>${pages.find((p) => p[0] === page)[2]}</h2><p>${page === "gerencias" || page === "cacs" ? "Catálogo institucional · independiente del período" : "Registros del período y ámbito seleccionados"}</p></div>${creationActions(collection,canManage(collection)&&(collection!=="remisiones"||!cloudMode()||canCreateRemision(cloud.profile)),cloud?.spark)}</div><input class="search" id="search" placeholder="Buscar en esta tabla…" value="${esc(query)}" aria-label="Buscar en la tabla">${tableMarkup}<p class="footnote">${filtered.length} resultados · ${cloudMode()?"":"Cambios guardados únicamente en este navegador."}</p></section>`;
 }
 function history() {
   const keys = [
@@ -526,7 +527,8 @@ function bind() {
   document.querySelectorAll('[data-verify-lot]').forEach(b=>b.onclick=()=>showLotVerification(cloudContext(),b.dataset.verifyLot));
   if(page==='catalog')bindCatalog(cloudContext());
   if($('#generate-lots'))$('#generate-lots').onclick=()=>showLotGenerator(cloudContext());
-  if(page==='remisiones'&&cloudMode())bindAnnulPanel({...cloudContext(),render});
+  unifyCollectionToolbar();
+  if(page==='remisiones')bindRemisionManagement({...cloudContext(),render});
   bindNavigation(hash=>{contextFilter=null;navigate(hash)});
   formBaseline=formSnapshot();
   if($('#clear-context'))$('#clear-context').onclick=()=>{contextFilter=null;render()};
@@ -624,6 +626,7 @@ function generateRemisiones() {
  $('#modal').showModal();
 }
 function form(c, id, defaults = {}) {
+  if(c==='remisiones'&&((!id&&cloudMode()&&!canCreateRemision(cloud.profile))||(id&&remisionState(db,find(c,id))==='Conciliada')))return;
   if(!canManage(c)||id&&recordAnnulled(c,id))return;
   if(c==='lotes'&&!id&&cloud?.spark){showLotGenerator(cloudContext());return;}
   if(!id){

@@ -1,4 +1,4 @@
-import {visibleModule,manageRecord} from './permissions.js?catalogo-observaciones-20261024';
+import {visibleModule,manageRecord} from './permissions.js?remisiones-20261026';
 const list={id:'list',label:'Consultar',action:'view'};
 const records=(id,label)=>({id,label,functions:[list,{id:'new',label:'Registrar',action:'new',write:id}]});
 export const groups=[
@@ -13,7 +13,7 @@ export const groups=[
 export const modules=groups.flatMap(g=>g.modules.map(m=>({...m,group:g.id,groupLabel:g.label})));
 export const pages=[['dashboard','◫','Inicio'],...modules.map(m=>[m.id,'▤',m.label]),['migration','⇧','Migración local']];
 export const allowed=(page,ctx)=>ctx.mode==='cloud'?visibleModule(ctx.profile,page):!['access','deadlines','migration','catalog','observationCatalog'].includes(page);
-export function functionsFor(module,ctx){return module.functions.filter(fn=>(!fn.admin||ctx.profile?.role==='technical')&&(!fn.write||ctx.mode!=='cloud'||manageRecord(ctx.profile,fn.write))&&(!fn.cloudOnly||ctx.mode==='cloud')&&(!fn.sparkOnly||ctx.spark)&&(!fn.page||allowed(fn.page,ctx)));}
+export function functionsFor(module,ctx){return module.functions.filter(fn=>!(fn.write==='remisiones'&&ctx.profile?.role==='asistente')&&(!fn.admin||ctx.profile?.role==='technical')&&(!fn.write||ctx.mode!=='cloud'||manageRecord(ctx.profile,fn.write))&&(!fn.cloudOnly||ctx.mode==='cloud')&&(!fn.sparkOnly||ctx.spark)&&(!fn.page||allowed(fn.page,ctx)));}
 export function resolveRoute(hash,ctx){
  const parts=hash.replace(/^#\/?/,'').split('/');
  if((!parts[0]||parts[0]==='dashboard')&&parts.length===1)return {page:'dashboard',functionId:'list'};
