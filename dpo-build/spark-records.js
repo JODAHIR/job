@@ -57,6 +57,7 @@ export function sparkWriter(store, auth) {
       const parent = { cacs:'gerenciaId',remisiones:'cacId',lotes:'remisionId',documentos:'loteId',observaciones:'documentId' }[entity];
       if (before && parent && before[parent] !== after[parent]) throw Error('La relación histórica no puede cambiar.');
       if (entity === 'remisiones') {
+        if(!before&&row.origin==='automatic'&&profile.role!=='technical')throw Error('Solo el Administrador puede generar remisiones por gerencia.');
         if(!before&&profile.role==='asistente')throw Error('El Asistente no puede crear remisiones.');
         if (before && ['year','month','half','receivedOn'].some(k => before[k] !== after[k])) throw Error('El período y la recepción son inmutables.');
         if (!before) {

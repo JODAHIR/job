@@ -1,6 +1,6 @@
-export function creationActions(collection,canCreate,spark) {
+export function creationActions(collection,canCreate,spark,profile) {
  if(!canCreate)return '';
- if(collection==='remisiones'&&spark)return '<details class="new-record-actions"><summary class="primary">+ Nuevo registro</summary><div><button data-new="remisiones" class="secondary">Registrar una remisión</button><button class="secondary" id="generate-remisiones">Generar remisiones de la gerencia</button></div></details>';
+ if(collection==='remisiones'&&spark)return `<div class="remision-actions"><button data-new="remisiones" class="primary">+ Nuevo registro</button>${profile?.active&&profile.role==='technical'?'<button class="secondary" id="generate-remisiones">Generar remisiones por gerencia</button>':''}</div>`;
  // In Spark the existing new-lot handler already opens the automatic generator.
  return `<button class="primary" data-new="${collection}">+ Nuevo registro</button>`;
 }

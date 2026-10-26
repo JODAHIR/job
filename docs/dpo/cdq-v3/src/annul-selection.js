@@ -1,4 +1,4 @@
-import {ANNUL_LIMIT} from './remision-lifecycle.js?v=cah-lotes-20261019';
+import {ANNUL_LIMIT} from './remision-lifecycle.js';
 
 // Selection is unlimited within the loaded, authorized scope. Each server
 // transaction retains its existing bounded size and security checks.

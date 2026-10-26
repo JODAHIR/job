@@ -1,17 +1,17 @@
-import {remisionState,canCreateRemision,remisionBadge,managementActions,bindRemisionManagement,unifyCollectionToolbar} from './remision-management.js?remisiones-detalle-20261026';
+import {remisionState,canCreateRemision,remisionBadge,managementActions,bindRemisionManagement,unifyCollectionToolbar} from './remision-management.js?remisiones-multiple-20261026';
 import {documentLots,selectedDocumentLot} from './document-lot-selection.js';
 import {observationCatalog,observationKey} from './observation-catalog.js';
 import {observationCatalogPanel,bindObservationCatalog} from './observation-catalog-ui.js';
 import {initialFilters,createFilterSession} from './filter-session.js?v=filtros-vacios-20261023';
 import {connectionState,orderLots} from './presentation-status.js?v=cah-filtros-20261020';
 import {showLotVerification,lotVerificationLabel,lotReconciliation} from './lot-verification-ui.js?formulario-20261023';
-import {creationActions} from './record-actions.js?v=cah-ajustes-20261020';
+import {creationActions} from './record-actions.js?remisiones-multiple-20261026';
 import {dashboardFilters,intelligencePanel,bindIntelligence,groupModuleFilters} from './intelligence-ui.js?dashboard-color-20261025';
 import {catalogPanel,bindCatalog,showLotGenerator,lotDashboard} from './lot-ui.js?v=cah-guardado-directo-20261019';
 import {sortedTypes} from './lot-catalog.js?v=cah-lotes-20261019';
 import {annulPanel,bindAnnulPanel} from './remision-annul-ui.js?v=cah-filtros-20261020';
-import {pages,resolveRoute,routeFor} from './navigation.js?remisiones-20261026';
-import {navigationMarkup,bindNavigation,breadcrumb} from './navigation-ui.js?remisiones-20261026';
+import {pages,resolveRoute,routeFor} from './navigation.js?remisiones-multiple-20261026';
+import {navigationMarkup,bindNavigation,breadcrumb} from './navigation-ui.js?remisiones-multiple-20261026';
 import {installTables} from './tables.js?v=filas20-20261023';
 import {validateResponsables,validateContact,assignedUsers,userDescription} from './gerencia-contacts.js?v=cah-lotes-20261019';
 import { visibleModule, manageRecord, manageCacStatus } from './permissions.js?remisiones-20261026';
@@ -139,7 +139,7 @@ async function load() {
     else {$('#app').setAttribute('aria-busy','true');$('#refresh-cloud').disabled=true;showSyncStatus();}
 
     try{
-      if(!cloud){const module=await import('./firebase-client.bundle.js?remisiones-20261026');cloud=await module.connectFirebase();let initial=true;stopAuth=cloud.watchAuth(()=>{if(initial){initial=false;return}if(cloudMode()||!cloud.auth.currentUser){mode='cloud';epoch++;db=null;page="dashboard";functionId="list";window.history.replaceState(null,"",routeFor(page));$('#modal').close();load()}});}
+      if(!cloud){const module=await import('./firebase-client.bundle.js?remisiones-multiple-20261026');cloud=await module.connectFirebase();let initial=true;stopAuth=cloud.watchAuth(()=>{if(initial){initial=false;return}if(cloudMode()||!cloud.auth.currentUser){mode='cloud';epoch++;db=null;page="dashboard";functionId="list";window.history.replaceState(null,"",routeFor(page));$('#modal').close();load()}});}
       if(cloud.authOnly){authenticationView();return}
       if(!cloud.auth.currentUser){loginView();return}
       const result=await cloud.load({includeAdministration:false,onCached:cached=>{
@@ -350,16 +350,7 @@ function collectionView() {
       remisionBadge(remisionState(db,r),esc),
       managementActions(db,r,cloud?.profile||{active:true,role:"technical"},esc),
     ]);
-    for (const pending of s.pendingRows)
-        { const c=find("cacs",pending.cacId),half=pending.half;
-          rows.push([
-            esc(c.name),
-            esc(period({ year: +f.year, month: +f.month, half })),
-            "—", "—", "—", "—",
-            0,
-            remisionBadge("Pendiente",esc),
-            (canManage("remisiones") && (!cloudMode()||canCreateRemision(cloud.profile))) && c.active !== false ? `<button class="link" data-register-remision="${esc(c.id)}" data-half="${half}">Registrar remisión ↗</button>` : "—",
-          ]); }
+
   }
   if (page === "lotes") {
     headers = [
@@ -424,7 +415,7 @@ function collectionView() {
       return `<details class="document-group"><summary><strong>${title}</strong> · ${individual.length} ${individual.length===1?'documento individualizado':'documentos individualizados'}${review?` · Cantidad verificada del lote: ${review[4]}`:''}${summary?` <span class="document-group-states">${summary}</span>`:''}${review?` <span class="document-group-states">Estado del lote: ${review[3]}</span>`:''}</summary>${table(headers,group)}<p class="footnote">La verificación total y los documentos individualizados no se suman.</p></details>`;
     }).join('')||'<p>Sin documentos para esta selección.</p>';
   }
-  return `<section class="panel">${contextFilter?.child===page?'<p>Mostrando registros vinculados. <button id="clear-context" class="link">Ver todos los registros del período</button></p>':""}<div class="section-line"><div><h2>${pages.find((p) => p[0] === page)[2]}</h2><p>${page === "gerencias" || page === "cacs" ? "Catálogo institucional · independiente del período" : "Registros del período y ámbito seleccionados"}</p></div>${creationActions(collection,canManage(collection)&&(collection!=="remisiones"||!cloudMode()||canCreateRemision(cloud.profile)),cloud?.spark)}</div><input class="search" id="search" placeholder="Buscar en esta tabla…" value="${esc(query)}" aria-label="Buscar en la tabla">${tableMarkup}<p class="footnote">${filtered.length} resultados · ${cloudMode()?"":"Cambios guardados únicamente en este navegador."}</p></section>`;
+  return `<section class="panel">${contextFilter?.child===page?'<p>Mostrando registros vinculados. <button id="clear-context" class="link">Ver todos los registros del período</button></p>':""}<div class="section-line"><div><h2>${pages.find((p) => p[0] === page)[2]}</h2><p>${page === "gerencias" || page === "cacs" ? "Catálogo institucional · independiente del período" : "Registros del período y ámbito seleccionados"}</p></div>${creationActions(collection,canManage(collection)&&(collection!=="remisiones"||!cloudMode()||canCreateRemision(cloud.profile)),cloud?.spark,cloud?.profile)}</div><input class="search" id="search" placeholder="Buscar en esta tabla…" value="${esc(query)}" aria-label="Buscar en la tabla">${tableMarkup}<p class="footnote">${filtered.length} resultados · ${cloudMode()?"":"Cambios guardados únicamente en este navegador."}</p></section>`;
 }
 function history() {
   const keys = [
@@ -606,10 +597,11 @@ async function toggleCac(id) {
  catch(e){alert(e.message);}
 }
 function generateRemisiones() {
+ if(!cloud?.profile?.active||cloud.profile.role!=='technical')return;
  if(!f.gerencia || !f.year || !f.month || !f.half){updateNotice('Seleccione gerencia, año, mes y quincena antes de generar.',true);return;}
  const cacs=db.cacs.filter(c=>c.gerenciaId===f.gerencia && c.active!==false);
  const gerenciaId=f.gerencia,year=+f.year,month=+f.month,half=+f.half;
- $('#modal').innerHTML=`<form id="generate-form"><h2>Generar remisiones de ${esc(name('gerencias',gerenciaId))}</h2><p>${esc(period({year,month,half}))} · ${cacs.length} CAC activos. Se omiten remisiones existentes. Los siguientes datos se aplican a cada remisión nueva de esta gerencia, independientemente del filtro de CAC.</p><div class="form-fields"><label>Número de expediente<input name="expediente" required maxlength="150"></label><label>Fecha de remisión<input name="remittedOn" type="date" required></label><label>Fecha de recepción<input name="receivedOn" type="date" required></label></div><p>Se registra cada CAC por separado. Si hay un error, se informa el resultado y puede reintentar sin duplicar los registros guardados.</p><p id="generation-result" role="status"></p><div class="form-actions"><button type="button" id="generation-close">Cerrar</button><button class="primary">Generar pendientes</button></div></form>`;
+ $('#modal').innerHTML=`<form id="generate-form"><h2>Generar remisiones de ${esc(name('gerencias',gerenciaId))}</h2><p>${esc(period({year,month,half}))} · ${cacs.length} CAC activos. Se omiten remisiones existentes. Los siguientes datos se aplican a cada remisión nueva de esta gerencia, independientemente del filtro de CAC.</p><div class="form-fields"><label>Número de expediente<input name="expediente" required maxlength="150"></label><label>Fecha de remisión<input name="remittedOn" type="date" required></label><label>Fecha de recepción<input name="receivedOn" type="date" required></label></div><p>Se registra cada CAC por separado. Si hay un error, se informa el resultado y puede reintentar sin duplicar los registros guardados.</p><p id="generation-result" role="status"></p><div class="form-actions"><button type="button" id="generation-close">Cerrar</button><button class="primary">Confirmar generación</button></div></form>`;
  $('#generation-close').onclick=()=>$('#modal').close();
  $('#generate-form').onsubmit=async e=>{
   e.preventDefault();e.submitter.disabled=true;$('#generation-close').disabled=true;

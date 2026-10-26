@@ -207,7 +207,7 @@ service cloud.firestore {
     && (resource == null ? request.resource.data.revision == 1 : request.resource.data.revision == resource.data.revision + 1);
    match /{c}/{id} {
     allow read: if c in ['cacs','remisiones','lotes','documentos','observaciones','audit'] && readScope(g) && exists(/databases/$(database)/documents/gerencias/$(g));
-    allow create: if c in ['cacs','remisiones','lotes','documentos','observaciones'] && (c != 'remisiones' || !role('asistente')) && entityWrite(g,c) && (c != 'cacs' || role('technical')) && exists(/databases/$(database)/documents/gerencias/$(g))
+    allow create: if c in ['cacs','remisiones','lotes','documentos','observaciones'] && (c != 'remisiones' || !role('asistente') && (request.resource.data.get('origin','') != 'automatic' || role('technical'))) && entityWrite(g,c) && (c != 'cacs' || role('technical')) && exists(/databases/$(database)/documents/gerencias/$(g))
       && (c != 'lotes' || !exists(/databases/$(database)/documents/documentCatalog/current) && !('typeId' in request.resource.data))
       && operational(g,c,request.resource.data,true) && basic(g,c,id,request.resource.data,'gerencias/'+g+'/'+c+'/'+id) && schema(g,c,request.resource.data) && request.resource.data.revision == 1
       && (c != 'remisiones' || receipt(request.resource.data) && get(/databases/$(database)/documents/gerencias/$(g)/cacs/$(request.resource.data.cacId)).data.get('active',true) == true);
