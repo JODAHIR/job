@@ -1,0 +1,18 @@
+@scope (.dashboard-color) {
+:scope{background:linear-gradient(135deg,#eef6fa,#f5f7fa 55%,#edf8f5)}
+.intel-heading{border-left:5px solid #078486;padding:16px 22px;background:linear-gradient(110deg,#e0f3f2,transparent);border-radius:12px}
+.intel-kpi{--tone:#2463a1;--wash:#edf5ff;background:linear-gradient(135deg,var(--wash),#fff)!important;border:1px solid #dce7ec!important;border-top:4px solid var(--tone)!important;box-shadow:0 4px 16px #173c5410;transition:transform .2s,box-shadow .2s}
+.intel-kpi>span{color:#355169!important}.intel-kpi>strong{color:var(--tone)!important}.intel-kpi details{color:#25465c}.intel-kpi:hover{transform:translateY(-3px);box-shadow:0 9px 22px #173c541c}
+.intel-kpi[data-tone=yellow]{--tone:#806000;--wash:#fff8cf;border-top-color:#facc15!important}
+.intel-kpi[data-tone=green]{--tone:#21824a;--wash:#e4f6eb}
+.intel-kpi[data-tone=red]{--tone:#bc3038;--wash:#fff0f0}
+.intel-kpi[data-tone=gray]{--tone:#64748b;--wash:#f0f3f7}
+.panel,.intel-coverage{box-shadow:0 3px 14px #173c5409}.panel:has(>details){border-left:3px solid #89caca}
+summary{transition:color .2s,background .2s;border-radius:6px}summary:hover{color:#007f82;background:#e9f6f5}details[open]>:not(summary){animation:reveal .25s ease-out}
+button{transition:background .18s,box-shadow .18s,transform .18s}button:hover{box-shadow:0 3px 9px #12384c18}button:active{transform:translateY(1px)}
+.intel-bar-track{border-radius:20px;overflow:hidden}.intel-bar-track>span{transform-origin:left;animation:grow .8s ease-out}.intel-bar:hover{background:#eaf6f5}
+progress{border:0;border-radius:20px;overflow:hidden;background:#e7edf1}progress::-webkit-progress-bar{background:#e7edf1;border-radius:20px}progress::-webkit-progress-value{background:var(--progress-color,#078486);border-radius:20px}progress::-moz-progress-bar{background:var(--progress-color,#078486);border-radius:20px}
+@keyframes grow{from{transform:scaleX(0)}to{transform:scaleX(1)}}@keyframes reveal{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important;scroll-behavior:auto!important}.intel-kpi:hover{transform:none}}
+
+}
