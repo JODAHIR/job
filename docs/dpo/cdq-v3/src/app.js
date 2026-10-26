@@ -237,7 +237,7 @@ function lotRows(lots) {
       esc(name("cacs", r.cacId)),
       esc(period(r)),
       l.declared,
-      `${n}<small> · ${counts.get(l.id)||0} fichas individuales</small>`,
+      `${n}<small> · ${counts.get(l.id)||0} doc individuales</small>`,
       badge(
         diff === 0 ? "Conciliado" : `${diff > 0 ? "+" : ""}${diff} documentos`,
         diff === 0 ? "ok" : "warn",
@@ -366,7 +366,7 @@ function collectionView() {
       "CAC / dependencia",
       "Período",
       "Declarados",
-      "Registrados / conciliados",
+      "Registrados / Individualizados",
       "Conciliación",
       "",
     ];
@@ -854,7 +854,7 @@ function dependencySheet(kind,id){
 }
 function indicatorDetail(index){
  const m=metrics(db,f),docRows=ds=>ds.map(d=>[esc(d.type),esc(d.number),esc(d.state),esc(name('lotes',d.loteId)||find('lotes',d.loteId).code)]);
- if(index===0||index===1){const kind=index===0?'gerencias':'cacs',ids=new Set(m.cacs.map(c=>index===0?c.gerenciaId:c.id));return showDetail('Fichas consolidadas',['Nombre','Detalle'],db[kind].filter(x=>ids.has(x.id)).map(x=>[esc(x.name),`<button class="link" data-sheet="${kind}" data-id="${esc(x.id)}">Abrir ficha</button>`]));}
+ if(index===0||index===1){const kind=index===0?'gerencias':'cacs',ids=new Set(m.cacs.map(c=>index===0?c.gerenciaId:c.id));return showDetail('Doc consolidadas',['Nombre','Detalle'],db[kind].filter(x=>ids.has(x.id)).map(x=>[esc(x.name),`<button class="link" data-sheet="${kind}" data-id="${esc(x.id)}">Abrir ficha</button>`]));}
  if([2,11,12,18,19].includes(index)){const rows=index===11?m.expectedRows:index===12?m.pendingRows:m.rem.filter(r=>index===18?deadlineStatus(r)==='Próximo':index===19?deadlineStatus(r)==='Vencido':true);return showDetail('Detalle de remisiones',['CAC','Período','Expediente','Recepción','Vencimiento'],rows.map(item=>{const r=item.existing||item;return [esc(name('cacs',r.cacId)),esc(period(r)),esc(r.expediente||'—'),esc(r.receivedOn||'Sin recepción'),esc(r.dueOn||'Sin plazo')]}));}
  if([3,8,9,13,14].includes(index)){const lots=m.lots.filter(l=>index===8?l.declared>(m.counts.get(l.id)||0):index===9?l.declared!==(m.counts.get(l.id)||0):index===14?l.declared===(m.counts.get(l.id)||0):true);return showDetail('Detalle de lotes',['Lote','CAC','Período','Declarados','Individualizados','Conciliación'],lotRows(lots).map(r=>r.slice(0,6)));}
  if([15,16,17].includes(index)){const status=['Pendiente','En proceso','Regularizada'][index-15];return showDetail('Observaciones '+status,['Documento','Descripción','Fecha','Responsable','Estado'],m.observations.filter(o=>o.status===status).map(o=>[esc(find('documentos',o.documentId).number),esc(o.description),esc(o.date),esc(o.owner),esc(o.status)]));}
