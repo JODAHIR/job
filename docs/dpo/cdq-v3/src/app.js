@@ -1,4 +1,4 @@
-import {remisionState,canCreateRemision,remisionBadge,managementActions,bindRemisionManagement,unifyCollectionToolbar} from './remision-management.js';
+import {remisionState,canCreateRemision,remisionBadge,managementActions,bindRemisionManagement,unifyCollectionToolbar} from './remision-management.js?remisiones-detalle-20261026';
 import {documentLots,selectedDocumentLot} from './document-lot-selection.js';
 import {observationCatalog,observationKey} from './observation-catalog.js';
 import {observationCatalogPanel,bindObservationCatalog} from './observation-catalog-ui.js';
