@@ -5,9 +5,9 @@ import {observationCatalogPanel,bindObservationCatalog} from './observation-cata
 import {initialFilters,createFilterSession} from './filter-session.js?v=filtros-vacios-20261023';
 import {connectionState,orderLots} from './presentation-status.js?v=cah-filtros-20261020';
 import {showLotVerification,lotVerificationLabel,lotReconciliation} from './lot-verification-ui.js?formulario-20261023';
-import {creationActions} from './record-actions.js?remisiones-multiple-20261026';
+import {creationActions} from './record-actions.js?gdzs-20261027';
 import {dashboardFilters,intelligencePanel,bindIntelligence,groupModuleFilters} from './intelligence-ui.js?dashboard-color-20261025';
-import {catalogPanel,bindCatalog,showLotGenerator,lotDashboard} from './lot-ui.js?v=cah-guardado-directo-20261019';
+import {catalogPanel,bindCatalog,showLotGenerator,lotDashboard} from './lot-ui.js?gdzs-20261027';
 import {sortedTypes} from './lot-catalog.js?v=cah-lotes-20261019';
 import {annulPanel,bindAnnulPanel} from './remision-annul-ui.js?v=cah-filtros-20261020';
 import {pages,resolveRoute,routeFor} from './navigation.js?remisiones-multiple-20261026';
