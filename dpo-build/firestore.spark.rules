@@ -43,8 +43,8 @@ service cloud.firestore {
        && existsParent(g,'cacs',r.cacId) && r.year is int && r.year >= 2000 && r.year <= 2100 && r.month is int && r.month >= 1 && r.month <= 12 && r.half in [1,2]
        && ((!('expediente' in r) && !('remittedOn' in r)) || text(r.expediente,150) && civil(r.remittedOn) && r.remittedOn <= r.receivedOn)
        && text(r.receivedOn,10) && text(r.dueOn,10) && text(r.originalDueOn,10) && ident(r.calendarVersion) && r.businessDays == 10 && r.timeZone == 'America/Asuncion'
-    : c == 'lotes' ? r.keys().hasOnly(['id','remisionId','code','declared','revision','updatedAt','uniqueKey','typeId','typeCode','typeRequired','catalogVersion','sequence','cacCode']) && existsParent(g,'remisiones',r.remisionId) && part(r.code) && r.declared is int && r.declared >= 0 && r.declared <= 1000000
-    : c == 'documentos' ? r.keys().hasOnly(['id','loteId','type','number','state','firstObservationId','revision','updatedAt','uniqueKey']) && existsParent(g,'lotes',r.loteId) && part(r.type) && part(r.number) && (!('typeId' in parent(g,'lotes',r.loteId)) || r.type == parent(g,'lotes',r.loteId).typeCode)
+    : c == 'lotes' ? r.keys().hasOnly(['id','remisionId','code','declared','revision','updatedAt','uniqueKey','typeId','typeCode','typeRequired','catalogVersion','sequence','cacCode','deletion']) && existsParent(g,'remisiones',r.remisionId) && part(r.code) && r.declared is int && r.declared >= 0 && r.declared <= 1000000
+    : c == 'documentos' ? r.keys().hasOnly(['id','loteId','type','number','state','firstObservationId','revision','updatedAt','uniqueKey','deletion']) && existsParent(g,'lotes',r.loteId) && part(r.type) && part(r.number) && (!('typeId' in parent(g,'lotes',r.loteId)) || r.type == parent(g,'lotes',r.loteId).typeCode)
       && r.state in ['Pendiente','Verificado','Verificado con observación','Rechazado'] && r.firstObservationId is string && r.firstObservationId.size() <= 128
       && (r.firstObservationId == '' ? r.state != 'Verificado con observación' : ident(r.firstObservationId) && r.state == 'Verificado con observación' && getAfter(/databases/$(database)/documents/gerencias/$(g)/observaciones/$(r.firstObservationId)).data.documentId == r.id)
     : c == 'observaciones' && r.keys().hasOnly(['id','documentId','description','date','owner','status','revision','updatedAt','uniqueKey']) && existsParent(g,'documentos',r.documentId)
@@ -54,9 +54,44 @@ service cloud.firestore {
   function stable(c,r,b) {
    return c == 'cacs' ? r.gerenciaId == b.gerenciaId
     : c == 'remisiones' ? r.cacId == b.cacId && r.year == b.year && r.month == b.month && r.half == b.half && r.receivedOn == b.receivedOn && r.dueOn == b.dueOn && r.originalDueOn == b.originalDueOn && r.calendarVersion == b.calendarVersion && r.get('origin','unknown') == b.get('origin','unknown')
-    : c == 'lotes' ? r.remisionId == b.remisionId && (!('typeId' in b) ? !('typeId' in r) : r.diff(b).affectedKeys().hasOnly(['declared','revision','updatedAt']))
+    : c == 'lotes' ? r.remisionId == b.remisionId && (!('typeId' in b) ? !('typeId' in r) : r.diff(b).affectedKeys().hasOnly(['declared','revision','updatedAt','deletion']))
     : c == 'documentos' ? r.loteId == b.loteId && (b.firstObservationId == '' || r.firstObservationId == b.firstObservationId)
     : r.documentId == b.documentId;
+  }
+
+
+  // lotManagement is an internal, versioned lock and active-document count.
+  // Legacy initialization is an administrator attestation; ordinary users cannot reset it.
+  function mgPath(g,id) { return /databases/$(database)/documents/gerencias/$(g)/lotManagement/$(id); }
+  function activeRecord(g,c,id) { return parent(g,c,id).get('deletion',null) == null; }
+  function managedCreate(g,c,r) {
+    return r.get('deletion',null) == null && (c == 'lotes'
+      ? getAfter(mgPath(g,r.id)).data.event == 'create'
+      : c == 'documentos' ? activeRecord(g,'lotes',r.loteId)
+        && getAfter(mgPath(g,r.loteId)).data.documents == get(mgPath(g,r.loteId)).data.documents + 1
+      : c != 'observaciones' || activeRecord(g,'documentos',r.documentId));
+  }
+  function deletionChange(g,c,r,b) {
+    let m=get(mgPath(g,c == 'lotes' ? r.id : r.loteId)).data;
+    let d=r.deletion;
+    return !role('asistente') && b.get('deletion',null) == null && m.pending
+      && (c == 'lotes' ? m.documents == 0 : b.state == 'Pendiente')
+      && r.diff(b).affectedKeys().hasOnly(['deletion','revision','updatedAt'])
+      && d is map && d.keys().hasAll(['state','actor','at','reason']) && d.keys().hasOnly(['state','actor','at','reason'])
+      && d.state == 'Eliminado' && d.actor == request.auth.uid && d.at == request.time && text(d.reason,2000)
+      && (c == 'lotes' || getAfter(mgPath(g,r.loteId)).data.documents == m.documents - 1);
+  }
+  function managedUpdate(g,c,r,b) {
+    return c in ['lotes','documentos'] ? b.get('deletion',null) == null && (
+      r.get('deletion',null) != null ? deletionChange(g,c,r,b)
+      : c == 'lotes' ? get(mgPath(g,r.id)).data.pending
+      : activeRecord(g,'lotes',r.loteId) && (
+        b.state == 'Pendiente' && get(mgPath(g,r.loteId)).data.pending
+        || b.firstObservationId == '' && r.state == 'Verificado con observación'
+          && r.diff(b).affectedKeys().hasOnly(['firstObservationId','state','revision','updatedAt'])
+          && !exists(/databases/$(database)/documents/gerencias/$(g)/observaciones/$(r.firstObservationId))
+          && getAfter(/databases/$(database)/documents/gerencias/$(g)/observaciones/$(r.firstObservationId)).data.documentId == r.id))
+      : c != 'observaciones' || activeRecord(g,'documentos',r.documentId);
   }
 
   function controlPath(g,r) { return /databases/$(database)/documents/gerencias/$(g)/remisionControls/$(r); }
@@ -209,14 +244,48 @@ service cloud.firestore {
     allow read: if c in ['cacs','remisiones','lotes','documentos','observaciones','audit'] && readScope(g) && exists(/databases/$(database)/documents/gerencias/$(g));
     allow create: if c in ['cacs','remisiones','lotes','documentos','observaciones'] && (c != 'remisiones' || !role('asistente') && (request.resource.data.get('origin','') != 'automatic' || role('technical'))) && entityWrite(g,c) && (c != 'cacs' || role('technical')) && exists(/databases/$(database)/documents/gerencias/$(g))
       && (c != 'lotes' || !exists(/databases/$(database)/documents/documentCatalog/current) && !('typeId' in request.resource.data))
-      && operational(g,c,request.resource.data,true) && basic(g,c,id,request.resource.data,'gerencias/'+g+'/'+c+'/'+id) && schema(g,c,request.resource.data) && request.resource.data.revision == 1
+      && managedCreate(g,c,request.resource.data) && operational(g,c,request.resource.data,true) && basic(g,c,id,request.resource.data,'gerencias/'+g+'/'+c+'/'+id) && schema(g,c,request.resource.data) && request.resource.data.revision == 1
       && (c != 'remisiones' || receipt(request.resource.data) && get(/databases/$(database)/documents/gerencias/$(g)/cacs/$(request.resource.data.cacId)).data.get('active',true) == true);
     allow update: if c in ['cacs','remisiones','lotes','documentos','observaciones'] && (entityWrite(g,c) && (c != 'cacs' || role('technical')) || role('director') && c == 'cacs' && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['active','revision','updatedAt'])) && exists(/databases/$(database)/documents/gerencias/$(g))
-      && operational(g,c,request.resource.data,false) && basic(g,c,id,request.resource.data,'gerencias/'+g+'/'+c+'/'+id) && schema(g,c,request.resource.data) && request.resource.data.revision == resource.data.revision + 1 && stable(c,request.resource.data,resource.data);
+      && managedUpdate(g,c,request.resource.data,resource.data) && operational(g,c,request.resource.data,false) && basic(g,c,id,request.resource.data,'gerencias/'+g+'/'+c+'/'+id) && schema(g,c,request.resource.data) && request.resource.data.revision == resource.data.revision + 1 && stable(c,request.resource.data,resource.data);
    }
    match /lotes/{id} {
-    allow create: if newTypedLot(g,id,request.resource.data);
+    allow create: if managedCreate(g,'lotes',request.resource.data) && newTypedLot(g,id,request.resource.data);
    }
+
+   match /lotManagement/{id} {
+    allow read: if readScope(g);
+    function valid(m) {
+      return m.keys().hasAll(['id','pending','documents','version','event','recordId','updatedAt'])
+        && m.keys().hasOnly(['id','pending','documents','version','event','recordId','updatedAt'])
+        && m.id == id && ident(id) && m.pending is bool && m.documents is int && m.documents >= 0 && m.documents <= 1000000
+        && m.version is int && m.version > 0 && m.event in ['create','initialize','document','verification']
+        && ident(m.recordId) && m.updatedAt == request.time;
+    }
+    function documentChange(m,b) {
+      let p=/databases/$(database)/documents/gerencias/$(g)/documentos/$(m.recordId);
+      let a=getAfter(p).data;
+      let created=!exists(p);
+      return entityWrite(g,'documentos') && a.loteId == id && a.updatedAt == request.time
+       && (created ? a.revision == 1 && a.get('deletion',null) == null && m.pending
+          : get(p).data.get('deletion',null) == null && a.deletion.at == request.time && a.deletion.actor == request.auth.uid && m.pending == b.pending)
+       && m.documents == b.documents + (created ? 1 : -1);
+    }
+    function verificationChange(m,b) {
+      let v=getAfter(/databases/$(database)/documents/gerencias/$(g)/lotVerifications/$(m.recordId)).data;
+      return role('technical') && v.lotId == id && v.at == request.time && v.actor == request.auth.uid
+        && m.documents == b.documents && m.pending == (v.registered != v.declared);
+    }
+    allow create: if lotWrite(g) && valid(request.resource.data) && request.resource.data.version == 1 && (
+      request.resource.data.event == 'create' && request.resource.data.recordId == id && request.resource.data.pending && request.resource.data.documents == 0
+        && !exists(/databases/$(database)/documents/gerencias/$(g)/lotes/$(id)) && getAfter(/databases/$(database)/documents/gerencias/$(g)/lotes/$(id)).data.revision == 1
+      || request.resource.data.event == 'verification' && verificationChange(request.resource.data,{'documents':request.resource.data.documents})
+      || role('technical') && request.resource.data.event == 'initialize' && request.resource.data.recordId == id && existsParent(g,'lotes',id));
+    allow update: if lotWrite(g) && valid(request.resource.data) && request.resource.data.version == resource.data.version + 1
+      && (request.resource.data.event == 'document' && documentChange(request.resource.data,resource.data)
+        || request.resource.data.event == 'verification' && verificationChange(request.resource.data,resource.data));
+   }
+
    // Immutable signed review; quantities are the authorized reviewer's attestation.
    // Inventory is recalculated by the client, fenced against concurrent operational writes.
    match /lotVerificationComments/{id} {
@@ -227,13 +296,13 @@ service cloud.firestore {
      return v.keys().hasAll(['id','lotId','verificationId','comments','actor','role','at'])
       && v.keys().hasOnly(['id','lotId','verificationId','comments','actor','role','at'])
       && ident(id) && v.id==id && ident(v.lotId) && ident(v.verificationId)
-      && review.lotId==v.lotId && review.result=='Verificado'
+      && review.lotId==v.lotId && review.registered==review.declared && activeRecord(g,'lotes',v.lotId)
       && text(v.comments,2000) && v.actor==request.auth.uid && v.role==profile().role && v.at==request.time;
     }
    }
    match /lotVerifications/{id} {
     allow read: if readScope(g);
-    allow create: if role('technical') && validVerification(request.resource.data);
+    allow create: if role('technical') && activeRecord(g,'lotes',request.resource.data.lotId) && getAfter(mgPath(g,request.resource.data.lotId)).data.recordId == id && getAfter(mgPath(g,request.resource.data.lotId)).data.event == 'verification' && validVerification(request.resource.data);
     function validVerification(v) {
      let l=get(/databases/$(database)/documents/gerencias/$(g)/lotes/$(v.lotId)).data;
      let r=get(/databases/$(database)/documents/gerencias/$(g)/remisiones/$(l.remisionId)).data;

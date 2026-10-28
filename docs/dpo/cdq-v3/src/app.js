@@ -1,10 +1,11 @@
+import {managedState,managedCollection,bindManagedRecords} from './managed-records-ui.js?abm-documental-20261028';
 import {remisionState,canCreateRemision,remisionBadge,managementActions,bindRemisionManagement,unifyCollectionToolbar} from './remision-management.js?remisiones-multiple-20261026';
 import {documentLots,selectedDocumentLot} from './document-lot-selection.js';
 import {observationCatalog,observationKey} from './observation-catalog.js';
 import {observationCatalogPanel,bindObservationCatalog} from './observation-catalog-ui.js';
 import {initialFilters,createFilterSession} from './filter-session.js?v=filtros-vacios-20261023';
 import {connectionState,orderLots} from './presentation-status.js?v=cah-filtros-20261020';
-import {showLotVerification,lotVerificationLabel,lotReconciliation} from './lot-verification-ui.js?formulario-20261023';
+import {showLotVerification,lotVerificationLabel,lotReconciliation} from './lot-verification-ui.js?abm-documental-20261028';
 import {creationActions} from './record-actions.js?gdzs-20261027';
 import {dashboardFilters,intelligencePanel,bindIntelligence,groupModuleFilters} from './intelligence-ui.js?dashboard-color-20261025';
 import {catalogPanel,bindCatalog,showLotGenerator,lotDashboard} from './lot-ui.js?gdzs-20261027';
@@ -139,7 +140,7 @@ async function load() {
     else {$('#app').setAttribute('aria-busy','true');$('#refresh-cloud').disabled=true;showSyncStatus();}
 
     try{
-      if(!cloud){const module=await import('./firebase-client.bundle.js?remisiones-multiple-20261026');cloud=await module.connectFirebase();let initial=true;stopAuth=cloud.watchAuth(()=>{if(initial){initial=false;return}if(cloudMode()||!cloud.auth.currentUser){mode='cloud';epoch++;db=null;page="dashboard";functionId="list";window.history.replaceState(null,"",routeFor(page));$('#modal').close();load()}});}
+      if(!cloud){const module=await import('./firebase-client.bundle.js?abm-documental-20261028');cloud=await module.connectFirebase();let initial=true;stopAuth=cloud.watchAuth(()=>{if(initial){initial=false;return}if(cloudMode()||!cloud.auth.currentUser){mode='cloud';epoch++;db=null;page="dashboard";functionId="list";window.history.replaceState(null,"",routeFor(page));$('#modal').close();load()}});}
       if(cloud.authOnly){authenticationView();return}
       if(!cloud.auth.currentUser){loginView();return}
       const result=await cloud.load({includeAdministration:false,onCached:cached=>{
@@ -316,6 +317,7 @@ function collectionView() {
    if(entity==='lotes')s.docs=s.docs.filter(d=>d.loteId===id);
    if(entity==='documentos')s.docs=s.docs.filter(d=>d.id===id);
   }
+  if(cloud?.spark&&['lotes','documentos'].includes(page))return managedCollection({db,s,page,query,esc,table,period,canManage,profile:cloud.profile,linked:contextFilter?.child===page});
   let rows = [],
     headers = [],
     collection = page;
@@ -519,6 +521,7 @@ function bind() {
   if(page==='catalog')bindCatalog(cloudContext());
   if($('#generate-lots'))$('#generate-lots').onclick=()=>showLotGenerator(cloudContext());
   unifyCollectionToolbar();
+  if(cloud?.spark&&['lotes','documentos'].includes(page))bindManagedRecords(cloudContext());
   if(page==='remisiones')bindRemisionManagement({...cloudContext(),render});
   bindNavigation(hash=>{contextFilter=null;navigate(hash)});
   formBaseline=formSnapshot();
@@ -618,6 +621,7 @@ function generateRemisiones() {
  $('#modal').showModal();
 }
 function form(c, id, defaults = {}) {
+  if(id&&cloud?.spark&&['lotes','documentos'].includes(c)&&managedState(db,c,find(c,id))!=='Pendiente')return;
   if(c==='remisiones'&&((!id&&cloudMode()&&!canCreateRemision(cloud.profile))||(id&&remisionState(db,find(c,id))==='Conciliada')))return;
   if(!canManage(c)||id&&recordAnnulled(c,id))return;
   if(c==='lotes'&&!id&&cloud?.spark){showLotGenerator(cloudContext());return;}

@@ -1,3 +1,4 @@
+import {newLotGuard} from './spark-document-management.js';
 import {assertRemisionEditable} from './spark-remision-guard.js';
 import {lifecycleFence} from './spark-lifecycle.js';
 import {validateResponsables,validateContact} from './gerencia-contacts.js';
@@ -70,6 +71,18 @@ export function sparkWriter(store, auth) {
           after = {...after, ...day.data(), receivedOn: row.receivedOn};
         }
       }
+      let guardWrite=null;
+      if(['lotes','documentos'].includes(entity)){
+        const gid=entity==='lotes'?row.id:row.loteId,gref=doc(store,`gerencias/${g}/lotManagement/${gid}`);
+        const guard=(await tx.get(gref)).data();
+        if(before?.deletion)throw Error('El registro está eliminado.');
+        if(before&&(!guard?.pending||entity==='documentos'&&before.state!=='Pendiente'))throw Error('Solo se pueden editar registros pendientes.');
+        if(entity==='lotes'&&!before)guardWrite={ref:gref,after:newLotGuard(gid)};
+        if(entity==='documentos'&&!before){
+          if(!guard)throw Error('El Administrador debe actualizar la gestión del lote.');
+          guardWrite={ref:gref,after:{...guard,documents:guard.documents+1,pending:true,version:guard.version+1,event:'document',recordId:row.id,updatedAt:serverTimestamp()}};
+        }
+      }
       const fence=await lifecycleFence(tx,store,g,entity,after,before);
       if(remisionVersion!=null&&fence?.after.version!==remisionVersion+1)throw Error('La remisión cambió. Actualice antes de guardar.');
       let related = null;
@@ -84,6 +97,7 @@ export function sparkWriter(store, auth) {
         id:`${c}_${saved.id}_${saved.revision}`, actor:auth.currentUser.uid, ...(c==='lotes'?{role:profile.role}:{}), collection:c, recordId:saved.id,
         at:serverTimestamp(),before:previous,after:saved,reason:reason.trim(),
       });
+      if(guardWrite)tx.set(guardWrite.ref,guardWrite.after);
       if(fence)tx.set(fence.ref,fence.after);
       tx.set(ref,after);
       tx.set(identityRef,{gerenciaId:g,entity,recordId:row.id});

@@ -5,6 +5,7 @@ const id=v=>{if(typeof v!=='string'||! /^[A-Za-z0-9_-]{1,128}$/.test(v))throw Er
 export async function reviewLot(store,auth,{gerenciaId,lotId}) {
  const g=id(gerenciaId),l=id(lotId),base=`gerencias/${g}`;
  const ls=await getDocFromServer(doc(store,base,'lotes',l));if(!ls.exists())throw Error('Lote inexistente.');
+ if(ls.data().deletion)throw Error('El lote está eliminado.');
  const lot=ls.data(),ref=doc(store,base,'remisionControls',lot.remisionId),before=await getDocFromServer(ref);
  if(!before.exists())throw Error('El Administrador debe inicializar el control de la remisión.');
  const [ds,os,rs]=await Promise.all([
@@ -15,7 +16,7 @@ export async function reviewLot(store,auth,{gerenciaId,lotId}) {
  if(ds.size>3000||os.size>3000)throw Error('Inventario incompleto: revisión bloqueada.');
  if(before.data().version!==end.data().version)throw Error('Los documentos cambiaron. Revise nuevamente.');
  if(!rs.exists()||rs.data().annulment)throw Error('La remisión está anulada o no existe.');
- return {gerenciaId:g,lotId:l,lot,controlVersion:end.data().version,inventory:{documentos:ds.docs.map(d=>d.data()),observaciones:os.docs.map(d=>d.data())},summary:reconcileLot(lot,ds.docs.map(d=>d.data()),os.docs.map(d=>d.data()))};
+ return {gerenciaId:g,lotId:l,lot,controlVersion:end.data().version,inventory:{documentos:ds.docs.map(d=>d.data()).filter(d=>!d.deletion),observaciones:os.docs.map(d=>d.data())},summary:reconcileLot(lot,ds.docs.map(d=>d.data()).filter(d=>!d.deletion),os.docs.map(d=>d.data()))};
 }
 export async function verifyLot(store,auth,{review,confirmed=false,comments='',operationId,registered}) {
  const g=id(review.gerenciaId),l=id(review.lotId),op=id(operationId),base=`gerencias/${g}`;
@@ -32,8 +33,10 @@ export async function verifyLot(store,auth,{review,confirmed=false,comments='',o
  if(existing.exists()){if(existing.data().actor!==auth.currentUser.uid)throw Error('Operación ajena.');return existing.data();}
  if(!lotPermission(ps.data(),g)||ps.data().role!=='technical')throw Error('Solo el Administrador puede cambiar el estado del lote.');
  if(!ls.exists()||ls.data().revision!==fresh.lot.revision||cs.data()?.version!==fresh.controlVersion||!rs.exists()||rs.data().annulment)throw Error('El lote cambió. Vuelva a conciliar.');
+ const guardRef=doc(store,base,'lotManagement',l),guard=(await tx.get(guardRef)).data()||{id:l,documents:fresh.summary.registered,version:0};
  const {complete,...counts}=summary;
  const record={id:op,lotId:l,code:fresh.lot.code,remisionId:fresh.lot.remisionId,lotRevision:fresh.lot.revision,controlVersion:fresh.controlVersion,actor:auth.currentUser.uid,role:ps.data().role,at:serverTimestamp(),...counts,...result};
+ tx.set(guardRef,{...guard,pending:summary.registered!==summary.declared,version:guard.version+1,event:'verification',recordId:op,updatedAt:serverTimestamp()});
  tx.set(target,record);return record;
  });
 }
@@ -51,7 +54,7 @@ export async function addVerificationComment(store,auth,{gerenciaId,lotId,verifi
   const [existing,profile,review]=await Promise.all([tx.get(target),tx.get(doc(store,'users',auth.currentUser.uid)),tx.get(doc(store,base,'lotVerifications',v))]);
   if(!lotPermission(profile.data(),g))throw Error('Sin permisos para comentar este lote.');
   if(existing.exists()){if(existing.data().actor!==auth.currentUser.uid)throw Error('Operación ajena.');return existing.data();}
-  if(!review.exists()||review.data().lotId!==l||review.data().result!=='Verificado')throw Error('Seleccione una verificación válida.');
+  if(!review.exists()||review.data().lotId!==l||review.data().registered!==review.data().declared)throw Error('Seleccione una verificación válida.');
   const record={id:op,lotId:l,verificationId:v,comments:comments.trim(),actor:auth.currentUser.uid,role:profile.data().role,at:serverTimestamp()};
   tx.set(target,record);return record;
  });

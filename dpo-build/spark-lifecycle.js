@@ -5,9 +5,10 @@ const path=(g,r)=>`gerencias/${g}/remisionControls/${r}`;
 const id=v=>{if(typeof v!=='string'||! /^[A-Za-z0-9_-]{1,128}$/.test(v))throw Error('Identificador inválido.');return v;};
 export async function lifecycleFence(tx,store,g,entity,row,before) {
   if(!['remisiones','lotes','documentos','observaciones'].includes(entity))return null;
+  if(before?.deletion)throw Error('El registro está eliminado.');
   let r=row, c=entity;
   for(const [child,parent,key] of [['observaciones','documentos','documentId'],['documentos','lotes','loteId'],['lotes','remisiones','remisionId']]) {
-    if(c===child){const snap=await tx.get(doc(store,`gerencias/${g}/${parent}/${r[key]}`));if(!snap.exists())throw Error('Antecesor inexistente.');r=snap.data();c=parent;}
+    if(c===child){const snap=await tx.get(doc(store,`gerencias/${g}/${parent}/${r[key]}`));if(!snap.exists())throw Error('Antecesor inexistente.');r=snap.data();if(r.deletion)throw Error('El registro vinculado está eliminado.');c=parent;}
   }
   if(r.annulment || before?.annulment)throw Error('La remisión está anulada; sus registros son de solo consulta.');
   const ref=doc(store,path(g,r.id)),snap=await tx.get(ref);

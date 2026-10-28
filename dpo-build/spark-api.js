@@ -1,3 +1,4 @@
+import {deleteManagedRecord} from './spark-document-management.js';
 import {registerDocument} from './spark-document-registration.js';
 import {readObservationCatalog,saveObservationCatalog} from './spark-observation-catalog.js';
 import {reviewLot,verifyLot,lotVerificationHistory,addVerificationComment,verificationComments} from './spark-verification.js';
@@ -20,6 +21,7 @@ export function sparkAPI(api) {
  api.requestAccess=requestAccess;
  api.spark=true;
  return async(name,input)=>{
+  if(name==='deleteManagedRecord')return deleteManagedRecord(store,auth,input);
   if(name==='observationCatalogHistory')return (await getDocsFromServer(query(collection(store,'observationCatalogAudit'),orderBy('revision','desc'),limit(100)))).docs.map(d=>d.data());
   if(name==='readObservationCatalog')return readObservationCatalog(store);
   if(name==='saveObservationCatalog')return saveObservationCatalog(store,auth,input);

@@ -1,3 +1,4 @@
+import {initializeManagement} from './spark-document-management.js';
 import {sessionDataCache} from './load-cache.js';
 import {readPool} from './read-pool.js';
 import { initializeApp } from "firebase/app";
@@ -166,7 +167,7 @@ export async function connectFirebase() {
       };
       if (spark) {
         tasks.push(async()=>{const snap=await getDocFromServer(doc(store,'observationCatalog/current'));state.observationCatalog=snap.exists()?snap.data():{revision:0,entries:{}};});
-        state.lotVerifications = []; state.lotRequirements = []; state.catalogVersions = []; state.remisionControls = [];
+        state.lotManagement = []; state.lotVerifications = []; state.lotRequirements = []; state.catalogVersions = []; state.remisionControls = [];
         tasks.push(async () => {
           const snapshot = await getDocFromServer(doc(store, 'documentCatalog/current'));
           state.catalog = snapshot.exists() ? snapshot.data() : null;
@@ -186,7 +187,7 @@ export async function connectFirebase() {
       // Operational reads can start as soon as scope resolves, without waiting for calendars.
       await Promise.all([readPool(tasks,task=>task()),(async()=>{
         await readScope();
-      const collections = spark ? [...entities, 'remisionControls', 'lotRequirements', 'lotVerifications'] : entities;
+      const collections = spark ? [...entities, 'remisionControls', 'lotRequirements', 'lotVerifications', 'lotManagement'] : entities;
       const reads = state.gerencias.flatMap(g => collections.map(entity => ({gerenciaId:g.id, entity})));
       const snapshots = await readPool(reads, ({gerenciaId, entity}) =>
         getDocsFromServer(query(collection(store, 'gerencias', gerenciaId, entity), limit(3001))));
@@ -210,6 +211,15 @@ export async function connectFirebase() {
         const versions = [...new Set(state.lotRequirements.map(r => r.catalogVersion))];
         const snapshots = await readPool(versions, v => getDocFromServer(doc(store, 'documentCatalogVersions', String(v))));
         state.catalogVersions = snapshots.filter(s => s.exists()).map(s => s.data());
+      }
+      if(spark){
+        await initializeManagement(store,auth,{...state,profile});
+        state.deletedRecords=[...state.lotes.filter(r=>r.deletion).map(r=>({...r,collection:'lotes'})),...state.documentos.filter(r=>r.deletion).map(r=>({...r,collection:'documentos'}))];
+        state.lotes=state.lotes.filter(r=>!r.deletion);
+        const activeLots=new Set(state.lotes.map(r=>r.id));
+        state.documentos=state.documentos.filter(r=>!r.deletion&&activeLots.has(r.loteId));
+        const activeDocs=new Set(state.documentos.map(r=>r.id));
+        state.observaciones=state.observaciones.filter(r=>activeDocs.has(r.documentId));
       }
       state.audit.sort((a,b) => a.at.localeCompare(b.at));
       if(auth.currentUser?.uid!==user.uid)throw Error('La sesión cambió.');

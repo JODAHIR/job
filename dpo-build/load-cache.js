@@ -1,6 +1,6 @@
 // Session-only preview. A fresh authorized profile is required before reading it.
 export function sessionDataCache(storage,ttl=300000){
- const key='cdq-authorized-preview-v1';
+ const key='cdq-authorized-preview-v2';
  return {
   clear(){try{storage.removeItem(key);}catch{}},
   read(uid,profile,now=Date.now()){

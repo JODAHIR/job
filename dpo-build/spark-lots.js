@@ -1,3 +1,4 @@
+import {newLotGuard} from './spark-document-management.js';
 import {readPool} from './read-pool.js';
 import {doc,collection,query,limit,getDocsFromServer,getDocFromServer,runTransaction,serverTimestamp} from 'firebase/firestore';
 import {lotPermission,lotQuantity,typedKey} from './lot-catalog.js';
@@ -36,6 +37,7 @@ export async function createTypedLot(store,auth,{gerenciaId,remisionId,typeId,de
   // Reuse snapshots read by this same transaction, never a cross-transaction cache.
   const fence=await lifecycleFence({get:ref=>ref.path===remRef.path?Promise.resolve(rs):ref.path===controlRef.path?Promise.resolve(control):tx.get(ref)},store,g,'lotes',after,null);
   if(!reqSnap.exists())tx.set(reqRef,{id:rid,catalogVersion:version,actor:auth.currentUser.uid,at:serverTimestamp()});
+  tx.set(doc(store,`gerencias/${g}/lotManagement/${lotId}`),newLotGuard(lotId));
   tx.set(seqRef,{value:sequence,lotId,updatedAt:serverTimestamp()});
   tx.set(doc(store,`gerencias/${g}/lotes/${lotId}`),after);
   tx.set(lock,{path:`gerencias/${g}/lotes/${lotId}`,gerenciaId:g,entity:'lotes',recordId:lotId});
