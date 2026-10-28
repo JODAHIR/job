@@ -140,7 +140,7 @@ async function load() {
     else {$('#app').setAttribute('aria-busy','true');$('#refresh-cloud').disabled=true;showSyncStatus();}
 
     try{
-      if(!cloud){const module=await import('./firebase-client.bundle.js?abm-documental-20261028');cloud=await module.connectFirebase();let initial=true;stopAuth=cloud.watchAuth(()=>{if(initial){initial=false;return}if(cloudMode()||!cloud.auth.currentUser){mode='cloud';epoch++;db=null;page="dashboard";functionId="list";window.history.replaceState(null,"",routeFor(page));$('#modal').close();load()}});}
+      if(!cloud){const module=await import('./firebase-client.bundle.js?generacion-20261028');cloud=await module.connectFirebase();let initial=true;stopAuth=cloud.watchAuth(()=>{if(initial){initial=false;return}if(cloudMode()||!cloud.auth.currentUser){mode='cloud';epoch++;db=null;page="dashboard";functionId="list";window.history.replaceState(null,"",routeFor(page));$('#modal').close();load()}});}
       if(cloud.authOnly){authenticationView();return}
       if(!cloud.auth.currentUser){loginView();return}
       const result=await cloud.load({includeAdministration:false,onCached:cached=>{
@@ -604,7 +604,7 @@ function generateRemisiones() {
  if(!f.gerencia || !f.year || !f.month || !f.half){updateNotice('Seleccione gerencia, año, mes y quincena antes de generar.',true);return;}
  const cacs=db.cacs.filter(c=>c.gerenciaId===f.gerencia && c.active!==false);
  const gerenciaId=f.gerencia,year=+f.year,month=+f.month,half=+f.half;
- $('#modal').innerHTML=`<form id="generate-form"><h2>Generar remisiones de ${esc(name('gerencias',gerenciaId))}</h2><p>${esc(period({year,month,half}))} · ${cacs.length} CAC activos. Se omiten remisiones existentes. Los siguientes datos se aplican a cada remisión nueva de esta gerencia, independientemente del filtro de CAC.</p><div class="form-fields"><label>Número de expediente<input name="expediente" required maxlength="150"></label><label>Fecha de remisión<input name="remittedOn" type="date" required></label><label>Fecha de recepción<input name="receivedOn" type="date" required></label></div><p>Se registra cada CAC por separado. Si hay un error, se informa el resultado y puede reintentar sin duplicar los registros guardados.</p><p id="generation-result" role="status"></p><div class="form-actions"><button type="button" id="generation-close">Cerrar</button><button class="primary">Confirmar generación</button></div></form>`;
+ $('#modal').innerHTML=`<form id="generate-form"><h2>Generar remisiones de ${esc(name('gerencias',gerenciaId))}</h2><p>${esc(period({year,month,half}))} · ${cacs.length} CAC activos. Se omiten remisiones vigentes. Las dadas de baja se informan por separado y conservan su historial. Los siguientes datos se aplican a cada remisión nueva de esta gerencia, independientemente del filtro de CAC.</p><div class="form-fields"><label>Número de expediente<input name="expediente" required maxlength="150"></label><label>Fecha de remisión<input name="remittedOn" type="date" required></label><label>Fecha de recepción<input name="receivedOn" type="date" required></label></div><p>Se registra cada CAC por separado. Si hay un error, se informa el resultado y puede reintentar sin duplicar los registros guardados.</p><p id="generation-result" role="status"></p><div class="form-actions"><button type="button" id="generation-close">Cerrar</button><button class="primary">Confirmar generación</button></div></form>`;
  $('#generation-close').onclick=()=>$('#modal').close();
  $('#generate-form').onsubmit=async e=>{
   e.preventDefault();e.submitter.disabled=true;$('#generation-close').disabled=true;
@@ -613,8 +613,10 @@ function generateRemisiones() {
    for(const row of result.created){const i=db.remisiones.findIndex(r=>r.id===row.id);if(i<0)db.remisiones.push(row);else db.remisiones[i]=row;}
    for(const c of result.controls||[]){db.remisionControls??=[];const i=db.remisionControls.findIndex(x=>x.id===c.id);if(i<0)db.remisionControls.push(c);else db.remisionControls[i]=c;}
    render();
-   $('#generation-result').textContent=`Registradas: ${result.created.length}. Existentes: ${result.skipped.length}. Errores: ${result.failed.length}. `+result.failed.map(x=>x.name+': '+x.error).join(' | ');
-   if(!result.failed.length)updateNotice('Actualización realizada');
+   $('#generation-result').textContent=`Registradas: ${result.created.length}. Vigentes existentes: ${result.skipped.length}. Dadas de baja: ${result.annulled?.length||0}. Errores: ${result.failed.length}. `+result.failed.map(x=>x.name+': '+x.error).join(' | ');
+   if(result.annulled?.length)$('#generation-result').textContent+=' No se generaron nuevas remisiones para estos CAC porque ya tienen una remisión dada de baja en este período: '+result.annulled.map(x=>x.name||x.id).join(', ')+'. No aparecen con el filtro Vigentes. La baja conserva la reserva del CAC y período; no se restauraron ni duplicaron registros.';
+   if(result.created.length)updateNotice(`${result.created.length} remisiones registradas.`);
+   else updateNotice('No se crearon remisiones. Consulte el resultado de la generación.',true);
   }catch(error){$('#generation-result').textContent=error.message;}
   finally{e.submitter.disabled=false;$('#generation-close').disabled=false;}
  };
