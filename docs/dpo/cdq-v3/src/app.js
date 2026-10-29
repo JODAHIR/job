@@ -1,4 +1,4 @@
-import {managedState,managedCollection,bindManagedRecords} from './managed-records-ui.js?abm-documental-20261028';
+import {managedState,managedCollection,bindManagedRecords} from './managed-records-ui.js?lotes-cantidades-20261029';
 import {remisionState,canCreateRemision,remisionBadge,managementActions,bindRemisionManagement,unifyCollectionToolbar} from './remision-management.js?comentarios-20261029';
 import {documentLots,selectedDocumentLot} from './document-lot-selection.js';
 import {observationCatalog,observationKey} from './observation-catalog.js';
@@ -8,7 +8,7 @@ import {connectionState,orderLots} from './presentation-status.js?v=cah-filtros-
 import {showLotVerification,lotVerificationLabel,lotReconciliation} from './lot-verification-ui.js?abm-documental-20261028';
 import {creationActions} from './record-actions.js?gdzs-20261027';
 import {dashboardFilters,intelligencePanel,bindIntelligence,groupModuleFilters} from './intelligence-ui.js?dashboard-color-20261025';
-import {catalogPanel,bindCatalog,showLotGenerator,lotDashboard} from './lot-ui.js?gdzs-20261027';
+import {catalogPanel,bindCatalog,showLotGenerator,lotDashboard} from './lot-ui.js?lotes-cantidades-20261029';
 import {sortedTypes} from './lot-catalog.js?v=cah-lotes-20261019';
 import {annulPanel,bindAnnulPanel} from './remision-annul-ui.js?v=cah-filtros-20261020';
 import {pages,resolveRoute,routeFor} from './navigation.js?remisiones-multiple-20261026';
@@ -571,6 +571,7 @@ function bind() {
   document
     .querySelectorAll("[data-new]")
     .forEach((b) => (b.onclick = () => form(b.dataset.new)));
+  document.querySelectorAll('[data-add-single-lot]').forEach(b=>b.onclick=()=>{if(canManage('lotes'))showLotGenerator(cloudContext(),{individual:true});});
   document.querySelectorAll('[data-add-document-observation]').forEach(b=>b.onclick=()=>form('observaciones',null,{documentId:b.dataset.addDocumentObservation}));
   document
     .querySelectorAll("[data-edit]")

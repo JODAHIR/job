@@ -1,3 +1,4 @@
+import {managedState} from './managed-records-ui.js?lotes-cantidades-20261029';
 import {scope} from './domain.js?v=cah-lotes-20261019';
 import {sortedTypes,catalogType,lotQuantity,lotTracking} from './lot-catalog.js?v=cah-lotes-20261019';
 const $=s=>document.querySelector(s);
@@ -19,33 +20,49 @@ export function bindCatalog(ctx){
  };
  $('#catalog-new').onclick=()=>edit();document.querySelectorAll('[data-type-edit]').forEach(b=>b.onclick=()=>edit(b.dataset.typeEdit));
 }
-export function showLotGenerator(ctx){
- const {db,cloud,esc,f,load}=ctx,modal=$('#modal');labelDialog(modal,'Nuevo registro por GDZS');
+export function showLotGenerator(ctx, {individual=false}={}){
+ const {db,cloud,esc,f,load}=ctx,modal=$('#modal');labelDialog(modal,individual?'Agregar lote individual':'Nuevo registro por GDZS');
  if(!db.catalog){modal.innerHTML='<h2>Catálogo pendiente</h2><p>El Director o Administrador debe inicializar los tipos documentales.</p><button id="lot-close">Cerrar</button>';modal.showModal();$('#lot-close').onclick=()=>modal.close();return;}
  const opts=(rows,val)=>rows.map(x=>`<option value="${esc(x.id)}" ${x.id===val?'selected':''}>${esc(x.name)}</option>`).join('');
- modal.innerHTML=`<form id="lot-generate-form"><h2>Nuevo registro por GDZS</h2><details open><summary>1. Datos generales</summary><div class="form-fields"><label>Gerencia<select name="gerenciaId" required><option value="">Seleccionar…</option>${opts(db.gerencias,f.gerencia)}</select></label><label>CAC<select name="cacId"><option value="">Todos los CAC activos</option></select></label><label>Año<input name="year" type="number" min="2000" max="2100" required value="${f.year}"></label><label>Mes<input name="month" type="number" min="1" max="12" required value="${f.month||1}"></label><label>Quincena<select name="half"><option value="1" ${String(f.half)==='1'?'selected':''}>Primera</option><option value="2" ${String(f.half)==='2'?'selected':''}>Segunda</option></select></label></div><button type="button" id="lot-prepare" class="secondary">Preparar tipos y cantidades</button></details><details id="lot-types"><summary>2. Tipos documentales y cantidades por CAC</summary><div id="lot-matrix"></div></details><button class="primary" id="lot-save" disabled>Guardar y cerrar lotes</button><p id="lot-error" role="alert"></p><button type="button" id="lot-close">Cerrar</button></form>`;modal.showModal();
- const form=$('#lot-generate-form');let prepared=null,results=null;
+ modal.innerHTML=`<form id="lot-generate-form"><style>#lot-generate-form{width:min(900px,85vw)}#lot-generate-form .form-fields{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:16px}#lot-generate-form .lot-bulk-controls{display:flex;flex-wrap:wrap;gap:12px;align-items:end;padding:16px 0}#lot-generate-form .lot-type-row{display:grid;grid-template-columns:minmax(0,2fr) minmax(120px,1fr);gap:12px;padding:14px 0;border-bottom:1px solid #dde5e9}#lot-generate-form .lot-type-row small{grid-column:1/-1}#lot-generate-form input[type=number]{width:100%;box-sizing:border-box}#lot-generate-form details{margin:16px 0}#lot-generate-form .lot-footer-actions{display:flex;justify-content:flex-end;align-items:center;gap:12px;margin-top:20px}#lot-generate-form .lot-close-muted{background:#f1f3f5;color:#59636d;border:1px solid #dce1e5;font-weight:400}#lot-generate-form .lot-close-muted:hover{background:#e5e9ed}@media(max-width:600px){#lot-generate-form{width:100%}#lot-generate-form .lot-type-row{grid-template-columns:1fr}#lot-generate-form .lot-bulk-controls>*{width:100%}}</style><h2>${individual?'Agregar lote individual':'Nuevo registro por GDZS'}</h2><details open><summary>1. Datos generales</summary><div class="form-fields"><label>Gerencia<select name="gerenciaId" required><option value="">Seleccionar…</option>${opts(db.gerencias,f.gerencia)}</select></label><label>CAC<select name="cacId"><option value="">Todos los CAC activos</option></select></label><label>Año<input name="year" type="number" min="2000" max="2100" required value="${f.year}"></label><label>Mes<input name="month" type="number" min="1" max="12" required value="${f.month||1}"></label><label>Quincena<select name="half"><option value="1" ${String(f.half)==='1'?'selected':''}>Primera</option><option value="2" ${String(f.half)==='2'?'selected':''}>Segunda</option></select></label></div><button type="button" id="lot-prepare" class="secondary">Preparar tipos y cantidades</button></details><details id="lot-types"><summary>2. Tipos documentales y cantidades por CAC</summary><div class="lot-bulk-controls"><button type="button" class="secondary" id="lot-required">Seleccionar obligatorios</button><button type="button" class="secondary" id="lot-optional">Seleccionar opcionales</button><label>Cantidad base<input id="lot-common-quantity" type="number" min="0" max="1000000" step="1"></label><button type="button" class="secondary" id="lot-apply-quantity">Aplicar cantidad a seleccionados</button></div><div id="lot-matrix"></div></details><p id="lot-error" role="alert"></p><div class="lot-footer-actions"><button class="primary" id="lot-save" disabled>Guardar y cerrar lotes</button><button type="button" class="secondary lot-close-muted" id="lot-close">Cerrar</button></div></form>`;modal.showModal();
+ const form=$('#lot-generate-form');let prepared=null,results=null,quantityGroup=null;
+ const selectGroup=required=>{quantityGroup=required?'required':'optional';form.querySelectorAll('[data-lot-choice]').forEach(choice=>{if(!choice.disabled)choice.checked=choice.dataset.required===String(required);});$('#lot-apply-quantity').textContent=required?'Aplicar cantidad a obligatorios':'Aplicar mitad a opcionales';};
+ $('#lot-required').onclick=()=>selectGroup(true);$('#lot-optional').onclick=()=>selectGroup(false);
+ if(individual){$('#lot-required').hidden=true;$('#lot-optional').hidden=true;}
  const invalidate=()=>{prepared=null;$('#lot-save').disabled=true;$('#lot-matrix').innerHTML='';};
  const cacs=()=>db.cacs.filter(c=>c.gerenciaId===form.elements.gerenciaId.value&&c.active!==false);
- const syncCac=()=>{form.elements.cacId.innerHTML='<option value="">Todos los CAC activos</option>'+opts(cacs(),f.cac);invalidate();};syncCac();
+ const syncCac=()=>{form.elements.cacId.innerHTML=`<option value="">${individual?'Seleccionar CAC…':'Todos los CAC activos'}</option>`+opts(cacs(),f.cac);invalidate();};syncCac();
  form.elements.gerenciaId.onchange=syncCac;for(const k of ['cacId','year','month','half'])form.elements[k].onchange=invalidate;
+ $('#lot-apply-quantity').onclick=()=>{
+  try{
+   const base=lotQuantity($('#lot-common-quantity').value);
+   const quantity=quantityGroup==='optional'?base/2:base;
+   if(!Number.isInteger(quantity))throw Error('La mitad debe ser una cantidad entera. Ingrese una cantidad base par.');
+   const selected=[...form.querySelectorAll('[data-lot-choice]:checked:not(:disabled)')];
+   if(!selected.length)throw Error('Seleccione uno o más lotes.');
+   for(const choice of selected){const field=form.querySelector(`[data-quantity="${choice.dataset.index}"]`);if(!field.disabled)field.value=quantity;}
+   $('#lot-error').textContent='';
+  }catch(error){$('#lot-error').textContent=error.message;}
+ };
  $('#lot-close').onclick=async()=>{modal.close();if(results)await load();};
  $('#lot-prepare').onclick=()=>{
   try{
    if(!form.elements.gerenciaId.value)throw Error('Seleccione una gerencia.');
+   if(individual&&!form.elements.cacId.value)throw Error('Seleccione un CAC para el lote individual.');
    const year=Number(form.elements.year.value),month=Number(form.elements.month.value),half=Number(form.elements.half.value);
    if(!Number.isInteger(year)||year<2000||year>2100||!Number.isInteger(month)||month<1||month>12)throw Error('Año o mes inválido.');
    prepared={gerenciaId:form.elements.gerenciaId.value,year,month,half,catalogRevision:db.catalog.revision};let index=0;
    $('#lot-matrix').innerHTML=cacs().filter(c=>!form.elements.cacId.value||c.id===form.elements.cacId.value).map(c=>{
     const r=db.remisiones.find(r=>r.cacId===c.id&&r.year===year&&r.month===month&&r.half===half&&!r.annulment);
     const req=db.lotRequirements?.find(x=>x.id===r?.id),version=db.catalogVersions?.find(x=>x.revision===req?.catalogVersion),types=sortedTypes(version||db.catalog);
-    return `<details open><summary>${esc(c.name)} · ${r?'Remisión registrada':'Sin remisión registrada'}</summary>${!r?'<p>Este CAC no tiene remisión. Seleccione un CAC con remisión para guardar.</p>':''}<div class="lot-type-grid">${types.filter(t=>t.enabled).map(t=>{const n=index++,existing=db.lotes.find(l=>l.remisionId===r?.id&&l.typeId===t.id),disabled=!db.catalog.types[t.id]?.enabled;return `<div class="lot-type-row"><label><input type="checkbox" data-lot-choice data-cac="${esc(c.id)}" data-type="${esc(t.id)}" data-index="${n}" ${t.required?'checked':''} ${t.required||disabled?'disabled':''}> ${esc(t.code)} · ${esc(t.description)} · ${t.required?'Obligatorio':'Opcional'}</label><label>Cantidad · ${esc(c.name)} · ${esc(t.code)}<input data-quantity="${n}" type="number" min="0" max="1000000" step="1" ${existing||disabled?'disabled':''}></label><small>${existing?'Existente: '+esc(existing.code)+' · '+existing.declared+' declarados (no se sobrescribe)':disabled?'Tipo inhabilitado: no se pueden generar nuevos lotes':''}</small></div>`;}).join('')}</div></details>`;
+    return `<details open><summary>${esc(c.name)} · ${r?'Remisión registrada':'Sin remisión registrada'}</summary>${!r?'<p>Este CAC no tiene remisión. Seleccione un CAC con remisión para guardar.</p>':''}<div class="lot-type-grid">${types.filter(t=>t.enabled).map(t=>{const n=index++,existing=db.lotes.find(l=>l.remisionId===r?.id&&l.typeId===t.id),disabled=!db.catalog.types[t.id]?.enabled||!!existing&&managedState(db,'lotes',existing)!=='Pendiente';return `<div class="lot-type-row"><label><input type="checkbox" data-lot-choice data-required="${t.required}" data-cac="${esc(c.id)}" data-type="${esc(t.id)}" data-index="${n}" ${!individual&&t.required&&!existing?'checked':''} ${disabled?'disabled':''}> ${esc(t.code)} · ${esc(t.description)} · ${t.required?'Obligatorio':'Opcional'}</label><label>Cantidad declarada · ${esc(c.name)} · ${esc(t.code)}<input data-quantity="${n}" type="number" min="0" max="1000000" step="1" value="${existing?.declared??''}" ${disabled?'disabled':''}></label><small>${existing?'Existente: '+esc(existing.code)+' · '+existing.declared+' declarados'+(disabled?' · No editable':' · Puede modificar la cantidad declarada'):disabled?'Tipo inhabilitado: no se pueden generar nuevos lotes':''}</small></div>`;}).join('')}</div></details>`;
    }).join('')||'<p>No hay CAC activos.</p>';
+   if(individual)form.querySelectorAll('[data-lot-choice]').forEach(choice=>choice.onchange=()=>{if(choice.checked)form.querySelectorAll('[data-lot-choice]').forEach(other=>{if(other!==choice)other.checked=false;});});
    $('#lot-types').open=true;$('#lot-save').disabled=false;$('#lot-error').textContent='';
   }catch(e){$('#lot-error').textContent=e.message;}
  };
  function itemsForSave(){
-  return [...form.querySelectorAll('[data-lot-choice]:checked')].map(el=>{const r=db.remisiones.find(r=>r.cacId===el.dataset.cac&&r.year===prepared.year&&r.month===prepared.month&&r.half===prepared.half&&!r.annulment);const old=db.lotes.find(l=>l.remisionId===r?.id&&l.typeId===el.dataset.type);const disabled=!db.catalog.types[el.dataset.type]?.enabled;return {cacId:el.dataset.cac,typeId:el.dataset.type,declared:old?.declared??(!r||disabled?0:lotQuantity(form.querySelector(`[data-quantity="${el.dataset.index}"]`).value)),skipDisabled:disabled};});
+  return [...form.querySelectorAll('[data-lot-choice]:checked')].map(el=>{const r=db.remisiones.find(r=>r.cacId===el.dataset.cac&&r.year===prepared.year&&r.month===prepared.month&&r.half===prepared.half&&!r.annulment);const old=db.lotes.find(l=>l.remisionId===r?.id&&l.typeId===el.dataset.type);const disabled=!db.catalog.types[el.dataset.type]?.enabled;return {cacId:el.dataset.cac,typeId:el.dataset.type,declared:(!r||disabled?0:lotQuantity(form.querySelector(`[data-quantity="${el.dataset.index}"]`).value)),skipDisabled:disabled};});
  }
  let saving=false;
  form.onsubmit=async e=>{
@@ -53,6 +70,7 @@ export function showLotGenerator(ctx){
   let disabledBefore=[];
   try{
    const all=itemsForSave();
+   if(individual&&all.length!==1)throw Error('Seleccione un tipo documental para agregar el lote.');
    if(!all.length||all.length>200)throw Error('Seleccione entre 1 y 200 lotes por operación.');
    if(all.some(i=>i.skipDisabled))throw Error('Hay tipos inhabilitados en la selección. Prepare nuevamente los tipos.');
    const missing=all.filter(i=>!db.remisiones.some(r=>r.cacId===i.cacId&&r.year===prepared.year&&r.month===prepared.month&&r.half===prepared.half&&!r.annulment));
@@ -61,7 +79,20 @@ export function showLotGenerator(ctx){
    saving=true;disabledBefore=[...form.elements].map(el=>[el,el.disabled]);
    for(const [el] of disabledBefore)el.disabled=true;
    $('#lot-save').textContent='Guardando…';$('#lot-error').textContent='';
-   const response=await cloud.call('generateLots',{...prepared,items});results=response.results;
+   results=[];
+   for(const item of items){
+    const rem=db.remisiones.find(r=>r.cacId===item.cacId&&r.year===prepared.year&&r.month===prepared.month&&r.half===prepared.half&&!r.annulment);
+    const old=db.lotes.find(l=>l.remisionId===rem?.id&&l.typeId===item.typeId);
+    if(!old)continue;
+    if(managedState(db,'lotes',old)!=='Pendiente')throw Error('El lote '+old.code+' no está pendiente.');
+    if(old.declared!==item.declared){
+     await cloud.call('saveRecord',{gerenciaId:prepared.gerenciaId,collection:'lotes',row:{id:old.id,remisionId:old.remisionId,code:old.code,declared:item.declared},expectedRevision:old.revision??0});
+     old.declared=item.declared;old.revision=(old.revision??0)+1;
+    }
+    results.push({...item,status:'existing'});
+   }
+   const fresh=items.filter(i=>!results.some(r=>r.cacId===i.cacId&&r.typeId===i.typeId));
+   if(fresh.length){const response=await cloud.call('generateLots',{...prepared,items:fresh});results.push(...response.results);} 
    const failed=results.filter(r=>!['created','existing'].includes(r.status));
    if(failed.length||results.length!==items.length){
     const saved=results.filter(r=>['created','existing'].includes(r.status)).length;
