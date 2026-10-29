@@ -1,3 +1,4 @@
+import {remisionComments,addRemisionComment} from './remision-comments.js';
 import {deleteManagedRecord} from './spark-document-management.js';
 import {registerDocument} from './spark-document-registration.js';
 import {readObservationCatalog,saveObservationCatalog} from './spark-observation-catalog.js';
@@ -36,6 +37,8 @@ export function sparkAPI(api) {
   if(name==='generateLots')return generateLots(store,auth,input);
   if(name==='initializeControl')return initializeControl(store,auth,input);
   if(name==='previewAnnulments')return previewAnnulments(store,auth,input);
+  if(name==='remisionComments')return remisionComments(store,input);
+  if(name==='addRemisionComment')return addRemisionComment(store,auth,input);
   if(name==='restoreRemision')return restoreRemision(store,auth,input);
   if(name==='annulRemisiones')return annulRemisiones(store,auth,input);
   if(name==='publishCalendar') return publishSparkCalendar(store,auth,input);

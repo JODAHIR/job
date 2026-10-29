@@ -352,6 +352,18 @@ service cloud.firestore {
     }
     allow create, update: if lotWrite(g) && validSequence(request.resource.data);
    }
+   match /remisiones/{rid}/comments/{cid} {
+    allow read: if readScope(g);
+    function validComment(c) {
+      let r=parent(g,'remisiones',rid);
+      return c.keys().hasAll(['id','actor','owner','description','at']) && c.keys().hasOnly(['id','actor','owner','description','at'])
+       && c.id == cid && ident(cid) && c.actor == request.auth.uid && c.at == request.time
+       && text(c.description,2000) && c.description.trim().size() > 0 && text(c.owner,500)
+       && c.owner == (profile().get('description','').trim().size() > 0 ? profile().description.trim() : 'Usuario sin descripción')
+       && r.get('annulment',null) == null && r.get('receivedOn','') != '';
+    }
+    allow create: if lotWrite(g) && validComment(request.resource.data);
+   }
    match /remisiones/{id} {
     allow update: if readScope(g) && (annulChange(g,id,request.resource.data,resource.data) || restoreChange(g,id,request.resource.data,resource.data))
       && request.resource.data.revision == resource.data.revision + 1
