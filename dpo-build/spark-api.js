@@ -4,7 +4,7 @@ import {readObservationCatalog,saveObservationCatalog} from './spark-observation
 import {reviewLot,verifyLot,lotVerificationHistory,addVerificationComment,verificationComments} from './spark-verification.js';
 import {saveCatalog,initializeCatalog,catalogHistory} from './spark-catalog.js';
 import {generateLots} from './spark-lots.js';
-import {initializeControl,previewAnnulments,annulRemisiones} from './spark-lifecycle.js';
+import {initializeControl,previewAnnulments,annulRemisiones,restoreRemision} from './spark-lifecycle.js';
 import {generateRemisiones} from './spark-remisiones.js';
 import {doc,collection,getDocFromServer,getDocsFromServer,runTransaction,serverTimestamp,query,orderBy,startAfter,limit} from 'firebase/firestore';
 import {sparkWriter} from './spark-records.js';
@@ -36,6 +36,7 @@ export function sparkAPI(api) {
   if(name==='generateLots')return generateLots(store,auth,input);
   if(name==='initializeControl')return initializeControl(store,auth,input);
   if(name==='previewAnnulments')return previewAnnulments(store,auth,input);
+  if(name==='restoreRemision')return restoreRemision(store,auth,input);
   if(name==='annulRemisiones')return annulRemisiones(store,auth,input);
   if(name==='publishCalendar') return publishSparkCalendar(store,auth,input);
   if(name==='generateRemisiones') return generateRemisiones(store,auth,input);

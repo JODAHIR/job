@@ -97,3 +97,25 @@ export async function annulRemisiones(store,auth,{preview,reason,confirmed}) {
     tx.set(opref,result);return {...result,at:null};
   });
 }
+
+export async function restoreRemision(store,auth,{gerenciaId:g,id:r,expectedRevision,reason}) {
+ id(g);id(r);
+ if(typeof reason!=='string'||!reason.trim()||reason.trim().length>2000)throw Error('Motivo obligatorio (máximo 2000 caracteres).');
+ return runTransaction(store,async tx=>{
+  const ps=await tx.get(doc(store,'users',auth.currentUser.uid));
+  if(!ps.data()?.active||ps.data().role!=='technical')throw Error('Solo el Administrador puede restaurar remisiones.');
+  const rr=doc(store,`gerencias/${g}/remisiones/${r}`),cr=doc(store,path(g,r));
+  const rs=await tx.get(rr),cs=await tx.get(cr),before=rs.data(),control=cs.data();
+  if(!before?.annulment)throw Error('La remisión ya está vigente o no existe. Actualice la vista.');
+  if(before.revision!==expectedRevision||!control)throw Error('El registro cambió o no tiene control. Actualice la vista.');
+  const lock=await tx.get(doc(store,'sparkKeys',before.uniqueKey));
+  if(lock.data()?.path!==rr.path)throw Error('El CAC y período están reservados por otro registro o requieren revisión.');
+  const {annulment,...rest}=before;
+  const after={...rest,revision:before.revision+1,updatedAt:serverTimestamp()};
+  tx.set(rr,after);
+  tx.set(cr,{...control,version:control.version+1,collection:'restoration',recordId:r,revision:after.revision,updatedAt:serverTimestamp()});
+  const aid=`remisiones_${r}_${after.revision}`;
+  tx.set(doc(store,`gerencias/${g}/audit/${aid}`),{id:aid,actor:auth.currentUser.uid,collection:'remisiones',recordId:r,at:serverTimestamp(),before,after,reason:reason.trim()});
+  return {id:r,revision:after.revision};
+ });
+}

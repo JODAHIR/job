@@ -115,6 +115,16 @@ service cloud.firestore {
   function canAnnul(g,control) {
     return role('technical') || role('director') || role('gerente') && profile().gerenciaId == g;
   }
+  function restoreChange(g,id,r,b) {
+    let control=get(controlPath(g,id)).data;
+    let next=getAfter(controlPath(g,id)).data;
+    return role('technical') && b.get('annulment',null) != null && !('annulment' in r)
+      && r.diff(b).affectedKeys().hasOnly(['annulment','revision','updatedAt'])
+      && locked(g,'remisiones',r,'gerencias/'+g+'/remisiones/'+id)
+      && next.version == control.version+1 && next.collection == 'restoration'
+      && next.recordId == id && next.revision == r.revision && next.updatedAt == request.time
+      && next.lots == control.lots && next.documents == control.documents && next.observations == control.observations;
+  }
   function annulChange(g,id,r,b) {
     let a=r.annulment;
     let cp=controlPath(g,id);
@@ -343,7 +353,7 @@ service cloud.firestore {
     allow create, update: if lotWrite(g) && validSequence(request.resource.data);
    }
    match /remisiones/{id} {
-    allow update: if readScope(g) && annulChange(g,id,request.resource.data,resource.data)
+    allow update: if readScope(g) && (annulChange(g,id,request.resource.data,resource.data) || restoreChange(g,id,request.resource.data,resource.data))
       && request.resource.data.revision == resource.data.revision + 1
       && request.resource.data.updatedAt == request.time && audited(g,'remisiones',id,request.resource.data);
    }
@@ -375,7 +385,11 @@ service cloud.firestore {
       && parent(g,'remisiones',id).get('annulment',null) == null && request.resource.data.revision == parent(g,'remisiones',id).revision
       && getAfter(/databases/$(database)/documents/gerencias/$(g)/lifecycleAudit/$('init_'+id)).data.control == request.resource.data);
     allow update: if validControl(request.resource.data) && request.resource.data.version == resource.data.version + 1 && (
-      request.resource.data.collection != 'annulment' && validAdvance(request.resource.data) || request.resource.data.collection == 'annulment' && request.resource.data.recordId == id
+      role('technical') && request.resource.data.collection == 'restoration'
+      && restoreChange(g,id,getAfter(/databases/$(database)/documents/gerencias/$(g)/remisiones/$(id)).data,parent(g,'remisiones',id))
+      && getAfter(/databases/$(database)/documents/gerencias/$(g)/remisiones/$(id)).data.revision == parent(g,'remisiones',id).revision+1
+      && audited(g,'remisiones',id,getAfter(/databases/$(database)/documents/gerencias/$(g)/remisiones/$(id)).data)
+      || request.resource.data.collection != 'annulment' && validAdvance(request.resource.data) || request.resource.data.collection == 'annulment' && request.resource.data.recordId == id
       && request.resource.data.lots == resource.data.lots && request.resource.data.documents == resource.data.documents && request.resource.data.observations == resource.data.observations
       && request.resource.data.revision == getAfter(/databases/$(database)/documents/gerencias/$(g)/remisiones/$(id)).data.revision
       && parent(g,'remisiones',id).get('annulment',null) == null

@@ -1,3 +1,4 @@
+import {bindRestoration} from './remision-restoration-ui.js?restaurar-20261029';
 import {previewSelection,confirmSelection} from './annul-selection.js';
 import {openRemisionDetailWindow} from './remision-detail-window.js';
 import {currentVerification} from './lot-verification.js';
@@ -11,9 +12,10 @@ export function remisionState(db,r){
 export const canCreateRemision=p=>p?.active&&['technical','director','gerente'].includes(p.role);
 export function remisionActions(db,r,p){const state=remisionState(db,r),locked=['Conciliada','Anulada'].includes(state);return {state,edit:!locked&&p?.active&&['technical','director','gerente','asistente'].includes(p.role),remove:!locked&&canCreateRemision(p)};}
 export function remisionBadge(state,esc){return `<span class="badge remision-state ${state==='Conciliada'?'remision-green':state==='Registrada'?'remision-yellow':state==='Pendiente'?'remision-red':'neutral'}">${esc(state)}</span>`;}
-export function managementActions(db,r,p,esc){const a=remisionActions(db,r,p);return `<div class="remision-actions">${a.remove?`<input type="checkbox" data-remision-select="${esc(r.id)}" aria-label="Seleccionar remisión ${esc(r.expediente||r.id)}">`:""}${a.edit?`<button class="secondary" data-edit="remisiones" data-id="${esc(r.id)}">Editar</button>`:''}${a.remove?`<button class="secondary remision-danger" data-remision-remove="${esc(r.id)}">Eliminar</button>`:''}<button class="secondary" data-remision-detail="${esc(r.id)}" title="Abrir ventana de detalle">Ver detalle</button></div>`;}
+export function managementActions(db,r,p,esc){const a=remisionActions(db,r,p);return `<div class="remision-actions">${r.annulment&&p?.active&&p.role==='technical'?`<input type="checkbox" data-remision-restore-select="${esc(r.id)}" aria-label="Seleccionar anulada ${esc(r.expediente||r.id)}">`:""}${a.remove?`<input type="checkbox" data-remision-select="${esc(r.id)}" aria-label="Seleccionar remisión ${esc(r.expediente||r.id)}">`:""}${a.edit?`<button class="secondary" data-edit="remisiones" data-id="${esc(r.id)}">Editar</button>`:''}${a.remove?`<button class="secondary remision-danger" data-remision-remove="${esc(r.id)}">Eliminar</button>`:''}<button class="secondary" data-remision-detail="${esc(r.id)}" title="Abrir ventana de detalle">Ver detalle</button></div>`;}
 export function bindRemisionManagement(ctx){const {db,cloud,esc,load}=ctx;
  bindBulkRemisiones(ctx);
+ bindRestoration(ctx);
  document.querySelectorAll('[data-remision-detail]').forEach(b=>b.onclick=()=>{
  const r=db.remisiones.find(r=>r.id===b.dataset.remisionDetail),control=db.remisionControls?.find(c=>c.id===r.id);
  const types=Array.isArray(db.catalog?.types)?db.catalog.types:Object.values(db.catalog?.types||{});
