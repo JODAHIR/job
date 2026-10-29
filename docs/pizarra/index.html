@@ -782,6 +782,12 @@
 .shared-note-card{color:#182334;border-radius:16px;padding:18px;margin-bottom:16px;box-shadow:0 12px 28px #0002}
 .shared-note-card .shared-note-text{white-space:pre-wrap}
 .shared-note-card details{margin:14px 0}.shared-note-card summary{cursor:pointer;font-weight:700}
+.shared-comment{margin-top:10px;padding:10px 12px;border-radius:12px;background:#ffffff9e;border:1px solid #17263a1c}
+.shared-comment.is-reply{margin-left:clamp(12px,4vw,34px);border-left:4px solid #375b7a}
+.shared-comment-meta{font-size:.76rem;font-weight:800;color:#394b61}
+.shared-comment-text{margin:4px 0 6px;white-space:pre-wrap;overflow-wrap:anywhere}
+.shared-comment-reply-to{margin-bottom:6px;font-size:.72rem;color:#53657a;font-style:italic;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.shared-comment-reply.btn{padding:2px 8px;color:#243c56;border-color:#526d89}
 .shared-date-group{margin-top:14px}
 .shared-date-heading{position:sticky;top:0;z-index:2;margin:0 0 10px;padding:7px 10px;border-radius:10px;background:#16273d;color:#dbe8f8;font-size:.86rem;font-weight:800;text-transform:capitalize;letter-spacing:.02em;box-shadow:0 4px 14px #02071155}
 .admin-row .label{flex:1;min-width:180px;overflow-wrap:anywhere}
@@ -1084,6 +1090,6 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js" integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI" crossorigin="anonymous"></script>
-<script type="module" src="./app.js?v=20261028-shared-dates"></script>
+<script type="module" src="./app.js?v=20261029-comment-replies"></script>
 </body>
 </html>
