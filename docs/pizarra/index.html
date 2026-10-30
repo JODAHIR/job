@@ -779,7 +779,7 @@
 .account-bar .view-active{background:#6ea8fe;color:#07111e;border-color:#8fbdff}
 .admin-row{display:flex;align-items:center;flex-wrap:wrap;gap:8px;padding:14px 10px;border-bottom:1px solid #ffffff22}
 .admin-category{width:min(190px,100%)}
-.shared-note-card{color:#182334;border-radius:16px;padding:18px;margin-bottom:16px;box-shadow:0 12px 28px #0002}
+.shared-note-card{width:100%;color:#182334;border-radius:16px;padding:clamp(13px,2vw,20px);margin-bottom:16px;box-shadow:0 12px 28px #0002;overflow:hidden}
 .shared-note-card .shared-note-text{white-space:pre-wrap}
 .shared-comments-panel{margin:18px 0 14px;border:1px solid #263c552e;border-radius:15px;background:#f7f9fbd9;overflow:hidden}
 .shared-comments-panel>summary{display:flex;align-items:center;gap:9px;padding:12px 14px;cursor:pointer;font-weight:800;color:#172b42;list-style:none;background:#eaf0f6;user-select:none}
@@ -787,22 +787,22 @@
 .shared-comments-panel>summary::before{content:'›';display:grid;place-items:center;width:22px;height:22px;border-radius:50%;background:#193b5b;color:#fff;font-size:1.1rem;transition:transform .18s ease}
 .shared-comments-panel[open]>summary::before{transform:rotate(90deg)}
 .shared-comments-label{flex:1}.shared-comments-count{display:grid;place-items:center;min-width:26px;height:26px;padding:0 7px;border-radius:999px;background:#193b5b;color:#fff;font-size:.76rem}
-.shared-comments-thread{display:flex;flex-direction:column;gap:11px;max-height:min(430px,52vh);padding:15px;overflow:auto;overscroll-behavior:contain;background:linear-gradient(180deg,#f8fafc,#edf2f6)}
-.shared-comment-row{display:flex;align-items:flex-end;gap:8px;max-width:min(82%,720px)}
+.shared-comments-thread{display:flex;flex-direction:column;gap:11px;max-height:min(520px,55dvh);padding:15px;overflow:auto;overscroll-behavior:contain;scrollbar-gutter:stable;background:linear-gradient(180deg,#f8fafc,#edf2f6)}
+.shared-comment-row{display:flex;align-items:flex-end;gap:8px;max-width:min(82%,720px);min-width:0}
 .shared-comment-row.is-own{align-self:flex-end;flex-direction:row-reverse}.shared-comment-row.is-other{align-self:flex-start}
 .shared-comment-row.is-reply{max-width:min(76%,660px)}
 .shared-comment-avatar{display:grid;place-items:center;flex:0 0 30px;width:30px;height:30px;border-radius:50%;background:#315a78;color:#fff;font-size:.69rem;font-weight:900;box-shadow:0 3px 8px #0c20352e}
 .shared-comment-row.is-own .shared-comment-avatar{background:#176b5b}
-.shared-comment-bubble{min-width:0;padding:9px 12px;border:1px solid #263c5521;border-radius:15px 15px 15px 4px;background:#fff;box-shadow:0 3px 10px #17283a12}
+.shared-comment-bubble{min-width:0;max-width:calc(100% - 38px);padding:9px 12px;border:1px solid #263c5521;border-radius:15px 15px 15px 4px;background:#fff;box-shadow:0 3px 10px #17283a12}
 .shared-comment-row.is-own .shared-comment-bubble{border-radius:15px 15px 4px 15px;background:#d9f2e9;border-color:#2d766733}
-.shared-comment-meta{font-size:.7rem;font-weight:800;color:#53657a}
+.shared-comment-meta{font-size:.7rem;font-weight:800;color:#53657a;overflow-wrap:anywhere}
 .shared-comment-text{margin:4px 0 5px;white-space:pre-wrap;overflow-wrap:anywhere;color:#17283a;line-height:1.4}
 .shared-comment-reply-to{margin-bottom:7px;padding:6px 8px;border-left:3px solid #52718f;border-radius:5px;background:#e8eef4;color:#435a70;font-size:.7rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .shared-comment-reply.btn{padding:1px 5px;border:0;color:#315a78;background:transparent;font-size:.72rem;font-weight:800}
 .shared-comment-reply.btn:hover,.shared-comment-reply.btn:focus-visible{color:#0e3b62;background:#dce8f2}
-.shared-comment-compose{margin:0 15px 15px;width:calc(100% - 30px);border-color:#315a78!important;color:#244b68!important;background:#fff!important;font-weight:800}
+.shared-comment-compose{margin:0 15px 15px;width:calc(100% - 30px);min-height:42px;border-color:#315a78!important;color:#244b68!important;background:#fff!important;font-weight:800}
 .shared-comments-empty{display:grid;place-items:center;gap:2px;padding:22px;color:#53657a;text-align:center}.shared-comments-empty span{font-size:1.55rem}.shared-comments-empty strong{color:#243c56}.shared-comments-empty small{font-size:.76rem}
-.shared-date-group{margin-top:14px}
+.shared-date-group{width:100%;max-width:1440px;margin-top:14px;margin-right:auto}
 .shared-date-heading{position:sticky;top:0;z-index:2;margin:0 0 10px;padding:7px 10px;border-radius:10px;background:#16273d;color:#dbe8f8;font-size:.86rem;font-weight:800;text-transform:capitalize;letter-spacing:.02em;box-shadow:0 4px 14px #02071155}
 .admin-row .label{flex:1;min-width:180px;overflow-wrap:anywhere}
 .user-group{border:1px solid #ffffff18;border-radius:16px;overflow:hidden;background:#ffffff05}
@@ -840,13 +840,29 @@
   .workspace-bar .search-box{grid-column:1/-1;grid-row:2}
   .workspace-tools{gap:7px}
   .workspace-tools .btn{min-height:42px;min-width:44px;padding-inline:10px}
-  .admin-panel{padding:18px 12px max(18px,env(safe-area-inset-bottom))}
+  .admin-panel{padding:14px 9px max(18px,env(safe-area-inset-bottom))}
   .admin-panel h2{font-size:1.2rem}
   .admin-row{align-items:stretch;padding:14px 4px}
   .admin-row .label{flex:1 0 100%;min-width:0}
   .admin-row .btn{flex:1 1 145px;min-height:42px;white-space:normal}
-  .shared-comment-row,.shared-comment-row.is-reply{max-width:94%}
-  .shared-comments-thread{padding:12px 9px}
+  .shared-note-card{padding:13px;border-radius:14px;margin-bottom:12px}
+  .shared-note-card>.h5{font-size:1rem;overflow-wrap:anywhere}
+  .shared-note-card>.small{font-size:.72rem;overflow-wrap:anywhere}
+  .shared-note-card .shared-note-text{font-size:.9rem;line-height:1.45}
+  .shared-comments-panel{margin:14px 0 11px;border-radius:13px}
+  .shared-comments-panel>summary{min-height:46px;padding:10px 11px}
+  .shared-comment-row,.shared-comment-row.is-reply{width:100%;max-width:100%}
+  .shared-comment-bubble{max-width:calc(100% - 36px)}
+  .shared-comments-thread{gap:9px;max-height:48dvh;padding:11px 8px;scrollbar-gutter:auto}
+  .shared-comment-reply-to{white-space:normal;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+  .shared-comment-compose{margin:0 10px 10px;width:calc(100% - 20px);min-height:46px}
+  .shared-date-heading{top:0;margin-inline:2px}
+  #commentNoteModal .comment-dialog{min-height:100%;margin:0;align-items:flex-end;max-width:none}
+  #commentNoteModal .comment-modal-content{max-height:92dvh;border-radius:20px 20px 0 0!important;padding-bottom:env(safe-area-inset-bottom)}
+  #commentNoteModal .modal-body{overflow:auto}
+  #commentNoteModal textarea{min-height:120px;font-size:16px}
+  #commentNoteModal .modal-footer{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  #commentNoteModal .modal-footer>*{width:100%;min-height:44px;margin:0}
 }
 @media(max-width:420px){
   .account-bar{gap:7px;padding-inline:9px}
@@ -861,6 +877,14 @@
   .workspace-tools .btn{padding-inline:9px}
   .menu-peek{font-size:.8rem}
   .gate-card{border-radius:18px}
+  .shared-comments-panel>summary::before{width:20px;height:20px;font-size:1rem}
+  .shared-comments-count{min-width:24px;height:24px}
+  .shared-comment-row{gap:6px}
+  .shared-comment-avatar{flex-basis:27px;width:27px;height:27px;font-size:.62rem}
+  .shared-comment-bubble{max-width:calc(100% - 31px);padding:8px 9px}
+  .shared-comment-meta{font-size:.65rem}
+  .shared-comment-text{font-size:.86rem}
+  .shared-comment-reply{min-height:32px}
 }
 </style>
 <section id="gate" class="gate"><div class="gate-card"><a class="text-white-50 d-inline-block mb-3" href="https://jodahir.github.io/job/dpo/">← Asistente operativo</a><h1 class="h3">Mi Pizarra Digital</h1><p id="gateMessage">Conectando…</p><form id="loginForm" hidden><label for="email">Correo electrónico</label><input class="form-control" id="email" type="email" autocomplete="email" required><label for="password">Contraseña</label><input class="form-control" id="password" type="password" autocomplete="current-password" minlength="6" required><button class="btn btn-primary" type="submit">Ingresar</button> <button class="btn btn-outline-light" type="button" id="registerBtn">Crear cuenta</button><button class="btn btn-link text-white" type="button" id="resetBtn">Recuperar contraseña</button></form><button id="gateLogout" class="btn btn-outline-light" hidden>Cerrar sesión</button><p id="authError" class="mt-3" role="alert"></p></div></section>
@@ -1024,8 +1048,8 @@
 </div>
 
 <div class="modal fade" id="commentNoteModal" tabindex="-1" aria-hidden="true">
-  <div class="modal-dialog modal-dialog-centered">
-    <div class="modal-content rounded-4">
+  <div class="modal-dialog modal-dialog-centered comment-dialog">
+    <div class="modal-content rounded-4 comment-modal-content">
       <div class="modal-header border-secondary-subtle">
         <h2 class="modal-title h5">Agregar comentario</h2>
         <button class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
@@ -1106,6 +1130,6 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js" integrity="sha384-FKyoEForCGlyvwx9Hj09JcYn3nv7wiPVlz7YYwJrWVcXK/BmnVDxM+D2scQbITxI" crossorigin="anonymous"></script>
-<script type="module" src="./app.js?v=20261029-comments-ui"></script>
+<script type="module" src="./app.js?v=20261030-comments-responsive"></script>
 </body>
 </html>
