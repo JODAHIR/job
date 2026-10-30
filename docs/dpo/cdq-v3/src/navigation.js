@@ -1,4 +1,4 @@
-import {visibleModule,manageRecord} from './permissions.js?remisiones-20261026';
+import {visibleModule,manageRecord} from './permissions.js?roles-cac-20261030';
 const list={id:'list',label:'Consultar',action:'view'};
 const records=(id,label)=>({id,label,functions:[list,{id:'new',label:'Registrar',action:'new',write:id}]});
 export const groups=[
@@ -15,12 +15,13 @@ export const pages=[['dashboard','◫','Inicio'],...modules.map(m=>[m.id,'▤',m
 export const allowed=(page,ctx)=>ctx.mode==='cloud'?visibleModule(ctx.profile,page):!['access','deadlines','migration','catalog','observationCatalog'].includes(page);
 export function functionsFor(module,ctx){return module.functions.filter(fn=>!(module.id==='remisiones'&&fn.id==='generate')&&!(fn.write==='remisiones'&&ctx.profile?.role==='asistente')&&(!fn.admin||ctx.profile?.role==='technical')&&(!fn.write||ctx.mode!=='cloud'||manageRecord(ctx.profile,fn.write))&&(!fn.cloudOnly||ctx.mode==='cloud')&&(!fn.sparkOnly||ctx.spark)&&(!fn.page||allowed(fn.page,ctx)));}
 export function resolveRoute(hash,ctx){
+ const home=ctx.mode==='cloud'&&ctx.profile?.role==='gerente'?'remisiones':'dashboard';
  const parts=hash.replace(/^#\/?/,'').split('/');
- if((!parts[0]||parts[0]==='dashboard')&&parts.length===1)return {page:'dashboard',functionId:'list'};
+ if((!parts[0]||parts[0]==='dashboard')&&parts.length===1)return {page:home,functionId:'list'};
  const m=modules.find(m=>m.group===parts[0]&&m.id===parts[1]);
- if(!m||!allowed(m.id,ctx))return {page:'dashboard',functionId:'list',error:'Pantalla inexistente o no autorizada.'};
+ if(!m||!allowed(m.id,ctx))return {page:home,functionId:'list',error:'Pantalla inexistente o no autorizada.'};
  const id=parts[2]||'list',fn=functionsFor(m,ctx).find(f=>f.id===id);
- if((m.functions.length&&!fn)||(!m.functions.length&&id!=='list')||parts.length>3)return {page:'dashboard',functionId:'list',error:'Función inexistente o no autorizada.'};
+ if((m.functions.length&&!fn)||(!m.functions.length&&id!=='list')||parts.length>3)return {page:home,functionId:'list',error:'Función inexistente o no autorizada.'};
  return {page:fn?.page||m.id,module:m.id,functionId:id,fn};
 }
 export function routeFor(page,id='list'){const m=modules.find(m=>m.id===(page==='migration'?'bulk':page));return m?`#/${m.group}/${m.id}/${page==='migration'?'migration':id}`:'#/dashboard';}

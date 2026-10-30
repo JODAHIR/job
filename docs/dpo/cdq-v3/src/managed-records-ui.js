@@ -9,7 +9,7 @@ export function managedState(db,c,row){
  if(review&&review.registered===lot.declared)return 'Conciliado';
  return c==='lotes'?'Pendiente':row.state==='Pendiente'?'Pendiente':row.state;
 }
-export function managedCollection({db,s,page,query,esc,table,period,canManage,profile,linked}){
+export function managedCollection({db,s,page,query,esc,table,period,canManage,profile,linked,selectedCac}){
  const lots=page==='lotes',types=sortedTypes(db.catalog),rows=lots?s.lots:s.docs;
  const canDelete=canManage(page)&&profile?.role!=='asistente';
  const remOf=row=>db.remisiones.find(r=>r.id===(lots?row:db.lotes.find(l=>l.id===row.loteId))?.remisionId);
@@ -31,6 +31,7 @@ export function managedCollection({db,s,page,query,esc,table,period,canManage,pr
    const obs=db.observaciones.filter(o=>o.documentId===row.id).sort((a,b)=>(b.date||'').localeCompare(a.date||'')),last=obs[0];
    return [checkbox,esc(row.number),esc(lot?.code),esc(typeOf(lot)||row.type),badge,obs.length,esc(last?.date||'—'),esc(last?.status||'Sin observaciones'),esc(last?.owner||'—'),`<div class="remision-actions">${actions}</div>`];
   });
+  if(lots&&selectedCac)return table(headers,rendered);
   return `<details class="document-group"><summary>${esc(db.cacs.find(c=>c.id===cacId)?.name||'CAC')} · ${items.length} ${lots?(items.length===1?'lote':'lotes'):(items.length===1?'documento':'documentos')}</summary>${table(headers,rendered)}</details>`;
  }).join('');
  const remIds=new Set(s.rem.map(r=>r.id)),removed=(db.deletedRecords||[]).filter(r=>r.collection===page&&remIds.has(lots?r.remisionId:[...db.lotes,...(db.deletedRecords||[]).filter(l=>l.collection==='lotes')].find(l=>l.id===r.loteId)?.remisionId));

@@ -1,4 +1,4 @@
-import {managedState,managedCollection,bindManagedRecords} from './managed-records-ui.js?lotes-cantidades-20261029';
+import {managedState,managedCollection,bindManagedRecords} from './managed-records-ui.js?roles-cac-20261030';
 import {remisionState,canCreateRemision,remisionBadge,managementActions,bindRemisionManagement,unifyCollectionToolbar} from './remision-management.js?comentarios-20261029';
 import {documentLots,selectedDocumentLot} from './document-lot-selection.js';
 import {observationCatalog,observationKey} from './observation-catalog.js';
@@ -7,15 +7,15 @@ import {initialFilters,createFilterSession} from './filter-session.js?v=filtros-
 import {connectionState,orderLots} from './presentation-status.js?v=cah-filtros-20261020';
 import {showLotVerification,lotVerificationLabel,lotReconciliation} from './lot-verification-ui.js?abm-documental-20261028';
 import {creationActions} from './record-actions.js?gdzs-20261027';
-import {dashboardFilters,intelligencePanel,bindIntelligence,groupModuleFilters} from './intelligence-ui.js?dashboard-color-20261025';
+import {dashboardFilters,intelligencePanel,bindIntelligence,groupModuleFilters} from './intelligence-ui.js?roles-cac-20261030';
 import {catalogPanel,bindCatalog,showLotGenerator,lotDashboard} from './lot-ui.js?lotes-cantidades-20261029';
 import {sortedTypes} from './lot-catalog.js?v=cah-lotes-20261019';
 import {annulPanel,bindAnnulPanel} from './remision-annul-ui.js?v=cah-filtros-20261020';
-import {pages,resolveRoute,routeFor} from './navigation.js?remisiones-multiple-20261026';
-import {navigationMarkup,bindNavigation,breadcrumb} from './navigation-ui.js?remisiones-multiple-20261026';
+import {pages,resolveRoute,routeFor} from './navigation.js?roles-cac-20261030';
+import {navigationMarkup,bindNavigation,breadcrumb} from './navigation-ui.js?roles-cac-20261030';
 import {installTables} from './tables.js?v=filas20-20261023';
 import {validateResponsables,validateContact,assignedUsers,userDescription} from './gerencia-contacts.js?v=cah-lotes-20261019';
-import { visibleModule, manageRecord, manageCacStatus } from './permissions.js?remisiones-20261026';
+import { visibleModule, manageRecord, manageCacStatus } from './permissions.js?roles-cac-20261030';
 import {phase3Panel,bindPhase3} from './phase3-ui.js?documental-20261024';
 import { metrics, scope, deadlineStatus, mutate, states, integer } from "./domain.js?filtros-vacios-20261023";
 import { LocalRepository } from "./repository.js?v=cah-lotes-20261019";
@@ -140,7 +140,7 @@ async function load() {
     else {$('#app').setAttribute('aria-busy','true');$('#refresh-cloud').disabled=true;showSyncStatus();}
 
     try{
-      if(!cloud){const module=await import('./firebase-client.bundle.js?comentarios-20261029');cloud=await module.connectFirebase();let initial=true;stopAuth=cloud.watchAuth(()=>{if(initial){initial=false;return}if(cloudMode()||!cloud.auth.currentUser){mode='cloud';epoch++;db=null;page="dashboard";functionId="list";window.history.replaceState(null,"",routeFor(page));$('#modal').close();load()}});}
+      if(!cloud){const module=await import('./firebase-client.bundle.js?comentarios-20261029');cloud=await module.connectFirebase();let initial=true;stopAuth=cloud.watchAuth(()=>{if(initial){initial=false;return}if(cloudMode()||!cloud.auth.currentUser){mode='cloud';epoch++;db=null;page=cloud?.profile?.role==='gerente'?'remisiones':'dashboard';functionId="list";window.history.replaceState(null,"",routeFor(page));$('#modal').close();load()}});}
       if(cloud.authOnly){authenticationView();return}
       if(!cloud.auth.currentUser){loginView();return}
       const result=await cloud.load({includeAdministration:false,onCached:cached=>{
@@ -269,9 +269,9 @@ function groupedLots(lots) {
 let intelligenceLevel="executive";
 function dashboard() {
  if(cloud?.profile?.role==='asistente')return intelligencePanel(db,f,'operational','asistente');
- return intelligenceLevel==='legacy'
+ return intelligenceLevel==='legacy'&&cloud?.profile?.role==='technical'
  ? '<button id="intel-modern" class="secondary">Volver a Inteligencia Documental</button><p>Vista histórica: métricas del modelo de individualización completa.</p>'+legacyDashboard()
- : intelligencePanel(db,f,intelligenceLevel)+'<button id="intel-legacy" class="secondary">Consultar indicadores del modelo histórico</button>'; }
+ : intelligencePanel(db,f,intelligenceLevel,cloud?.profile?.role||'')+(cloud?.profile?.role==='technical'?'<button id="intel-legacy" class="secondary">Consultar indicadores del modelo histórico</button>':''); }
 function legacyDashboard() {
   const m = metrics(db, f);
   const cards = [
@@ -317,7 +317,7 @@ function collectionView() {
    if(entity==='lotes')s.docs=s.docs.filter(d=>d.loteId===id);
    if(entity==='documentos')s.docs=s.docs.filter(d=>d.id===id);
   }
-  if(cloud?.spark&&['lotes','documentos'].includes(page))return managedCollection({db,s,page,query,esc,table,period,canManage,profile:cloud.profile,linked:contextFilter?.child===page});
+  if(cloud?.spark&&['lotes','documentos'].includes(page))return managedCollection({db,s,page,query,esc,table,period,canManage,selectedCac:f.cac,profile:cloud.profile,linked:contextFilter?.child===page});
   let rows = [],
     headers = [],
     collection = page;
@@ -508,7 +508,7 @@ function render() {
   filterSession.save(f);
   const current = pages.find((p) => p[0] === page);
   $("#app").innerHTML =
-    `${navigationMarkup(page,functionId,navigationContext())}<main><header><button id="nav-mobile" aria-label="Abrir menú" aria-controls="institution-nav" aria-expanded="false">☰</button><div class="header-heading"><strong>CONTROL DOCUMENTO — CAH</strong><div class="breadcrumb"><button class="link" data-route="#/dashboard">Inicio</button>${page!=="dashboard"?` / ${esc(breadcrumb(page,functionId))}`:""}</div></div><div class="header-account">${cloudMode()?`<div class="session-bar header-session"><span>${esc(cloud.auth.currentUser.email)} · ${esc(({technical:"Administrador",director:"Director",gerente:"Gerente",asistente:"Asistente"})[cloud.profile.role]||cloud.profile.role)}</span><button id="refresh-cloud" class="secondary">Actualizar</button><button id="logout" class="secondary">Cerrar sesión</button></div>`:""}<div class="local-chip">${cloudMode()?(cloud.emulator?"◉ Emulador":"◉ Conectado") : "◉ Almacenamiento local"}</div></div></header><div class="content"><div class="title-row"><div>${page==='dashboard'?'':'<span class="eyebrow">SISTEMA DE CONTROL DOCUMENTAL</span>'}<h1>${current[2]}</h1>${page==='dashboard'?'':'<p>Seguimiento quincenal · Dirección de Operaciones</p>'}</div>${cloud?.profile?.role==="technical"?`<label class="mode-label">Espacio de trabajo<select id="mode"><option value="demo" ${mode === "demo" ? "selected" : ""}>Demostración</option><option value="local" ${mode === "local" ? "selected" : ""}>Mis registros locales</option><option value="cloud" ${cloudMode()?"selected":""}>Firebase institucional</option></select></label>`:(cloudMode()?"":'<button id="open-institutional" class="secondary">Acceder al sistema</button>')}</div>${mode==="local"?`<div class="session-bar"><button id="export-local" class="secondary">Descargar respaldo para migración</button></div>`:""}${cloudMode()?"":`<div class="notice">${mode==="demo"?"<strong>Datos ficticios.</strong> Espacio de demostración separado.":"<strong>Mis registros locales.</strong> Guardados en este navegador."} Sin sincronización multiusuario.</div>`}${!["audit","access","migration","catalog","observationCatalog"].includes(page) ? filters() : ""}${page === "observationCatalog" ? observationCatalogPanel(cloudContext()) : page === "catalog" ? catalogPanel(cloudContext()) : page === "dashboard" ? dashboard() : page === "history" ? history() : ["audit","reports","bulk"].includes(page) ? phase3Panel(page,phase3Context()) : ["access","deadlines","migration"].includes(page)?cloudPanel(page,cloudContext()):collectionView()}<footer>Dirección de Operaciones </footer></div></main>`;
+    `${navigationMarkup(page,functionId,navigationContext())}<main><header><button id="nav-mobile" aria-label="Abrir menú" aria-controls="institution-nav" aria-expanded="false">☰</button><div class="header-heading"><strong>CONTROL DOCUMENTO — CAH</strong><div class="breadcrumb"><button class="link" data-route="#/dashboard">Inicio</button>${page!=="dashboard"?` / ${esc(breadcrumb(page,functionId))}`:""}</div></div><div class="header-account">${cloudMode()?`<div class="session-bar header-session"><span>${esc(cloud.profile.description?.trim()||'Usuario sin descripción')}</span><button id="refresh-cloud" class="secondary">Actualizar</button><button id="logout" class="secondary">Cerrar sesión</button></div>`:""}<div class="local-chip">${cloudMode()?(cloud.emulator?"◉ Emulador":"◉ Conectado") : "◉ Almacenamiento local"}</div></div></header><div class="content"><div class="title-row"><div>${page==='dashboard'?'':'<span class="eyebrow">SISTEMA DE CONTROL DOCUMENTAL</span>'}<h1>${current[2]}</h1>${page==='dashboard'?'':'<p>Seguimiento quincenal · Dirección de Operaciones</p>'}</div>${cloud?.profile?.role==="technical"?`<label class="mode-label">Espacio de trabajo<select id="mode"><option value="demo" ${mode === "demo" ? "selected" : ""}>Demostración</option><option value="local" ${mode === "local" ? "selected" : ""}>Mis registros locales</option><option value="cloud" ${cloudMode()?"selected":""}>Firebase institucional</option></select></label>`:(cloudMode()?"":'<button id="open-institutional" class="secondary">Acceder al sistema</button>')}</div>${mode==="local"?`<div class="session-bar"><button id="export-local" class="secondary">Descargar respaldo para migración</button></div>`:""}${cloudMode()?"":`<div class="notice">${mode==="demo"?"<strong>Datos ficticios.</strong> Espacio de demostración separado.":"<strong>Mis registros locales.</strong> Guardados en este navegador."} Sin sincronización multiusuario.</div>`}${!["audit","access","migration","catalog","observationCatalog"].includes(page) ? filters() : ""}${page === "observationCatalog" ? observationCatalogPanel(cloudContext()) : page === "catalog" ? catalogPanel(cloudContext()) : page === "dashboard" ? dashboard() : page === "history" ? history() : ["audit","reports","bulk"].includes(page) ? phase3Panel(page,phase3Context()) : ["access","deadlines","migration"].includes(page)?cloudPanel(page,cloudContext()):collectionView()}<footer>Dirección de Operaciones </footer></div></main>`;
   bind();
   updateConnectionChip();
   installTables();
