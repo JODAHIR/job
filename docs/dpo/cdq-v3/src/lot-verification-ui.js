@@ -1,13 +1,11 @@
 import {currentVerification,reconcilePresented} from './lot-verification.js?abm-documental-20261028';
 
 export function verificationHistoryMarkup(records,users,esc){
- const roles={technical:'Administrador',director:'Director',gerente:'Gerente',asistente:'Asistente operativo'};
  return records.map(v=>{
   const user=users.find(u=>u.id===v.actor);
   const name=user?.description?.trim()||v.actorDescription?.trim()||user?.email||'Responsable sin descripción disponible';
   const date=v.at?.toDate?.().toLocaleString('es-PY')||'Fecha no disponible';
-  const counts=v.declared===undefined?'':`<dl class="verification-history-counts">${[['Declarados',v.declared],['Presentados',v.registered],['Faltantes',v.missing],['Excedentes',v.excess]].map(([label,value])=>`<div><dt>${label}</dt><dd>${esc(value)}</dd></div>`).join('')}</dl>`;
-  return `<article class="verification-history-entry"><header><strong>${esc(v.result||'Comentario')}</strong><time>${esc(date)}</time></header><p class="verification-history-author">${esc(name)}<span>${esc(roles[v.role]||'Responsable')}</span></p>${counts}<p class="verification-history-comment">${esc(v.comments)}</p>${v.reviewerComments&&v.reviewerComments!==v.comments?`<p class="verification-history-comment">${esc(v.reviewerComments)}</p>`:''}</article>`;
+  return `<article class="verification-history-entry"><h3>Estado y fecha de verificación</h3><header><strong>${esc(v.result||'Comentario')}</strong><time>${esc(date)}</time></header><p class="verification-history-author"><strong>Responsable:</strong> ${esc(name)}</p><p class="verification-history-comment"><strong>Comentario:</strong> ${esc(v.comments)}</p>${v.reviewerComments&&v.reviewerComments!==v.comments?`<p class="verification-history-comment"><strong>Comentario:</strong> ${esc(v.reviewerComments)}</p>`:''}</article>`;
  }).join('')||'<p>Sin verificaciones anteriores.</p>';
 }
 
