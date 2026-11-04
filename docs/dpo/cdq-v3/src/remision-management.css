@@ -5,3 +5,20 @@
 [data-managed-collection] .document-group>summary{font-weight:600;cursor:pointer}
 [data-managed-collection] .document-group[open]>summary{margin-bottom:12px}
 [data-managed-select],#managed-select-visible{width:18px;height:18px;min-height:0;margin:0;vertical-align:middle}
+
+/* Presentación aprobada: remisiones, sin modificar permisos ni operaciones. */
+.remisiones-panel table{table-layout:fixed;width:100%;min-width:0}
+.remisiones-panel th,.remisiones-panel td{padding:10px 5px;overflow-wrap:anywhere;font-size:12px}
+.remisiones-panel th:first-child{width:26px}
+.remisiones-panel th:nth-child(2){width:14%}
+.remisiones-panel th:last-child{width:304px}
+.remisiones-panel .remision-actions{gap:4px;flex-wrap:nowrap}
+.remisiones-panel td .remision-actions button{box-sizing:border-box;width:72px;min-width:0;min-height:28px;height:28px;padding:3px;font-size:11px;white-space:nowrap;background:#f1f3f5;color:#334b58;border:1px solid #d3dce2;border-radius:5px}
+.remisiones-panel .remision-actions [data-remision-detail]{background:#fff4bf;color:#765800;border-color:#ead784}
+.remisiones-panel .remision-actions .remision-danger,.remisiones-panel #remision-bulk-delete{background:#fde6e9;color:#a51d2d;border-color:#efb6bf}
+.remisiones-panel .collection-toolbar button{width:auto;white-space:normal;min-height:34px;padding:5px 9px;font-size:11px;border-radius:5px}
+.remisiones-panel .collection-toolbar .primary,.remisiones-panel .collection-toolbar [data-generate-remisiones],.remisiones-panel .collection-toolbar #generate-remisiones{background:#ddf5e6;color:#176336;border:1px solid #a5d8b7}
+.remisiones-panel input[type=checkbox]{width:16px;height:16px;min-height:0;margin:0}
+.remisiones-panel .collection-toolbar{gap:6px}
+.remisiones-panel .collection-toolbar input.search{min-width:160px}
+@media(max-width:1100px){.remisiones-panel table thead{display:none}.remisiones-panel table tr{display:flex;flex-wrap:wrap;gap:6px;border-bottom:1px solid #d7e3e8;padding:10px 0}.remisiones-panel table td{border:0;flex:1 1 95px}.remisiones-panel table td:first-child{flex:0 0 26px}.remisiones-panel table td:last-child{flex:1 1 304px}.remisiones-panel .table-scroll{overflow-x:visible}}

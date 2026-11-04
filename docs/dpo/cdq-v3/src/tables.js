@@ -5,6 +5,8 @@ export function installTables(root=document){
   const body=table.tBodies[0],rows=[...body.rows];
   if(!rows.length||rows[0].querySelector('.empty'))continue;
   let page=0,size=20,column=-1,direction=1;
+  const cacIndex=[...table.tHead.rows[0].cells].findIndex(th=>/^CAC(?: \/ dependencia)?$/.test(th.textContent.trim()));
+  if(cacIndex>=0){table.tHead.rows[0].cells[cacIndex].textContent='CAC';rows.sort((a,b)=>a.cells[cacIndex].textContent.trim().localeCompare(b.cells[cacIndex].textContent.trim(),'es',{numeric:true,sensitivity:'base'}));}
   const controls=document.createElement('div');controls.className='table-controls';
   const prev=document.createElement('button'),next=document.createElement('button'),label=document.createElement('span'),select=document.createElement('select');
   prev.textContent='Anterior';next.textContent='Siguiente';select.setAttribute('aria-label','Filas por página');
@@ -16,3 +18,4 @@ export function installTables(root=document){
  }
 }
 if(typeof document!=='undefined')new MutationObserver(()=>installTables()).observe(document.documentElement,{childList:true,subtree:true});
+

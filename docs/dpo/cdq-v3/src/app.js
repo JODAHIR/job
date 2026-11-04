@@ -1,5 +1,5 @@
 import {managedState,managedCollection,bindManagedRecords} from './managed-records-ui.js?historial-20261030';
-import {remisionState,canCreateRemision,remisionBadge,managementActions,bindRemisionManagement,unifyCollectionToolbar} from './remision-management.js?comentarios-20261029';
+import {remisionState,canCreateRemision,remisionBadge,managementActions,managementSelection,remisionCreator,bindRemisionManagement,unifyCollectionToolbar} from './remision-management.js?visual-20261104';
 import {documentLots,selectedDocumentLot} from './document-lot-selection.js';
 import {observationCatalog,observationKey} from './observation-catalog.js';
 import {observationCatalogPanel,bindObservationCatalog} from './observation-catalog-ui.js';
@@ -13,7 +13,7 @@ import {sortedTypes} from './lot-catalog.js?v=cah-lotes-20261019';
 import {annulPanel,bindAnnulPanel} from './remision-annul-ui.js?v=cah-filtros-20261020';
 import {pages,resolveRoute,routeFor} from './navigation.js?roles-cac-20261030';
 import {navigationMarkup,bindNavigation,breadcrumb} from './navigation-ui.js?roles-cac-20261030';
-import {installTables} from './tables.js?v=filas20-20261023';
+import {installTables} from './tables.js?v=visual-20261104';
 import {validateResponsables,validateContact,assignedUsers,userDescription} from './gerencia-contacts.js?v=cah-lotes-20261019';
 import { visibleModule, manageRecord, manageCacStatus } from './permissions.js?roles-cac-20261030';
 import {phase3Panel,bindPhase3} from './phase3-ui.js?documental-20261024';
@@ -203,7 +203,7 @@ function filters() {
     "Ambas quincenas",
   )}${select("gerencia", "Gerencia", db.gerencias, f.gerencia, "Todas las gerencias")}${select(
     "cac",
-    "CAC / dependencia",
+    "CAC",
     db.cacs.filter((c) => !f.gerencia || c.gerenciaId === f.gerencia),
     f.cac,
     "Todos los CAC",
@@ -259,7 +259,7 @@ function groupedLots(lots) {
     l => {const r=remisiones.get(l.remisionId);return [r?.cacId || '', name('cacs',r?.cacId) || 'Sin CAC'];}
   ];
   function renderGroups(items, depth) {
-    if(depth===levels.length) return table(["Lote", "CAC / dependencia", "Período", "Declarados", "Individualizados", "Conciliación", ""],lotRows(items));
+    if(depth===levels.length) return table(["Lote", "CAC", "Período", "Declarados", "Individualizados", "Conciliación", ""],lotRows(items));
     const groups=new Map();
     for(const lot of items){const [key,label]=levels[depth](lot);if(!groups.has(key))groups.set(key,{label,items:[]});groups.get(key).items.push(lot);}
     return [...groups.entries()].sort(([a],[b])=>a.localeCompare(b,'es',{numeric:true})).map(([,g])=>`<details class="lot-group"><summary>${esc(g.label)} <small>${g.items.length} ${g.items.length===1?'lote':'lotes'} · ${g.items.reduce((sum,l)=>sum+l.declared,0)} declarados</small></summary><div class="lot-group-content">${renderGroups(g.items,depth+1)}</div></details>`).join('');
@@ -333,7 +333,7 @@ function collectionView() {
       ]);
   }
   if (page === "cacs") {
-    headers = ["CAC / dependencia", "Gerencia", "Contacto", "Estado", ""];
+    headers = ["CAC", "Gerencia", "Contacto", "Estado", ""];
     rows = s.cacs.map((c) => [
       esc(c.name),
       esc(name("gerencias", c.gerenciaId)),
@@ -343,8 +343,9 @@ function collectionView() {
     ]);
   }
   if (page === "remisiones") {
-    headers = ["CAC / dependencia", "Período", "Expediente", "Fecha de remisión", "Recepción", "Vencimiento", "Lotes", "Registro", ""];
+    headers = ["", "CAC", "Período", "Expediente", "Fecha de remisión", "Recepción", "Vencimiento", "Lotes", "Estado", "Acciones"];
     rows = s.rem.map((r) => [
+      managementSelection(db,r,cloud?.profile||{active:true,role:"technical"},esc),
       esc(name("cacs", r.cacId)),
       esc(period(r)),
       esc(r.expediente ?? "—"), esc(r.remittedOn ?? "—"), esc(r.receivedOn ?? "—"), esc(r.dueOn ?? "—"),
@@ -357,7 +358,7 @@ function collectionView() {
   if (page === "lotes") {
     headers = [
       "Lote",
-      "CAC / dependencia",
+      "CAC",
       "Período",
       "Declarados",
       "Registrados / Individualizados",
@@ -417,7 +418,7 @@ function collectionView() {
       return `<details class="document-group"><summary><strong>${title}</strong> · ${individual.length} ${individual.length===1?'documento individualizado':'documentos individualizados'}${review?` · Cantidad verificada del lote: ${review[4]}`:''}${summary?` <span class="document-group-states">${summary}</span>`:''}${review?` <span class="document-group-states">Estado del lote: ${review[3]}</span>`:''}</summary>${table(headers,group)}<p class="footnote">La verificación total y los documentos individualizados no se suman.</p></details>`;
     }).join('')||'<p>Sin documentos para esta selección.</p>';
   }
-  return `<section class="panel">${contextFilter?.child===page?'<p>Mostrando registros vinculados. <button id="clear-context" class="link">Ver todos los registros del período</button></p>':""}<div class="section-line"><div><h2>${pages.find((p) => p[0] === page)[2]}</h2><p>${page === "gerencias" || page === "cacs" ? "Catálogo institucional · independiente del período" : "Registros del período y ámbito seleccionados"}</p></div>${creationActions(collection,canManage(collection)&&(collection!=="remisiones"||!cloudMode()||canCreateRemision(cloud.profile)),cloud?.spark,cloud?.profile)}</div><input class="search" id="search" placeholder="Buscar en esta tabla…" value="${esc(query)}" aria-label="Buscar en la tabla">${tableMarkup}<p class="footnote">${filtered.length} resultados · ${cloudMode()?"":"Cambios guardados únicamente en este navegador."}</p></section>`;
+  return `<section class="panel ${page==='remisiones'?'remisiones-panel':''}">${contextFilter?.child===page?'<p>Mostrando registros vinculados. <button id="clear-context" class="link">Ver todos los registros del período</button></p>':""}<div class="section-line"><div><h2>${pages.find((p) => p[0] === page)[2]}</h2><p>${page === "gerencias" || page === "cacs" ? "Catálogo institucional · independiente del período" : "Registros del período y ámbito seleccionados"}</p></div>${creationActions(collection,canManage(collection)&&(collection!=="remisiones"||!cloudMode()||canCreateRemision(cloud.profile)),cloud?.spark,cloud?.profile)}</div><input class="search" id="search" placeholder="Buscar en esta tabla…" value="${esc(query)}" aria-label="Buscar en la tabla">${tableMarkup}<p class="footnote">${filtered.length} resultados · ${cloudMode()?"":"Cambios guardados únicamente en este navegador."}</p></section>`;
 }
 function history() {
   const keys = [
@@ -663,7 +664,7 @@ function form(c, id, defaults = {}) {
     fields +=
       pick(
         "cacId",
-        "CAC / dependencia",
+        "CAC",
         db.cacs.filter(c => c.active !== false || c.id === row.cacId),
         (r) => r.name,
         row.cacId || f.cac,
@@ -739,7 +740,7 @@ function form(c, id, defaults = {}) {
         row.status ?? "Pendiente",
       );
   $("#modal").innerHTML =
-    `<form id="record-form"><div class="section-line"><h2>${id ? "Editar" : "Nuevo"} registro</h2><button type="button" id="close" aria-label="Cerrar">✕</button></div><p>${pages.find((p) => p[0] === c)[2]} · ${cloudMode()?"Firebase institucional":mode === "demo" ? "Demostración" : "Mis registros locales"}</p><div class="form-fields">${fields}${cloudMode()?"<p>Responsable: identidad de la sesión autenticada.</p>":field("actor", "Responsable de este registro")}</div><p id="form-error" role="alert"></p><div class="form-actions"><button type="button" id="cancel" class="secondary">Cancelar</button><button class="primary" type="submit">Guardar registro</button></div></form>`;
+    `<form id="record-form"><div class="section-line"><h2>${id ? "Editar" : "Nuevo"} registro</h2><button type="button" id="close" aria-label="Cerrar">✕</button></div>${c==="remisiones"?"":`<p>${pages.find((p) => p[0] === c)[2]} · ${cloudMode()?"Firebase institucional":mode === "demo" ? "Demostración" : "Mis registros locales"}</p>`}<div class="form-fields">${fields}${cloudMode()?(c==="remisiones"?`<p>Usuario que generó el registro: ${esc(remisionCreator(db,row,cloud.profile,!id))}</p>`:"<p>Responsable: identidad de la sesión autenticada.</p>"):field("actor", "Responsable de este registro")}</div><p id="form-error" role="alert"></p><div class="form-actions"><button type="button" id="cancel" class="secondary">Cancelar</button><button class="primary" type="submit">Guardar registro</button></div></form>`;
   if(c==='lotes'&&row.typeId){$('#record-form').elements.code.readOnly=true;$('#record-form').elements.remisionId.disabled=true;}
   if(c==='documentos'){
     const form=$('#record-form'),lotSelect=form.elements.loteId,typeSelect=form.elements.type;
@@ -863,4 +864,5 @@ function indicatorDetail(index){
  const docs=m.docs.filter(d=>index===5?d.state!=='Pendiente':index===6?d.state==='Pendiente':index===7?d.state==='Verificado con observación':index===10?d.state==='Verificado':true);
  showDetail('Detalle de documentos',['Tipo','Número','Estado','Lote'],docRows(docs));
 }
+
 

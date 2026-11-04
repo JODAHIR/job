@@ -13,7 +13,9 @@ export function remisionState(db,r){
 export const canCreateRemision=p=>p?.active&&['technical','director','gerente'].includes(p.role);
 export function remisionActions(db,r,p){const state=remisionState(db,r),locked=['Conciliada','Anulada'].includes(state);return {state,edit:!locked&&p?.active&&['technical','director','gerente','asistente'].includes(p.role),remove:!locked&&canCreateRemision(p)};}
 export function remisionBadge(state,esc){return `<span class="badge remision-state ${state==='Conciliada'?'remision-green':state==='Registrada'?'remision-yellow':state==='Pendiente'?'remision-red':'neutral'}">${esc(state)}</span>`;}
-export function managementActions(db,r,p,esc){const a=remisionActions(db,r,p);return `<div class="remision-actions">${r.annulment&&p?.active&&p.role==='technical'?`<input type="checkbox" data-remision-restore-select="${esc(r.id)}" aria-label="Seleccionar anulada ${esc(r.expediente||r.id)}">`:""}${a.remove?`<input type="checkbox" data-remision-select="${esc(r.id)}" aria-label="Seleccionar remisión ${esc(r.expediente||r.id)}">`:""}${a.edit?`<button class="secondary" data-edit="remisiones" data-id="${esc(r.id)}">Editar</button>`:''}${a.remove?`<button class="secondary remision-danger" data-remision-remove="${esc(r.id)}">Eliminar</button>`:''}${!r.annulment&&r.receivedOn&&p?.active?`<button class="secondary" data-remision-comment="${esc(r.id)}">Comentario general</button>`:''}<button class="secondary" data-remision-detail="${esc(r.id)}" title="Abrir ventana de detalle">Ver detalle</button></div>`;}
+export function managementSelection(db,r,p,esc){const a=remisionActions(db,r,p);return r.annulment&&p?.active&&p.role==='technical'?`<input type="checkbox" data-remision-restore-select="${esc(r.id)}" aria-label="Seleccionar anulada ${esc(r.expediente||r.id)}">`:a.remove?`<input type="checkbox" data-remision-select="${esc(r.id)}" aria-label="Seleccionar remisión ${esc(r.expediente||r.id)}">`:'';}
+export function managementActions(db,r,p,esc){const a=remisionActions(db,r,p);return `<div class="remision-actions">${a.edit?`<button class="secondary" data-edit="remisiones" data-id="${esc(r.id)}">Editar</button>`:''}${!r.annulment&&r.receivedOn&&p?.active?`<button class="secondary" data-remision-comment="${esc(r.id)}">Comentario</button>`:''}<button class="secondary" data-remision-detail="${esc(r.id)}" title="Abrir ventana de detalle">Ver detalle</button>${a.remove?`<button class="secondary remision-danger" data-remision-remove="${esc(r.id)}">Eliminar</button>`:''}</div>`;}
+export function remisionCreator(db,row,profile,isNew){if(isNew)return profile?.description?.trim()||'Usuario sin descripción';const entry=(db.audit||[]).find(a=>a.collection==='remisiones'&&a.recordId===row.id&&!a.before);const uid=row.createdBy||entry?.actor;return (db.users||[]).find(u=>u.id===uid)?.description?.trim()||(uid&&uid===profile?.id?profile.description?.trim():'')||'Autor no disponible en los datos cargados';}
 export function bindRemisionManagement(ctx){const {db,cloud,esc,load}=ctx;
  bindBulkRemisiones(ctx);
  bindRestoration(ctx);
@@ -39,6 +41,7 @@ function bindBulkRemisiones({db,cloud,esc,load}){
  bar.innerHTML='<label><input type="checkbox" id="remision-select-page"> Seleccionar página</label><span id="remision-selected-count">0 seleccionadas</span><button class="secondary remision-danger" id="remision-bulk-delete" disabled>Eliminar seleccionadas</button>';
  panel.querySelector('.collection-toolbar')?.after(bar);
  const page=bar.querySelector('input'),count=bar.querySelector('span'),button=bar.querySelector('button');
+ panel.querySelector('.collection-toolbar')?.append(button);
  const update=()=>{count.textContent=selected.size+' seleccionadas';button.disabled=!selected.size;const boxes=[...panel.querySelectorAll('[data-remision-select]')];for(const b of boxes)b.checked=selected.has(b.dataset.remisionSelect);page.checked=boxes.length>0&&boxes.every(b=>b.checked);page.indeterminate=boxes.some(b=>b.checked)&&!page.checked;};
  panel.addEventListener('change',e=>{if(e.target.matches('[data-remision-select]')){e.target.checked?selected.add(e.target.dataset.remisionSelect):selected.delete(e.target.dataset.remisionSelect);update();}});
  page.onchange=()=>{for(const b of panel.querySelectorAll('[data-remision-select]'))page.checked?selected.add(b.dataset.remisionSelect):selected.delete(b.dataset.remisionSelect);update();};
@@ -51,3 +54,4 @@ function bindBulkRemisiones({db,cloud,esc,load}){
  };
  };
 }
+
