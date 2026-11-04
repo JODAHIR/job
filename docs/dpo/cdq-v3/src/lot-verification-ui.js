@@ -1,3 +1,4 @@
+import {canConciliate} from './conciliation-permission.js';
 import {currentVerification,reconcilePresented} from './lot-verification.js?abm-documental-20261028';
 
 export function verificationHistoryMarkup(records,users,esc){
@@ -49,7 +50,7 @@ export async function showLotVerification({cloud,db,esc,load},lotId,adminEdit=fa
   };
   return;
  }
- if(!administrator){modal.innerHTML=`<h2>Revisión de ${esc(lot.code)}</h2><p>Solo el Administrador puede cambiar el estado del lote. Cuando esté verificado podrá agregar comentarios.</p><button class="secondary verification-close" id="verify-close">Cerrar</button>`;modal.querySelector('#verify-close').onclick=close;return;}
+ if(!canConciliate(cloud.profile,cloud.auth?.currentUser,db.gerencias.find(m=>m.id===g))){modal.innerHTML=`<h2>Revisión de ${esc(lot.code)}</h2><p>Solo el responsable designado de esta gerencia, el Director o el Administrador puede conciliar. Cuando esté verificado podrá agregar comentarios.</p><button class="secondary verification-close" id="verify-close">Cerrar</button>`;modal.querySelector('#verify-close').onclick=close;return;}
  let s=review.summary;
  const previous=history.find(v=>v.countSource==='manual');
  const initial=s.declared;
@@ -94,3 +95,4 @@ export function lotReconciliation(db,lot){
  const individualized=db.documentos.filter(d=>d.loteId===lot.id).length;
  return {review,individualized,registered:review?.registered??individualized};
 }
+

@@ -10,6 +10,17 @@ service cloud.firestore {
   function profile() { return get(/databases/$(database)/documents/users/$(request.auth.uid)).data; }
   function role(r) { return signed() && profile().active == true && profile().role == r; }
   function readScope(g) { return signed() && profile().active == true && (profile().role in ['director','technical'] || (profile().role == 'asistente' && g in profile().gerencias) || (profile().role == 'gerente' && profile().gerenciaId == g)); }
+  // Conciliation designation is independent from general operational write permissions.
+  function designatedConciliator(g) {
+   let contacts=get(/databases/$(database)/documents/gerencias/$(g)).data.get('responsables',[]);
+   let email=request.auth.token.email.lower();
+   return contacts is list && contacts.size()==2
+    && (contacts[0].correo.lower()==email || contacts[1].correo.lower()==email);
+  }
+  function conciliate(g) {
+   return signed() && profile().active == true
+    && (profile().role in ['technical','director'] || designatedConciliator(g));
+  }
   function writeScope(g) { let p=profile(); return signed() && p.active && (p.role == 'technical' || p.role == 'asistente' && g in p.gerencias); }
   function lotWrite(g) { let p=profile(); return signed() && p.active && (p.role in ['technical','director'] || p.role == 'gerente' && p.gerenciaId == g || p.role == 'asistente' && g in p.gerencias); }
   function entityWrite(g,c) { return c in ['lotes','remisiones'] ? lotWrite(g) : writeScope(g); }
@@ -283,15 +294,15 @@ service cloud.firestore {
     }
     function verificationChange(m,b) {
       let v=getAfter(/databases/$(database)/documents/gerencias/$(g)/lotVerifications/$(m.recordId)).data;
-      return role('technical') && v.lotId == id && v.at == request.time && v.actor == request.auth.uid
+      return conciliate(g) && v.lotId == id && v.at == request.time && v.actor == request.auth.uid
         && m.documents == b.documents && m.pending == (v.registered != v.declared);
     }
-    allow create: if lotWrite(g) && valid(request.resource.data) && request.resource.data.version == 1 && (
+    allow create: if (lotWrite(g) || request.resource.data.event == 'verification' && conciliate(g)) && valid(request.resource.data) && request.resource.data.version == 1 && (
       request.resource.data.event == 'create' && request.resource.data.recordId == id && request.resource.data.pending && request.resource.data.documents == 0
         && !exists(/databases/$(database)/documents/gerencias/$(g)/lotes/$(id)) && getAfter(/databases/$(database)/documents/gerencias/$(g)/lotes/$(id)).data.revision == 1
       || request.resource.data.event == 'verification' && verificationChange(request.resource.data,{'documents':request.resource.data.documents})
       || role('technical') && request.resource.data.event == 'initialize' && request.resource.data.recordId == id && existsParent(g,'lotes',id));
-    allow update: if lotWrite(g) && valid(request.resource.data) && request.resource.data.version == resource.data.version + 1
+    allow update: if (lotWrite(g) || request.resource.data.event == 'verification' && conciliate(g)) && valid(request.resource.data) && request.resource.data.version == resource.data.version + 1
       && (request.resource.data.event == 'document' && documentChange(request.resource.data,resource.data)
         || request.resource.data.event == 'verification' && verificationChange(request.resource.data,resource.data));
    }
@@ -312,7 +323,7 @@ service cloud.firestore {
    }
    match /lotVerifications/{id} {
     allow read: if readScope(g);
-    allow create: if role('technical') && activeRecord(g,'lotes',request.resource.data.lotId) && getAfter(mgPath(g,request.resource.data.lotId)).data.recordId == id && getAfter(mgPath(g,request.resource.data.lotId)).data.event == 'verification' && validVerification(request.resource.data);
+    allow create: if conciliate(g) && activeRecord(g,'lotes',request.resource.data.lotId) && getAfter(mgPath(g,request.resource.data.lotId)).data.recordId == id && getAfter(mgPath(g,request.resource.data.lotId)).data.event == 'verification' && validVerification(request.resource.data);
     function validVerification(v) {
      let l=get(/databases/$(database)/documents/gerencias/$(g)/lotes/$(v.lotId)).data;
      let r=get(/databases/$(database)/documents/gerencias/$(g)/remisiones/$(l.remisionId)).data;
@@ -508,3 +519,4 @@ service cloud.firestore {
   match /{path=**} { allow read,write: if false; }
  }
 }
+

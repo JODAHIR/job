@@ -1,4 +1,5 @@
 import {doc,collection,query,where,limit,getDocsFromServer,getDocFromServer,runTransaction,serverTimestamp} from 'firebase/firestore';
+import {canConciliate} from './conciliation-permission.js';
 import {lotPermission} from './lot-catalog.js';
 import {reconcileLot,reconcilePresented,verificationResult} from './lot-verification.js';
 const id=v=>{if(typeof v!=='string'||! /^[A-Za-z0-9_-]{1,128}$/.test(v))throw Error('Identificador inválido.');return v;};
@@ -29,9 +30,9 @@ export async function verifyLot(store,auth,{review,confirmed=false,comments='',o
  if(!confirmed&&!comments.trim())throw Error('Describa el resultado de la revisión.');
  return runTransaction(store,async tx=>{
  const target=doc(store,base,'lotVerifications',op);
- const [existing,ps,ls,cs,rs]=await Promise.all([tx.get(target),tx.get(doc(store,'users',auth.currentUser.uid)),tx.get(doc(store,base,'lotes',l)),tx.get(doc(store,base,'remisionControls',fresh.lot.remisionId)),tx.get(doc(store,base,'remisiones',fresh.lot.remisionId))]);
+ const [existing,ps,ls,cs,rs,gs]=await Promise.all([tx.get(target),tx.get(doc(store,'users',auth.currentUser.uid)),tx.get(doc(store,base,'lotes',l)),tx.get(doc(store,base,'remisionControls',fresh.lot.remisionId)),tx.get(doc(store,base,'remisiones',fresh.lot.remisionId)),tx.get(doc(store,'gerencias',g))]);
  if(existing.exists()){if(existing.data().actor!==auth.currentUser.uid)throw Error('Operación ajena.');return existing.data();}
- if(!lotPermission(ps.data(),g)||ps.data().role!=='technical')throw Error('Solo el Administrador puede cambiar el estado del lote.');
+ if(!canConciliate(ps.data(),auth.currentUser,{...gs.data(),id:g}))throw Error('Solo el responsable designado de esta gerencia, el Director o el Administrador puede conciliar.');
  if(!ls.exists()||ls.data().revision!==fresh.lot.revision||cs.data()?.version!==fresh.controlVersion||!rs.exists()||rs.data().annulment)throw Error('El lote cambió. Vuelva a conciliar.');
  const guardRef=doc(store,base,'lotManagement',l),guard=(await tx.get(guardRef)).data()||{id:l,documents:fresh.summary.registered,version:0};
  const {complete,...counts}=summary;
@@ -64,3 +65,4 @@ export async function verificationComments(store,{gerenciaId,lotId}){
  if(snap.size>3000)throw Error('Historial de comentarios incompleto.');
  return snap.docs.map(d=>d.data()).sort((a,b)=>b.at.seconds-a.at.seconds||b.at.nanoseconds-a.at.nanoseconds);
 }
+
