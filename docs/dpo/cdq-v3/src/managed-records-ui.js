@@ -32,7 +32,10 @@ export function managedCollection({db,s,page,query,esc,table,period,canManage,pr
    return [checkbox,esc(row.number),esc(lot?.code),esc(typeOf(lot)||row.type),badge,obs.length,esc(last?.date||'—'),esc(last?.status||'Sin observaciones'),esc(last?.owner||'—'),`<div class="remision-actions">${actions}</div>`];
   });
   if(lots&&selectedCac)return table(headers,rendered);
-  return `<details class="document-group"><summary>${esc(db.cacs.find(c=>c.id===cacId)?.name||'CAC')} · ${items.length} ${lots?(items.length===1?'lote':'lotes'):(items.length===1?'documento':'documentos')}</summary>${table(headers,rendered)}</details>`;
+  const stateCounts = new Map();
+  if(lots)for(const row of items){const state=managedState(db,page,row);stateCounts.set(state,(stateCounts.get(state)||0)+1);}
+  const stateSummary = [...stateCounts].map(([state,count])=>`<span class="badge ${state==='Conciliado'?'remision-green':state==='Pendiente'?'remision-red':'remision-yellow'}">${count} ${esc(state)}</span>`).join(' ');
+  return `<details class="document-group"><summary>${esc(db.cacs.find(c=>c.id===cacId)?.name||'CAC')} · ${items.length} ${lots?(items.length===1?'lote':'lotes'):(items.length===1?'documento':'documentos')} ${lots?`<span class="cac-state-summary">${stateSummary}</span>`:''}</summary>${table(headers,rendered)}</details>`;
  }).join('');
  const remIds=new Set(s.rem.map(r=>r.id)),removed=(db.deletedRecords||[]).filter(r=>r.collection===page&&remIds.has(lots?r.remisionId:[...db.lotes,...(db.deletedRecords||[]).filter(l=>l.collection==='lotes')].find(l=>l.id===r.loteId)?.remisionId));
  return `<section class="panel" data-managed-collection="${page}"><div class="section-line"><h2>${lots?'Lotes documentales':'Documentos individualizados'}</h2>${canManage(page)?`<button class="primary" data-new="${page}">${lots?'+ Nuevo registro por GDZS':'+ Nuevo registro'}</button>${lots?'<button class="secondary" data-add-single-lot>+ Agregar lote individual</button>':''}`:''}</div>${linked?'<p>Documentos vinculados al lote seleccionado. <button id="clear-context" class="link">Ver todos</button></p>':''}<input class="search" id="search" aria-label="Buscar registros" placeholder="${lots?'Buscar lote, tipo o CAC…':'Buscar documento, tipo o CAC…'}" value="${esc(query)}">${canDelete?'<div class="collection-toolbar"><label><input type="checkbox" id="managed-select-visible"> Seleccionar registros disponibles</label><button class="secondary remision-danger" id="managed-delete" disabled>Eliminar seleccionados (0)</button></div>':''}${markup||'<p>No hay registros para esta selección.</p>'}${removed.length?`<details class="document-group"><summary>Registros eliminados (${removed.length})</summary>${table(['Registro','Estado','Motivo'],removed.map(r=>[esc(r.code||r.number),'Eliminado',esc(r.deletion.reason)]))}</details>`:''}</section>`;
@@ -41,9 +44,10 @@ export function bindManagedRecords({db,cloud,esc,load}){
  const panel=document.querySelector('[data-managed-collection]'),button=panel?.querySelector('#managed-delete');if(!button)return;
  const c=panel.dataset.managedCollection,selected=new Set(),all=panel.querySelector('#managed-select-visible');
  const boxes=()=>[...panel.querySelectorAll('[data-managed-select]')].filter(b=>!b.closest('tr')?.hidden);
- const update=()=>{button.disabled=!selected.size;button.textContent=`Eliminar seleccionados (${selected.size})`;const visible=boxes();all.checked=visible.length>0&&visible.every(b=>b.checked);all.indeterminate=visible.some(b=>b.checked)&&!all.checked;};
+ const update=()=>{button.disabled=!selected.size;button.textContent=`Eliminar seleccionados (${selected.size})`;const visible=boxes();all.disabled=visible.length===0;all.title=visible.length?'Seleccionar registros pendientes disponibles':'No hay registros pendientes habilitados para eliminar';all.checked=visible.length>0&&visible.every(b=>b.checked);all.indeterminate=visible.some(b=>b.checked)&&!all.checked;};
  panel.addEventListener('change',e=>{if(e.target.matches('[data-managed-select]')){e.target.checked?selected.add(e.target.dataset.managedSelect):selected.delete(e.target.dataset.managedSelect);update();}});
  all.onchange=()=>{for(const b of boxes()){b.checked=all.checked;all.checked?selected.add(b.dataset.managedSelect):selected.delete(b.dataset.managedSelect);}update();};
+ update();
  button.onclick=()=>{
   const records=db[c].filter(r=>selected.has(r.id)),modal=document.querySelector('#modal');
   modal.innerHTML=`<form><h2>Eliminar ${records.length} registros</h2><p>Cambiarán al estado Eliminado. Se conservarán los datos y el historial.</p><ul>${records.map(r=>`<li>${esc(r.code||r.number)}</li>`).join('')}</ul><label>Motivo<textarea name="reason" required maxlength="2000"></textarea></label><p role="status" id="managed-result"></p><div class="form-actions"><button class="primary">Confirmar eliminación</button><button type="button" class="secondary" id="managed-close">Cancelar</button></div></form>`;modal.showModal();let busy=false;const close=modal.querySelector('#managed-close');close.onclick=()=>modal.close();const prevent=e=>{if(busy)e.preventDefault();};modal.addEventListener('cancel',prevent);modal.addEventListener('close',()=>modal.removeEventListener('cancel',prevent),{once:true});
@@ -53,3 +57,4 @@ export function bindManagedRecords({db,cloud,esc,load}){
   };
  };
 }
+

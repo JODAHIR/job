@@ -225,6 +225,10 @@ export function makeReport(
     note='Resumen por tipo documental. Individualizados se cuentan como faltantes, excepto Acuerdo de adhesión, que conserva el cálculo por conciliación. Verificados correctamente descuenta los faltantes una sola vez; adhesión conserva su cálculo anterior.';
   }
   if(!['comparativo','gerencias','documentos','observados','pendientes'].includes(type))headers.push(['diferencias','faltantes'].includes(type)?'Estado del lote':'Estado administrativo');
+  if (headers.includes('CAC') && headers.includes('Tipo de documento')) {
+    const cac = headers.indexOf('CAC'), kind = headers.indexOf('Tipo de documento');
+    rows.sort((a,b) => String(a[cac]).localeCompare(String(b[cac]), 'es', {numeric:true}) || String(a[kind]).localeCompare(String(b[kind]), 'es', {numeric:true}));
+  }
   note += ' Ámbito administrativo: '+(f.lifecycle==='all'?'incluye anuladas':f.lifecycle==='annulled'?'solo anuladas (histórico)':'solo vigentes; anuladas excluidas')+'. La anulación conserva fechas y documentos; no equivale a regularización.';
   return {
     title: type==='gerencias' ? reportTypes[type]+' - '+(f.gerencia ? gs.get(f.gerencia)?.name || 'Gerencia seleccionada' : 'Todas las gerencias') : reportTypes[type],
@@ -237,3 +241,4 @@ export function makeReport(
     scopeLabel: `Año ${f.year || "todos"}; mes ${f.month || "todos"}; quincena ${f.half || "ambas"}; gerencia ${f.gerencia ? gs.get(f.gerencia)?.name || f.gerencia : "todas las autorizadas"}; CAC ${f.cac ? cs.get(f.cac)?.name || f.cac : "todos los autorizados"}; estado ${state || "todos"}; tipo ${f.documentType || "todos"}; remisión ${f.remission || "todas"}; conciliación ${f.reconciliation || "todas"}; verificación ${f.verification || "todas"}; observación ${f.observation || "todas"}; plazo ${f.deadline || "todos"}; administrativo ${f.lifecycle || "vigentes"}`,
   };
 }
+

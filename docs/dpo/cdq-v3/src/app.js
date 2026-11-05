@@ -1,4 +1,4 @@
-import {managedState,managedCollection,bindManagedRecords} from './managed-records-ui.js?historial-20261030';
+import {managedState,managedCollection,bindManagedRecords} from './managed-records-ui.js?ajustes-20261105';
 import {remisionState,canCreateRemision,remisionBadge,managementActions,managementSelection,remisionCreator,bindRemisionManagement,unifyCollectionToolbar} from './remision-management.js?visual-20261104';
 import {documentLots,selectedDocumentLot} from './document-lot-selection.js';
 import {observationCatalog,observationKey} from './observation-catalog.js';
@@ -16,7 +16,7 @@ import {navigationMarkup,bindNavigation,breadcrumb} from './navigation-ui.js?rol
 import {installTables} from './tables.js?v=visual-20261104';
 import {validateResponsables,validateContact,assignedUsers,userDescription} from './gerencia-contacts.js?v=cah-lotes-20261019';
 import { visibleModule, manageRecord, manageCacStatus } from './permissions.js?roles-cac-20261030';
-import {phase3Panel,bindPhase3} from './phase3-ui.js?faltantes-20261105';
+import {phase3Panel,bindPhase3} from './phase3-ui.js?ajustes-20261105';
 import { metrics, scope, deadlineStatus, mutate, states, integer } from "./domain.js?filtros-vacios-20261023";
 import { LocalRepository } from "./repository.js?v=cah-lotes-20261019";
 import { demo } from "./seed.js?v=cah-lotes-20261019";
@@ -140,7 +140,7 @@ async function load() {
     else {$('#app').setAttribute('aria-busy','true');$('#refresh-cloud').disabled=true;showSyncStatus();}
 
     try{
-      if(!cloud){const module=await import('./firebase-client.bundle.js?faltantes-20261105');cloud=await module.connectFirebase();let initial=true;stopAuth=cloud.watchAuth(()=>{if(initial){initial=false;return}if(cloudMode()||!cloud.auth.currentUser){mode='cloud';epoch++;db=null;page=cloud?.profile?.role==='gerente'?'remisiones':'dashboard';functionId="list";window.history.replaceState(null,"",routeFor(page));$('#modal').close();load()}});}
+      if(!cloud){const module=await import('./firebase-client.bundle.js?ajustes-20261105');cloud=await module.connectFirebase();let initial=true;stopAuth=cloud.watchAuth(()=>{if(initial){initial=false;return}if(cloudMode()||!cloud.auth.currentUser){mode='cloud';epoch++;db=null;page=cloud?.profile?.role==='gerente'?'remisiones':'dashboard';functionId="list";window.history.replaceState(null,"",routeFor(page));$('#modal').close();load()}});}
       if(cloud.authOnly){authenticationView();return}
       if(!cloud.auth.currentUser){loginView();return}
       const result=await cloud.load({includeAdministration:false,onCached:cached=>{
@@ -391,8 +391,10 @@ function collectionView() {
       "",
     ];
     const ids = new Set(s.docs.map((d) => d.id));
+    const observationType = o => { const d=find("documentos",o.documentId), l=find("lotes",d?.loteId); return sortedTypes(db.catalog).find(t=>t.id===l?.typeId||t.code===l?.typeCode)?.description || d?.type || ""; };
     rows = db.observaciones
       .filter((o) => ids.has(o.documentId) && (!f.observation || o.status===f.observation))
+      .sort((a,b)=>observationType(a).localeCompare(observationType(b),"es",{numeric:true}) || a.description.localeCompare(b.description,"es"))
       .map((o) => [
         esc(find("documentos", o.documentId).number),
         esc(o.description),
@@ -864,5 +866,6 @@ function indicatorDetail(index){
  const docs=m.docs.filter(d=>index===5?d.state!=='Pendiente':index===6?d.state==='Pendiente':index===7?d.state==='Verificado con observación':index===10?d.state==='Verificado':true);
  showDetail('Detalle de documentos',['Tipo','Número','Estado','Lote'],docRows(docs));
 }
+
 
 

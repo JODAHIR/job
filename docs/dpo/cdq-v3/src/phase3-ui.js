@@ -1,6 +1,6 @@
 import {managementFilters} from './management-summary.js?faltantes-20261105';
 import { template, prepareBulk, applyBulkLocal } from "./bulk.js?v=cah-lotes-20261019";
-import { makeReport, reportTypes } from "./reports.js?faltantes-20261105";
+import { makeReport, reportTypes } from "./reports.js?ajustes-20261105";
 import { states } from "./domain.js?v=cah-lotes-20261019";
 const settings = {
   type: "documentos",
@@ -285,3 +285,4 @@ export function bindPhase3(page, c) {
     $("#audit-query").requestSubmit();
   }
 }
+
