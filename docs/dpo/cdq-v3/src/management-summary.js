@@ -1,3 +1,4 @@
+import {reportLotCounts} from './report-lot-counts.js';
 import {scope} from './domain.js';
 import {sortedTypes} from './lot-catalog.js';
 import {currentVerification} from './lot-verification.js';
@@ -21,8 +22,8 @@ export function managementSummary(db, filters={}) {
   if(!groups.has(key))groups.set(key,[type?.description||lot.typeCode||'Sin clasificación',0,0,0,0]);
   const row=groups.get(key), docs=db.documentos.filter(d=>d.loteId===lot.id);
   const review=currentVerification(db.lotVerifications||[],lot,db.remisionControls?.find(c=>c.id===lot.remisionId),!!remissions.get(lot.remisionId)?.annulment,db);
-  const missing=Math.max(0,lot.declared-(review?.registered??docs.length));
-  row[1]+=lot.declared;row[2]+=docs.length;row[3]+=missing;row[4]+=lot.declared-(docs.length+missing);
+  const {missing,correct}=reportLotCounts(lot,docs.length,review?.registered??docs.length,type);
+  row[1]+=lot.declared;row[2]+=docs.length;row[3]+=missing;row[4]+=correct;
  }
  const headers=['Tipo de documento','Declarados','Individualizados','Faltantes','Verificados correctamente'];
  const rows=[...groups.values()];

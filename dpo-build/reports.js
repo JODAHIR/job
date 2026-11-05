@@ -1,3 +1,4 @@
+import {reportLotCounts} from './report-lot-counts.js';
 import {managementSummary} from './management-summary.js';
 import {currentVerification} from './lot-verification.js';
 import {sortedTypes,lotTracking} from './lot-catalog.js';
@@ -98,13 +99,14 @@ export function makeReport(
       const individual = counts.get(l.id) || 0;
       const presented = review?.registered ?? individual;
       const documentType = sortedTypes(db.catalog).find(t => t.id === l.typeId || t.code === l.typeCode);
+      const totals = reportLotCounts(l, individual, presented, documentType);
       const status = rem.annulment ? "Anulado" : review?.result ||
         (db.lotVerifications?.some(v => v.lotId === l.id) ? "Requiere nueva revisión" : "Sin conciliación registrada");
       return [...ctx(l).slice(0, 2), documentType?.description || l.typeCode || "Sin clasificación",
         l.declared, individual, presented, presented - l.declared,
-        Math.max(0, l.declared - presented), l.declared - (individual + Math.max(0, l.declared - presented)), status];
+        totals.missing, totals.correct, status];
     }).filter(r => type === "faltantes" ? r[7] > 0 : true);
-    note = "Saldo de conciliación = presentados / conciliados menos declarados. Se utiliza la última revisión vigente; sin revisión vigente, se cuentan los documentos individualizados. Un saldo negativo indica faltantes y uno positivo excedentes. El informe de conciliación incluye todos los lotes seleccionados, incluso los de saldo cero. El informe de faltantes muestra solo saldos negativos.";
+    note = "Faltantes = documentos individualizados, excepto Acuerdo de adhesión, que conserva el cálculo por conciliación. Verificados correctamente = declarados menos faltantes; en adhesión se conserva el descuento adicional de individualizados. El informe de faltantes incluye únicamente lotes con faltantes mayores a cero.";
   }
 
   if (type === "plazos") {
@@ -220,7 +222,7 @@ export function makeReport(
   }
   if(type === 'gerencias'){
     ({headers,rows}=managementSummary(db,f));
-    note='Resumen por tipo documental del ámbito seleccionado. Verificados correctamente = declarados menos individualizados y faltantes.';
+    note='Resumen por tipo documental. Individualizados se cuentan como faltantes, excepto Acuerdo de adhesión, que conserva el cálculo por conciliación. Verificados correctamente descuenta los faltantes una sola vez; adhesión conserva su cálculo anterior.';
   }
   if(!['comparativo','gerencias','documentos','observados','pendientes'].includes(type))headers.push(['diferencias','faltantes'].includes(type)?'Estado del lote':'Estado administrativo');
   note += ' Ámbito administrativo: '+(f.lifecycle==='all'?'incluye anuladas':f.lifecycle==='annulled'?'solo anuladas (histórico)':'solo vigentes; anuladas excluidas')+'. La anulación conserva fechas y documentos; no equivale a regularización.';
