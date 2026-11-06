@@ -210,28 +210,80 @@ export function makeReport(
     note =
       "Mismo ámbito de gerencia y CAC. Mes: meses completos; año: años completos; quincena: seleccionada contra anterior (ambas: Q2 contra Q1). Los filtros avanzados se aplican a ambos períodos. Porcentajes sobre documentos individualizados.";
   }
-  if(type==='lotes'){
-    headers=['Gerencia','CAC','Período','Lote','Tipo','Condición histórica','Declarados','Individualizados','Revisados','Faltantes'];
-    rows=s.lots.map(l=>{const r=rs.get(l.remisionId),c=cs.get(r.cacId),docs=s.docs.filter(d=>d.loteId===l.id);return [gs.get(c.gerenciaId)?.name,c.name,`${r.year}-${r.month} Q${r.half}`,l.code,l.typeCode||'Histórico sin clasificación',l.typeId?(l.typeRequired?'Obligatorio':'Opcional'):'No determinada',l.declared,docs.length,docs.filter(d=>d.state!=='Pendiente').length,Math.max(0,l.declared-(counts.get(l.id)||0)),r.annulment?'Anulada':'Vigente'];});
-    note='Condición conservada al iniciar la carga; los cambios de catálogo no recalculan el histórico.';
+  if (['lotes','gerencias'].includes(type)) {
+    const types = sortedTypes(db.catalog);
+    const ordered = [...s.lots].sort((a,b)=> {
+      const ca=ctx(a), cb=ctx(b);
+      return ca[0].localeCompare(cb[0],'es') || ca[1].localeCompare(cb[1],'es',{numeric:true}) || String(a.code).localeCompare(String(b.code),'es',{numeric:true});
+    });
+    headers = type==='lotes'
+      ? ['Gerencia','CAC','Período','Lote','Tipo','Remitidos','Observados','Verificado','Total','Estado']
+      : ['Gerencia','CAC','Tipo de documento','Remitidos'];
+    const groups = new Map();
+    for(const l of ordered) {
+      const context=ctx(l), key=JSON.stringify(context.slice(0,2));
+      if(!groups.has(key))groups.set(key,[]);
+      const description=types.find(t=>t.id===l.typeId||t.code===l.typeCode)?.description || l.typeCode || 'Sin clasificación';
+      if(type==='gerencias') {
+        const group=groups.get(key), existing=group.find(row=>row[2]===description);
+        if(existing)existing[3]+=l.declared;
+        else group.push([...context.slice(0,2),description,l.declared]);
+      } else {
+        const rem=rs.get(l.remisionId);
+        const review=currentVerification(db.lotVerifications||[],l,db.remisionControls?.find(c=>c.id===l.remisionId),!!rem.annulment,db);
+        const individual=counts.get(l.id)||0;
+        const verified=review?.registered ?? 'Sin conciliación';
+        const status=rem.annulment?'Anulado':review?.result || 'Sin conciliación registrada';
+        groups.get(key).push([...context,description,l.declared,individual,verified,review?verified+individual:'Sin conciliación',status]);
+      }
+    }
+    for(const group of groups.values()) {
+      if(type==='gerencias')group.sort((a,b)=>a[2].localeCompare(b[2],'es'));
+      rows.push(...group);
+      const sum=i=>group.reduce((n,r)=>n+(typeof r[i]==='number'?r[i]:0),0);
+      if(type==='lotes') {
+        const complete=group.every(r=>typeof r[7]==='number');
+        rows.push([group[0][0],group[0][1],'','SUBTOTAL CAC','',sum(5),sum(6),complete?sum(7):'Sin conciliación completa',complete?sum(8):'Sin conciliación completa','']);
+      } else rows.push([group[0][0],group[0][1],'SUBTOTAL CAC',sum(3)]);
+    }
+    if(type==='gerencias') {
+      const descriptions=[...new Set(ordered.map(l=>types.find(t=>t.id===l.typeId||t.code===l.typeCode)?.description || l.typeCode || 'Sin clasificación'))];
+      headers=['Gerencia','CAC',...descriptions,'Total remitidos','Estado del lote'];
+      rows=[...groups.entries()].map(([key,group])=>{
+        const states=new Map();
+        for(const lot of ordered.filter(l=>JSON.stringify(ctx(l).slice(0,2))===key)) {
+          const rem=rs.get(lot.remisionId);
+          const review=currentVerification(db.lotVerifications||[],lot,db.remisionControls?.find(c=>c.id===lot.remisionId),!!rem?.annulment,db);
+          const state=rem?.annulment?'Anulado':review?.result || 'Sin conciliación registrada';
+          states.set(state,(states.get(state)||0)+1);
+        }
+        const amounts=descriptions.map(d=>group.filter(r=>r[2]===d).reduce((n,r)=>n+Number(r[3]||0),0));
+        return [...JSON.parse(key),...amounts,amounts.reduce((a,b)=>a+b,0),[...states].map(([state,n])=>`${state}: ${n}`).join(' · ')];
+      });
+    }
+    note=type==='lotes'?'Verificado corresponde a la conciliación vigente. Total = Verificado + Observados. Los subtotales de Verificado y Total requieren conciliación vigente de todos los lotes del CAC.':'Cantidad remitida acumulada por gerencia, CAC y tipo documental.';
   }
   if(type==='seguimiento'){
     headers=['Gerencia','CAC','Período','Seguimiento','Lotes','Declarados','Individualizados','Revisados','Observados','Faltantes','Tipos pendientes'];
     rows=lotTracking(db,f).map(r=>[gs.get(r.gerenciaId)?.name,cs.get(r.cacId)?.name,`${r.year}-${r.month} Q${r.half}`,r.status,r.lots,r.declared,r.received,r.reviewed,r.observed,r.missing,r.pending,r.status==='Anulada'?'Anulada':'Vigente']);
     note='Carga completa no significa verificada. Exclusiones sin descuento: procedimiento pendiente.';
   }
-  if(type === 'gerencias'){
-    ({headers,rows}=managementSummary(db,f));
-    note='Resumen por tipo documental. Individualizados se cuentan como faltantes, excepto Acuerdo de adhesión, que conserva el cálculo por conciliación. Verificados correctamente descuenta los faltantes una sola vez; adhesión conserva su cálculo anterior.';
-  }
-  if(!['comparativo','gerencias','documentos','observados','pendientes'].includes(type))headers.push(['diferencias','faltantes'].includes(type)?'Estado del lote':'Estado administrativo');
-  if (headers.includes('CAC') && headers.includes('Tipo de documento')) {
+  if(!['comparativo','gerencias','lotes','documentos','observados','pendientes'].includes(type))headers.push(['diferencias','faltantes'].includes(type)?'Estado del lote':'Estado administrativo');
+  if (!['gerencias','lotes'].includes(type) && headers.includes('CAC') && headers.includes('Tipo de documento')) {
     const cac = headers.indexOf('CAC'), kind = headers.indexOf('Tipo de documento');
     rows.sort((a,b) => String(a[cac]).localeCompare(String(b[cac]), 'es', {numeric:true}) || String(a[kind]).localeCompare(String(b[kind]), 'es', {numeric:true}));
   }
   note += ' Ámbito administrativo: '+(f.lifecycle==='all'?'incluye anuladas':f.lifecycle==='annulled'?'solo anuladas (histórico)':'solo vigentes; anuladas excluidas')+'. La anulación conserva fechas y documentos; no equivale a regularización.';
   return {
     title: type==='gerencias' ? reportTypes[type]+' - '+(f.gerencia ? gs.get(f.gerencia)?.name || 'Gerencia seleccionada' : 'Todas las gerencias') : reportTypes[type],
+    pdfIntroduction: type==='gerencias' ? (()=>{
+      const months=['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+      const period=f.from||f.to ? `al período desde ${f.from||'el inicio'} hasta ${f.to||'la fecha seleccionada'}` : f.year&&f.month ? `a ${Number(f.half)===1?'la primera quincena':Number(f.half)===2?'la segunda quincena':'ambas quincenas'} del mes de ${months[Number(f.month)-1]} de ${f.year}` : 'a los períodos seleccionados';
+      const management=f.gerencia ? gs.get(f.gerencia)?.name || 'Gerencia seleccionada' : 'las gerencias autorizadas seleccionadas';
+      return [`Se informa sobre la verificación de las documentaciones correspondientes ${period}, remitidas por ${management}.`,
+        'Las mismas corresponden a operaciones de Alta cliente | Desembolso | Cobranza, reflejadas en el sistema de cartera de préstamos de los distintos CAC que componen la gerencia.',
+        'El detalle siguiente presenta las cantidades remitidas y el estado de verificación de los lotes. La constancia de ausencia de documentos faltantes, cumplimiento del Manual de Procedimientos de Rendición de Documentos que respaldan las Operaciones de Desembolsos de Préstamos (Resolución del Consejo Directivo N.º 26, Acta N.º 34, de fecha 23/10/2025) y finalización del proceso requiere validación del responsable.'];
+    })() : [],
     headers,
     rows,
     note,

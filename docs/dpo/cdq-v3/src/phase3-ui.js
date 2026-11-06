@@ -1,6 +1,6 @@
 import {managementFilters} from './management-summary.js?faltantes-20261105';
 import { template, prepareBulk, applyBulkLocal } from "./bulk.js?v=cah-lotes-20261019";
-import { makeReport, reportTypes } from "./reports.js?ajustes-20261105";
+import { makeReport, reportTypes } from "./reports.js?reportes-20261106";
 import { states } from "./domain.js?v=cah-lotes-20261019";
 const settings = {
   type: "documentos",
@@ -87,7 +87,7 @@ export function bindPhase3(page, c) {
         (b.onclick = async () => {
           b.disabled = true;
           try {
-            const module = await import("./exporters.bundle.js?verificados-20261024");
+            const module = await import("./exporters.bundle.js?reportes-20261106");
             const report =
               mode === "cloud"
                 ? await cloud.call("report", {
@@ -108,7 +108,7 @@ export function bindPhase3(page, c) {
               );
             else
               module.download(
-                module.pdfBytes(report,{filters:f,user:db.users?.find(u=>u.id===cloud?.auth?.currentUser?.uid)?.description?.trim() || cloud?.profile?.description?.trim() || (mode==='demo'?'Usuario de demostración':'Descripción de usuario no registrada')}),
+                module.pdfBytes(report,{filters:report.filters || f,user:db.users?.find(u=>u.id===cloud?.auth?.currentUser?.uid)?.description?.trim() || cloud?.profile?.description?.trim() || (mode==='demo'?'Usuario de demostración':'Descripción de usuario no registrada')}),
                 "control-documental.pdf",
                 "application/pdf",
               );

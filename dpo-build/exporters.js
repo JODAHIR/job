@@ -66,8 +66,13 @@ export function pdfBytes(report, {user = 'Usuario no identificado', filters = re
   const headerBottom = 13 + title.length * 6 + 6 + responsible.length * 4 + 4;
   const visibleColumns = report.headers.map((label,index)=>({label,index}))
     .filter(({label})=>!['Presentados / conciliados','Saldo de conciliación'].includes(label));
+  let tableStart = headerBottom + 4;
+  if(report.pdfIntroduction?.length){
+    autoTable(pdf,{startY:tableStart,body:report.pdfIntroduction.map(text=>[text]),theme:'plain',styles:{fontSize:9,cellPadding:2},margin:{top:headerBottom+4,bottom:26,left:14,right:14}});
+    tableStart=pdf.lastAutoTable.finalY+5;
+  }
   autoTable(pdf, {
-    startY: headerBottom + 4,
+    startY: tableStart,
     head: [visibleColumns.map(c=>c.label)], body: report.rows.map(row=>visibleColumns.map(c=>row[c.index])),
     styles: {font:"helvetica",fontSize:8,overflow:"linebreak",cellPadding:2},
     headStyles:{fillColor:[18,91,97]},
