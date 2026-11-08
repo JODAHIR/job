@@ -1,0 +1,1 @@
+{"firestore": {"database": "(default)", "rules": "dpo-build/firestore.spark.rules"}, "emulators": {"firestore": {"port": 8188}, "ui": {"enabled": false}}}

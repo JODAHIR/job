@@ -1,5 +1,5 @@
 import {managedState,managedCollection,bindManagedRecords} from './managed-records-ui.js?ajustes-20261105';
-import {remisionState,canCreateRemision,remisionBadge,managementActions,managementSelection,remisionCreator,bindRemisionManagement,unifyCollectionToolbar} from './remision-management.js?visual-20261104';
+import {remisionState,canCreateRemision,remisionBadge,managementActions,managementSelection,remisionCreator,bindRemisionManagement,unifyCollectionToolbar} from './remision-management.js?archivo-20261108';
 import {documentLots,selectedDocumentLot} from './document-lot-selection.js';
 import {observationCatalog,observationKey} from './observation-catalog.js';
 import {observationCatalogPanel,bindObservationCatalog} from './observation-catalog-ui.js';
@@ -140,7 +140,7 @@ async function load() {
     else {$('#app').setAttribute('aria-busy','true');$('#refresh-cloud').disabled=true;showSyncStatus();}
 
     try{
-      if(!cloud){const module=await import('./firebase-client.bundle.js?reportes-20261106');cloud=await module.connectFirebase();let initial=true;stopAuth=cloud.watchAuth(()=>{if(initial){initial=false;return}if(cloudMode()||!cloud.auth.currentUser){mode='cloud';epoch++;db=null;page=cloud?.profile?.role==='gerente'?'remisiones':'dashboard';functionId="list";window.history.replaceState(null,"",routeFor(page));$('#modal').close();load()}});}
+      if(!cloud){const module=await import('./firebase-client.bundle.js?archivo-20261108');cloud=await module.connectFirebase();let initial=true;stopAuth=cloud.watchAuth(()=>{if(initial){initial=false;return}if(cloudMode()||!cloud.auth.currentUser){mode='cloud';epoch++;db=null;page=cloud?.profile?.role==='gerente'?'remisiones':'dashboard';functionId="list";window.history.replaceState(null,"",routeFor(page));$('#modal').close();load()}});}
       if(cloud.authOnly){authenticationView();return}
       if(!cloud.auth.currentUser){loginView();return}
       const result=await cloud.load({includeAdministration:false,onCached:cached=>{

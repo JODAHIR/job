@@ -30,3 +30,12 @@
 [data-managed-collection] .remision-danger{background:#fde6e9!important;color:#a51d2d!important;border-color:#efb6bf!important}
 [data-managed-collection] button:disabled{opacity:.5;cursor:not-allowed}
 @media(max-width:650px){[data-managed-collection] .cac-state-summary{float:none;display:flex;margin:8px 0 0}}
+
+/* Archivo: formulario aislado del resto de operaciones. */
+.custody-form .custody-fields{display:grid;grid-template-columns:1fr;gap:12px}
+.custody-form output{display:block;overflow-wrap:anywhere;padding:10px;background:#f3f5f6;border-radius:6px}
+.custody-form .form-actions{display:flex;justify-content:flex-end;gap:8px}
+.custody-form [data-close]{background:#f1f3f4;color:#53616b;border-color:#d6dde1}
+.custody-form [data-view][aria-pressed="true"]{background:#fff1ba}
+.custody-form [data-history] article{padding:8px 0;border-bottom:1px solid #e2eaed}
+.custody-form [name="confirmed"]{width:auto}

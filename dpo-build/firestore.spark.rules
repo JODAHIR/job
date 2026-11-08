@@ -363,6 +363,27 @@ service cloud.firestore {
     }
     allow create, update: if lotWrite(g) && validSequence(request.resource.data);
    }
+   match /remisiones/{rid}/custodyEvents/{eid} {
+    allow read: if readScope(g);
+    function validCustody(c) {
+     let r = parent(g, 'remisiones', rid);
+     let common = ['id','kind','actor','owner','at','remisionRevision'];
+     let zone = get(/databases/$(database)/documents/gerencias/$(g)).data.name.trim().replace('(?i)^Gerencia\\s+', '');
+     return c.keys().hasAll(common) && c.id == eid && ident(eid)
+      && c.actor == request.auth.uid && c.at == request.time
+      && c.remisionRevision == r.revision && text(c.owner,500)
+      && c.owner == (profile().get('description','').trim().size() > 0 ? profile().description.trim() : 'Usuario sin descripción')
+      && r.get('annulment',null) == null && r.get('receivedOn','') != ''
+      && ((c.kind == 'archive' && c.keys().hasAll(['name','number','month','year'])
+       && c.keys().hasOnly(common.concat(['name','number','month','year']))
+       && text(c.name,150) && c.name == 'GDSZ-'+zone+'-'+string(r.year)+'-'+(r.month < 10 ? '0' : '')+string(r.month)+'-'+c.number
+       && text(c.number,9) && c.number.matches('^[0-9]{1,9}$') && int(c.number) > 0
+       && c.month is int && c.month == r.month && c.month >= 1 && c.month <= 12
+       && c.year is int && c.year == r.year && c.year >= 2000 && c.year <= 2100)
+       || (c.kind == 'scan' && c.keys().hasOnly(common.concat(['confirmed'])) && c.confirmed == true));
+    }
+    allow create: if readScope(g) && conciliate(g) && validCustody(request.resource.data);
+   }
    match /remisiones/{rid}/comments/{cid} {
     allow read: if readScope(g);
     function validComment(c) {

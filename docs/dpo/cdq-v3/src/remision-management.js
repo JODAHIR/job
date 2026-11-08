@@ -1,3 +1,4 @@
+import {bindRemisionCustody} from './remision-custody-ui.js';
 import {bindRemisionComments} from './remision-comments-ui.js?comentarios-20261029';
 import {bindRestoration} from './remision-restoration-ui.js?restaurar-20261029';
 import {previewSelection,confirmSelection} from './annul-selection.js';
@@ -14,12 +15,12 @@ export const canCreateRemision=p=>p?.active&&['technical','director','gerente'].
 export function remisionActions(db,r,p){const state=remisionState(db,r),locked=['Conciliada','Anulada'].includes(state);return {state,edit:!locked&&p?.active&&['technical','director','gerente','asistente'].includes(p.role),remove:!locked&&canCreateRemision(p)};}
 export function remisionBadge(state,esc){return `<span class="badge remision-state ${state==='Conciliada'?'remision-green':state==='Registrada'?'remision-yellow':state==='Pendiente'?'remision-red':'neutral'}">${esc(state)}</span>`;}
 export function managementSelection(db,r,p,esc){const a=remisionActions(db,r,p);return r.annulment&&p?.active&&p.role==='technical'?`<input type="checkbox" data-remision-restore-select="${esc(r.id)}" aria-label="Seleccionar anulada ${esc(r.expediente||r.id)}">`:a.remove?`<input type="checkbox" data-remision-select="${esc(r.id)}" aria-label="Seleccionar remisión ${esc(r.expediente||r.id)}">`:'';}
-export function managementActions(db,r,p,esc){const a=remisionActions(db,r,p);return `<div class="remision-actions">${a.edit?`<button class="secondary" data-edit="remisiones" data-id="${esc(r.id)}">Editar</button>`:''}${!r.annulment&&r.receivedOn&&p?.active?`<button class="secondary" data-remision-comment="${esc(r.id)}">Comentario</button>`:''}<button class="secondary" data-remision-detail="${esc(r.id)}" title="Abrir ventana de detalle">Ver detalle</button>${a.remove?`<button class="secondary remision-danger" data-remision-remove="${esc(r.id)}">Eliminar</button>`:''}</div>`;}
+export function managementActions(db,r,p,esc){const a=remisionActions(db,r,p);return `<div class="remision-actions">${a.edit?`<button class="secondary" data-edit="remisiones" data-id="${esc(r.id)}">Editar</button>`:''}${!r.annulment&&r.receivedOn&&p?.active?`<button class="secondary" data-remision-comment="${esc(r.id)}">Comentario</button>`:''}${!r.annulment&&r.receivedOn&&p?.active?`<button class="secondary" data-custody="archive" data-remision="${esc(r.id)}">Archivo</button>`:''}<button class="secondary" data-remision-detail="${esc(r.id)}" title="Abrir ventana de detalle">Ver detalle</button>${a.remove?`<button class="secondary remision-danger" data-remision-remove="${esc(r.id)}">Eliminar</button>`:''}</div>`;}
 export function remisionCreator(db,row,profile,isNew){if(isNew)return profile?.description?.trim()||'Usuario sin descripción';const entry=(db.audit||[]).find(a=>a.collection==='remisiones'&&a.recordId===row.id&&!a.before);const uid=row.createdBy||entry?.actor;return (db.users||[]).find(u=>u.id===uid)?.description?.trim()||(uid&&uid===profile?.id?profile.description?.trim():'')||'Autor no disponible en los datos cargados';}
 export function bindRemisionManagement(ctx){const {db,cloud,esc,load}=ctx;
  bindBulkRemisiones(ctx);
  bindRestoration(ctx);
- bindRemisionComments(ctx);
+ bindRemisionComments(ctx);bindRemisionCustody(ctx);
  document.querySelectorAll('[data-remision-detail]').forEach(b=>b.onclick=()=>{
  const r=db.remisiones.find(r=>r.id===b.dataset.remisionDetail),control=db.remisionControls?.find(c=>c.id===r.id);
  const types=Array.isArray(db.catalog?.types)?db.catalog.types:Object.values(db.catalog?.types||{});
