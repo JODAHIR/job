@@ -5,8 +5,8 @@ export const visibleModule = (p, page) => {
  if (admin(p)) return true;
  const modules = {
  gerente: ['remisiones','observaciones'],
- director: ['observationCatalog','catalog','dashboard','documentos','observaciones','history','reports','lotes','remisiones','access','cacs','deadlines'],
- asistente: ['dashboard','remisiones','lotes','documentos','observaciones','history'],
+ director: ['archivo','observationCatalog','catalog','dashboard','documentos','observaciones','history','reports','lotes','remisiones','access','cacs','deadlines'],
+ asistente: ['archivo','dashboard','remisiones','lotes','documentos','observaciones','history'],
  };
  return (modules[p.role] ?? []).includes(page);
 };

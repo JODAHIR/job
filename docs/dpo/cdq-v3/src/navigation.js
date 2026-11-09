@@ -1,4 +1,4 @@
-import {visibleModule,manageRecord} from './permissions.js?roles-cac-20261030';
+import {visibleModule,manageRecord} from './permissions.js?archivo-operativo-20261109';
 const list={id:'list',label:'Consultar',action:'view'};
 const records=(id,label)=>({id,label,functions:[list,{id:'new',label:'Registrar',action:'new',write:id}]});
 export const groups=[
@@ -7,12 +7,12 @@ export const groups=[
  {id:'deadlines',label:'Plazos y excepciones',functions:[{id:'list',label:'Consultar vencimientos',target:'#deadline-list'},{id:'calendar',label:'Calendario registrado',target:'#calendar-view'},{id:'approve',label:'Aprobar calendario',target:'#calendar-form'},{id:'exception',label:'Autorizar excepción',target:'#exception-form',noSpark:true}]},
  {id:'bulk',label:'Importar CSV',functions:[{id:'list',label:'Importar y validar CSV',action:'view'},{id:'template',label:'Descargar plantilla',target:'#bulk-template',click:true,noSpark:true},{id:'migration',label:'Migración local',page:'migration',admin:true,cloudOnly:true}]},
  {id:'audit',label:'Auditoría',functions:[]} ]},
- {id:'operativo',label:'OPERATIVO',modules:[{...records('remisiones','Remisiones'),functions:[list,{id:'new',label:'Registrar',action:'new',write:'remisiones'},{id:'generate',label:'Generar por gerencia',action:'generate',write:'remisiones',sparkOnly:true}]},records('lotes','Lotes documentales'),records('documentos','Documentos'),records('observaciones','Observaciones')]},
+ {id:'operativo',label:'OPERATIVO',modules:[{...records('remisiones','Remisiones'),functions:[list,{id:'new',label:'Registrar',action:'new',write:'remisiones'},{id:'generate',label:'Generar por gerencia',action:'generate',write:'remisiones',sparkOnly:true}]},records('lotes','Lotes documentales'),records('documentos','Documentos'),records('observaciones','Observaciones'),{id:'archivo',label:'Archivo',functions:[]}]},
  {id:'informes',label:'INFORMES',modules:[{id:'history',label:'Períodos históricos',functions:[]},{id:'reports',label:'Reportes y comparativos',functions:[{id:'list',label:'Reportes documentales',report:'documentos'},{id:'differences',label:'Diferencias y faltantes',report:'diferencias'},{id:'deadlines',label:'Plazos',report:'plazos'},{id:'comparison',label:'Comparativos',report:'comparativo'},{id:'management',label:'Resumen por gerencia',report:'gerencias'}]}]}
 ];
 export const modules=groups.flatMap(g=>g.modules.map(m=>({...m,group:g.id,groupLabel:g.label})));
 export const pages=[['dashboard','◫','Inicio'],...modules.map(m=>[m.id,'▤',m.label]),['migration','⇧','Migración local']];
-export const allowed=(page,ctx)=>ctx.mode==='cloud'?visibleModule(ctx.profile,page):!['access','deadlines','migration','catalog','observationCatalog'].includes(page);
+export const allowed=(page,ctx)=>ctx.mode==='cloud'?visibleModule(ctx.profile,page):!['access','deadlines','migration','catalog','observationCatalog','archivo'].includes(page);
 export function functionsFor(module,ctx){return module.functions.filter(fn=>!(module.id==='remisiones'&&fn.id==='generate')&&!(fn.write==='remisiones'&&ctx.profile?.role==='asistente')&&(!fn.admin||ctx.profile?.role==='technical')&&(!fn.write||ctx.mode!=='cloud'||manageRecord(ctx.profile,fn.write))&&(!fn.cloudOnly||ctx.mode==='cloud')&&(!fn.sparkOnly||ctx.spark)&&(!fn.page||allowed(fn.page,ctx)));}
 export function resolveRoute(hash,ctx){
  const home=ctx.mode==='cloud'&&ctx.profile?.role==='gerente'?'remisiones':'dashboard';

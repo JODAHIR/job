@@ -363,6 +363,23 @@ service cloud.firestore {
     }
     allow create, update: if lotWrite(g) && validSequence(request.resource.data);
    }
+   match /archives/{aid}/locations/{lid} {
+    allow read: if readScope(g);
+    function validLocation(c) {
+     let r=parent(g,'remisiones',c.remisionId);
+     let e=get(/databases/$(database)/documents/gerencias/$(g)/remisiones/$(c.remisionId)/custodyEvents/$(c.eventId)).data;
+     return c.keys().hasAll(['id','remisionId','eventId','shelf','row','section','actor','owner','at'])
+      && c.keys().hasOnly(['id','remisionId','eventId','shelf','row','section','actor','owner','at'])
+      && ident(lid) && c.id==lid && ident(c.remisionId) && ident(c.eventId)
+      && e.kind=='archive' && aid==string(e.year)+'_'+string(e.month)+'_'+e.number
+      && r.get('annulment',null)==null && r.get('receivedOn','')!=''
+      && c.shelf is string && c.shelf.matches('^E(0[1-9]|10)$')
+      && c.row is string && c.row.matches('^F[1-5]$') && c.section in ['D','A']
+      && c.actor==request.auth.uid && c.at==request.time && text(c.owner,500)
+      && c.owner==(profile().get('description','').trim().size()>0 ? profile().description.trim() : 'Usuario sin descripción');
+    }
+    allow create: if readScope(g) && conciliate(g) && validLocation(request.resource.data);
+   }
    match /remisiones/{rid}/custodyEvents/{eid} {
     allow read: if readScope(g);
     function validCustody(c) {
