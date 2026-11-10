@@ -43,3 +43,8 @@
 .archive-filters{display:flex;flex-wrap:wrap;gap:12px;align-items:end;margin-bottom:20px}.archive-filters label{flex:1;min-width:150px}.archive-card{border:1px solid #dbe5e9;border-radius:10px;padding:18px;margin:12px 0;overflow-wrap:anywhere}.archive-card h3{margin:0}.archive-location-form .form-actions{display:flex;justify-content:flex-end;gap:8px}.archive-location-form [data-close]{background:#f1f3f4;color:#53616b}.archive-location-form{max-width:100%}@media(max-width:600px){.archive-filters{display:grid;grid-template-columns:1fr}.archive-card .form-actions{flex-wrap:wrap}}
 
 @media(max-width:450px){.remisiones-panel .remision-actions{flex-wrap:wrap}}
+
+.remision-period-group{margin-top:20px;border:1px solid #d8e3e8;border-radius:8px;overflow:hidden}
+.remision-period-heading{display:flex;flex-wrap:wrap;gap:12px 32px;padding:16px;background:#eaf3f5;color:#233f4b;font-size:14px}
+.remision-period-heading span{overflow-wrap:anywhere}
+@media(max-width:700px){.remision-period-heading{flex-direction:column;gap:8px}}

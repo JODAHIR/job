@@ -409,6 +409,22 @@ function collectionView() {
     r.join(" ").toLowerCase().includes(esc(query.toLowerCase())),
   );
   let tableMarkup=table(headers,filtered);
+  if(page==='remisiones'&&filtered.length){
+    const groups=new Map();
+    for(const row of filtered){
+      const key=JSON.stringify([row[2],row[3]]);
+      if(!groups.has(key))groups.set(key,[]);
+      groups.get(key).push(row);
+    }
+    const groupHeaders=headers.filter((_,i)=>i!==2&&i!==3);
+    tableMarkup=[...groups.values()].map(group=>{
+      const groupRows=[...group].sort((a,b)=>a[1].localeCompare(b[1],'es',{numeric:true}));
+      return `<div class="remision-period-group"><div class="remision-period-heading"><span><strong>Período:</strong> ${group[0][2]}</span><span><strong>Expediente:</strong> ${group[0][3]}</span></div>${table(groupHeaders,groupRows.map(row=>row.filter((_,i)=>i!==2&&i!==3)))}</div>`;
+    }).join('');
+  }else if(page==='remisiones'){
+    tableMarkup=table(headers.filter((_,i)=>i!==2&&i!==3),[]);
+  }
+
   if(page==='documentos'){
     const groups=new Map();for(const row of filtered){const key=JSON.stringify([row[2],row[1]]);if(!groups.has(key))groups.set(key,[]);groups.get(key).push(row);}
     tableMarkup=[...groups.values()].map(group=>{
