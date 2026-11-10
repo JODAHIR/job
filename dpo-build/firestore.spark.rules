@@ -363,6 +363,24 @@ service cloud.firestore {
     }
     allow create, update: if lotWrite(g) && validSequence(request.resource.data);
    }
+   match /independentArchives/{aid} {
+    allow read: if readScope(g);
+    function validIndependent(c) {
+     let zone=get(/databases/$(database)/documents/gerencias/$(g)).data.name.trim().replace('(?i)^Gerencia\\s+', '');
+     return c.keys().hasAll(['id','gerenciaId','name','number','month','year','description','shelf','row','section','scanned','origin','actor','owner','at'])
+      && c.keys().hasOnly(['id','gerenciaId','name','number','month','year','description','shelf','row','section','scanned','origin','actor','owner','at'])
+      && c.id==aid && c.gerenciaId==g && c.origin=='independent'
+      && c.year is int && c.year>=2000 && c.year<=2100 && c.month is int && c.month>=1 && c.month<=12
+      && c.number is string && c.number.matches('^[1-9][0-9]{0,8}$')
+      && aid==string(c.year)+'_'+string(c.month)+'_'+c.number
+      && text(c.name,150) && c.name=='GDSZ-'+zone+'-'+string(c.year)+'-'+(c.month<10?'0':'')+string(c.month)+'-'+c.number
+      && c.description is string && c.description.size()<=1000 && c.scanned is bool
+      && ((c.shelf=='' && c.row=='' && c.section=='') || (c.shelf is string && c.shelf.matches('^E(0[1-9]|10)$') && c.row is string && c.row.matches('^F[1-5]$') && c.section in ['D','A']))
+      && c.actor==request.auth.uid && c.at==request.time && text(c.owner,500)
+      && c.owner==(profile().get('description','').trim().size()>0 ? profile().description.trim() : 'Usuario sin descripción');
+    }
+    allow create: if readScope(g) && conciliate(g) && validIndependent(request.resource.data);
+   }
    match /archives/{aid}/locations/{lid} {
     allow read: if readScope(g);
     function validLocation(c) {

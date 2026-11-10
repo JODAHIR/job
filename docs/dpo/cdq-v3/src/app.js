@@ -1,4 +1,4 @@
-import {operationalArchivePanel,bindOperationalArchive} from './operational-archive-ui.js';
+import {operationalArchivePanel,bindOperationalArchive} from './operational-archive-ui.js?v=independent-20261110';
 import {managedState,managedCollection,bindManagedRecords} from './managed-records-ui.js?ajustes-20261105';
 import {remisionState,canCreateRemision,remisionBadge,managementActions,managementSelection,remisionCreator,bindRemisionManagement,unifyCollectionToolbar} from './remision-management.js?archivo-20261108';
 import {documentLots,selectedDocumentLot} from './document-lot-selection.js';
@@ -8,15 +8,15 @@ import {initialFilters,createFilterSession} from './filter-session.js?v=filtros-
 import {connectionState,orderLots} from './presentation-status.js?v=cah-filtros-20261020';
 import {showLotVerification,lotVerificationLabel,lotReconciliation} from './lot-verification-ui.js?conciliadores-20261104';
 import {creationActions} from './record-actions.js?gdzs-20261027';
-import {dashboardFilters,intelligencePanel,bindIntelligence,groupModuleFilters} from './intelligence-ui.js?archivo-operativo-20261109';
+import {dashboardFilters,intelligencePanel,bindIntelligence,groupModuleFilters} from './intelligence-ui.js?archivo-independiente-20261110';
 import {catalogPanel,bindCatalog,showLotGenerator,lotDashboard} from './lot-ui.js?lotes-cantidades-20261029';
 import {sortedTypes} from './lot-catalog.js?v=cah-lotes-20261019';
 import {annulPanel,bindAnnulPanel} from './remision-annul-ui.js?v=cah-filtros-20261020';
-import {pages,resolveRoute,routeFor} from './navigation.js?archivo-operativo-20261109';
-import {navigationMarkup,bindNavigation,breadcrumb} from './navigation-ui.js?archivo-operativo-20261109';
+import {pages,resolveRoute,routeFor} from './navigation.js?archivo-independiente-20261110';
+import {navigationMarkup,bindNavigation,breadcrumb} from './navigation-ui.js?archivo-independiente-20261110';
 import {installTables} from './tables.js?v=visual-20261104';
 import {validateResponsables,validateContact,assignedUsers,userDescription} from './gerencia-contacts.js?v=cah-lotes-20261019';
-import { visibleModule, manageRecord, manageCacStatus } from './permissions.js?archivo-operativo-20261109';
+import { visibleModule, manageRecord, manageCacStatus } from './permissions.js?archivo-independiente-20261110';
 import {phase3Panel,bindPhase3} from './phase3-ui.js?reportes-20261106';
 import { metrics, scope, deadlineStatus, mutate, states, integer } from "./domain.js?filtros-vacios-20261023";
 import { LocalRepository } from "./repository.js?v=cah-lotes-20261019";
@@ -141,7 +141,7 @@ async function load() {
     else {$('#app').setAttribute('aria-busy','true');$('#refresh-cloud').disabled=true;showSyncStatus();}
 
     try{
-      if(!cloud){const module=await import('./firebase-client.bundle.js?archivo-operativo-20261109');cloud=await module.connectFirebase();let initial=true;stopAuth=cloud.watchAuth(()=>{if(initial){initial=false;return}if(cloudMode()||!cloud.auth.currentUser){mode='cloud';epoch++;db=null;page=cloud?.profile?.role==='gerente'?'remisiones':'dashboard';functionId="list";window.history.replaceState(null,"",routeFor(page));$('#modal').close();load()}});}
+      if(!cloud){const module=await import('./firebase-client.bundle.js?archivo-independiente-20261110');cloud=await module.connectFirebase();let initial=true;stopAuth=cloud.watchAuth(()=>{if(initial){initial=false;return}if(cloudMode()||!cloud.auth.currentUser){mode='cloud';epoch++;db=null;page=cloud?.profile?.role==='gerente'?'remisiones':'dashboard';functionId="list";window.history.replaceState(null,"",routeFor(page));$('#modal').close();load()}});}
       if(cloud.authOnly){authenticationView();return}
       if(!cloud.auth.currentUser){loginView();return}
       const result=await cloud.load({includeAdministration:false,onCached:cached=>{

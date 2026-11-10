@@ -14,7 +14,9 @@ export async function readOperationalArchive(store,{gerenciaId}){
   return {row,archive,scanned:events.some(e=>e.kind==='scan'&&e.confirmed===true&&e.remisionRevision===row.revision)};
  });
  const groups=new Map();for(const e of entries.filter(Boolean)){const id=key(e.archive);if(!groups.has(id))groups.set(id,{id,gerenciaId,name:e.archive.name,year:e.archive.year,month:e.archive.month,number:e.archive.number,remisiones:[],anchor:{remisionId:e.row.id,eventId:e.archive.id}});groups.get(id).remisiones.push({...e.row,scanned:e.scanned});}
- return pool([...groups.values()],async g=>({...g,locations:(await getDocsFromServer(query(collection(store,base,'archives',g.id,'locations'),orderBy('at','desc'),limit(100)))).docs.map(d=>d.data())}));
+ const independent=(await getDocsFromServer(collection(store,base,'independentArchives'))).docs.map(d=>({...d.data(),id:d.id,independent:true,remisiones:[],locations:d.data().shelf?[d.data()]:[]}));
+ const linked=await pool([...groups.values()],async g=>({...g,locations:(await getDocsFromServer(query(collection(store,base,'archives',g.id,'locations'),orderBy('at','desc'),limit(100)))).docs.map(d=>d.data())}));
+ return [...linked,...independent];
 }
 export async function saveArchiveLocation(store,auth,input){
  const {gerenciaId,archiveId,remisionId,eventId,operationId,shelf,row,section}=input;
