@@ -48,3 +48,21 @@
 .remision-period-heading{display:flex;flex-wrap:wrap;gap:12px 32px;padding:16px;background:#eaf3f5;color:#233f4b;font-size:14px}
 .remision-period-heading span{overflow-wrap:anywhere}
 @media(max-width:700px){.remision-period-heading{flex-direction:column;gap:8px}}
+
+/* Tabla agrupada: distribuir el espacio disponible sin recortar las acciones. */
+.remisiones-panel .remision-period-group table{box-sizing:border-box}
+.remisiones-panel .remision-period-group th{box-sizing:border-box}
+.remisiones-panel .remision-period-group th:first-child{width:26px}
+.remisiones-panel .remision-period-group th:nth-child(2){width:auto}
+.remisiones-panel .remision-period-group th:nth-child(3),
+.remisiones-panel .remision-period-group th:nth-child(4),
+.remisiones-panel .remision-period-group th:nth-child(5){width:100px}
+.remisiones-panel .remision-period-group th:nth-child(6){width:48px}
+.remisiones-panel .remision-period-group th:nth-child(7){width:86px}
+.remisiones-panel .remision-period-group th:last-child{width:388px}
+.remisiones-panel .remision-period-group th button{padding:0;white-space:normal;text-align:left}
+@media(max-width:1100px){
+ .remisiones-panel .remision-period-group table{min-width:0}
+ .remisiones-panel .remision-period-group td{min-width:0}
+ .remisiones-panel .remision-actions{flex-wrap:wrap}
+}
