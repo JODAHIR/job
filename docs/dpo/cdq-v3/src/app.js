@@ -1,3 +1,4 @@
+import {canConciliate as observationPermission} from './conciliation-permission.js';
 import {operationalArchivePanel,bindOperationalArchive} from './operational-archive-ui.js?v=independent-20261110';
 import {managedState,managedCollection,bindManagedRecords} from './managed-records-ui.js?ajustes-20261105';
 import {remisionState,canCreateRemision,remisionBadge,managementActions,managementSelection,remisionCreator,bindRemisionManagement,unifyCollectionToolbar} from './remision-management.js?archivo-20261108';
@@ -82,6 +83,30 @@ const cloudContext=()=>({cloud,db,f,esc,table,badge,find,load,localRepository:Lo
 const phase3Context=()=>({db,f,mode,cloud,esc,table,render,load,repo});
 const canManage=(c)=>!cloudMode()||manageRecord(cloud?.profile,c);
 function gerenciaFor(c,row){if(c==='gerencias')return row.id;if(c==='cacs')return row.gerenciaId;if(c==='remisiones')return find('cacs',row.cacId).gerenciaId;if(c==='lotes')return gerenciaFor('remisiones',find('remisiones',row.remisionId));if(c==='documentos')return gerenciaFor('lotes',find('lotes',row.loteId));return gerenciaFor('documentos',find('documentos',row.documentId));}
+function canEditObservation(row){return !recordAnnulled('observaciones',row.id)&&(!cloudMode()||observationPermission(cloud?.profile,cloud?.auth?.currentUser,db.gerencias.find(g=>g.id===gerenciaFor('observaciones',row))));}
+function bindObservationSelection(){
+ const boxes=()=>[...document.querySelectorAll('[data-observation-select]')];
+ const update=()=>{const n=boxes().filter(b=>b.checked).length;const b=document.querySelector('#observation-bulk');if(b){b.disabled=!n;b.textContent=`Cambiar estado (${n})`;}};
+ boxes().forEach(b=>b.onchange=update);
+ const all=document.querySelector('#observation-all');if(all)all.onchange=()=>{boxes().forEach(b=>b.checked=all.checked);update();};
+ const button=document.querySelector('#observation-bulk');if(!button)return;
+ button.onclick=()=>{
+ const selected=boxes().filter(b=>b.checked).map(b=>find('observaciones',b.dataset.observationSelect)).filter(canEditObservation);
+ const modal=document.querySelector('#modal');
+ modal.innerHTML=`<form id="observation-status-form"><h2>Cambiar estado de ${selected.length} observaciones</h2><label>Estado<select name="status"><option>Pendiente</option><option>En proceso</option><option>Regularizada</option></select></label><p role="alert" id="observation-status-error"></p><div class="form-actions"><button class="primary">Guardar estado</button><button type="button" class="secondary" id="observation-status-close">Cerrar</button></div></form>`;
+ modal.showModal();document.querySelector('#observation-status-close').onclick=()=>modal.close();
+ document.querySelector('#observation-status-form').onsubmit=async e=>{
+ e.preventDefault();const form=e.currentTarget,status=form.elements.status.value;form.querySelectorAll('button').forEach(b=>b.disabled=true);
+ let done=0;try{for(const old of selected){if(!canEditObservation(old))throw Error('No tiene permiso para actualizar esta observación.');
+ const row=Object.fromEntries(['id','documentId','description','date','owner','status'].map(k=>[k,k==='status'?status:old[k]]));
+ const result=await cloud.call('saveRecord',{gerenciaId:gerenciaFor('observaciones',old),collection:'observaciones',row,expectedRevision:old.revision??0,reason:'Actualización de estado de observación'});
+ if(result.saved)Object.assign(old,result.saved);else Object.assign(old,row,{revision:(old.revision??0)+1});
+ if(result.related){const related=db.documentos.find(d=>d.id===result.related.id);if(related)Object.assign(related,result.related);}
+ if(result.control){db.remisionControls??=[];const i=db.remisionControls.findIndex(x=>x.id===result.control.id);if(i>=0)db.remisionControls[i]=result.control;else db.remisionControls.push(result.control);}
+ done++;}modal.close();render();}catch(error){document.querySelector('#observation-status-error').textContent=`Guardadas: ${done} de ${selected.length}. ${error.message} Cierre y actualice antes de reintentar.`;form.querySelector('#observation-status-close').disabled=false;}
+ };
+ };
+}
 function loginView(error=''){  hidePrivateShell();
   if(cloud?.authOnly){authenticationView(error);return;}
   $('#app').innerHTML=`<main class="content login-page"><section class="panel"><h1>CONTROL DOCUMENTO</h1><p>Para acceder al sistema debes ser funcionario de la Dirección de Operaciones</p><form id="login-form" class="form-fields"><label>Correo<input name="email" type="email" autocomplete="username" required></label><label>Contraseña<input name="password" type="password" autocomplete="current-password" required></label>
@@ -215,7 +240,7 @@ function table(headers, rows) {
 }
 function recordAnnulled(c,id){let row=find(c,id);if(c==='observaciones'){row=find('documentos',row.documentId);c='documentos';}if(c==='documentos'){row=find('lotes',row.loteId);c='lotes';}if(c==='lotes'){row=find('remisiones',row.remisionId);c='remisiones';}return c==='remisiones'&&!!row?.annulment;}
 const edit = (c, id) =>
-  (canManage(c)&&!recordAnnulled(c,id)?`<button class="link" data-edit="${c}" data-id="${esc(id)}">Editar ↗</button>`:'')+contextLink(c,id);
+  ((c==='observaciones'?canEditObservation(find(c,id)):canManage(c))&&!recordAnnulled(c,id)?`<button class="link" data-edit="${c}" data-id="${esc(id)}">Editar ↗</button>`:'')+contextLink(c,id);
 const childEntity={gerencias:'cacs',cacs:'remisiones',remisiones:'lotes',lotes:'documentos',documentos:'observaciones'};
 let contextFilter=null;
 function contextLink(entity,id){const child=childEntity[entity];return child&&(!cloudMode()||visibleModule(cloud.profile,child))?` <button class="link" data-related="${entity}" data-id="${esc(id)}">Ver ${esc(pages.find(p=>p[0]===child)[2])} →</button>`:'';}
@@ -384,11 +409,13 @@ function collectionView() {
   }
   if (page === "observaciones") {
     headers = [
+      "Seleccionar",
       "Documento",
+      "Tipo de documento",
       "Descripción",
       "Fecha",
       "Responsable",
-      "Regularización",
+      "Estado",
       "",
     ];
     const ids = new Set(s.docs.map((d) => d.id));
@@ -397,7 +424,9 @@ function collectionView() {
       .filter((o) => ids.has(o.documentId) && (!f.observation || o.status===f.observation))
       .sort((a,b)=>observationType(a).localeCompare(observationType(b),"es",{numeric:true}) || a.description.localeCompare(b.description,"es"))
       .map((o) => [
+        cloud?.spark&&canEditObservation(o)?`<input type="checkbox" data-observation-select="${esc(o.id)}" aria-label="Seleccionar observación del documento ${esc(find('documentos',o.documentId).number)}">`:'',
         esc(find("documentos", o.documentId).number),
+        esc(observationType(o)),
         esc(o.description),
         esc(o.date),
         esc(o.owner),
@@ -437,7 +466,7 @@ function collectionView() {
       return `<details class="document-group"><summary><strong>${title}</strong> · ${individual.length} ${individual.length===1?'documento individualizado':'documentos individualizados'}${review?` · Cantidad verificada del lote: ${review[4]}`:''}${summary?` <span class="document-group-states">${summary}</span>`:''}${review?` <span class="document-group-states">Estado del lote: ${review[3]}</span>`:''}</summary>${table(headers,group)}<p class="footnote">La verificación total y los documentos individualizados no se suman.</p></details>`;
     }).join('')||'<p>Sin documentos para esta selección.</p>';
   }
-  return `<section class="panel ${page==='remisiones'?'remisiones-panel':''}">${contextFilter?.child===page?'<p>Mostrando registros vinculados. <button id="clear-context" class="link">Ver todos los registros del período</button></p>':""}<div class="section-line"><div><h2>${pages.find((p) => p[0] === page)[2]}</h2><p>${page === "gerencias" || page === "cacs" ? "Catálogo institucional · independiente del período" : "Registros del período y ámbito seleccionados"}</p></div>${creationActions(collection,canManage(collection)&&(collection!=="remisiones"||!cloudMode()||canCreateRemision(cloud.profile)),cloud?.spark,cloud?.profile)}</div><input class="search" id="search" placeholder="Buscar en esta tabla…" value="${esc(query)}" aria-label="Buscar en la tabla">${tableMarkup}<p class="footnote">${filtered.length} resultados · ${cloudMode()?"":"Cambios guardados únicamente en este navegador."}</p></section>`;
+  return `<section class="panel ${page==='remisiones'?'remisiones-panel':''}">${contextFilter?.child===page?'<p>Mostrando registros vinculados. <button id="clear-context" class="link">Ver todos los registros del período</button></p>':""}<div class="section-line"><div><h2>${pages.find((p) => p[0] === page)[2]}</h2><p>${page === "gerencias" || page === "cacs" ? "Catálogo institucional · independiente del período" : "Registros del período y ámbito seleccionados"}</p></div>${creationActions(collection,canManage(collection)&&(collection!=="remisiones"||!cloudMode()||canCreateRemision(cloud.profile)),cloud?.spark,cloud?.profile)}</div><input class="search" id="search" placeholder="Buscar en esta tabla…" value="${esc(query)}" aria-label="Buscar en la tabla">${page==='observaciones'&&cloud?.spark?'<div class="collection-toolbar"><label><input type="checkbox" id="observation-all"> Seleccionar registros disponibles</label><button id="observation-bulk" class="secondary" disabled>Cambiar estado (0)</button></div>':''}${tableMarkup}<p class="footnote">${filtered.length} resultados · ${cloudMode()?"":"Cambios guardados únicamente en este navegador."}</p></section>`;
 }
 function history() {
   const keys = [
@@ -540,6 +569,7 @@ function bind() {
   document.querySelectorAll('[data-verify-lot]').forEach(b=>b.onclick=()=>showLotVerification(cloudContext(),b.dataset.verifyLot));
   if(page==='catalog')bindCatalog(cloudContext());
   if($('#generate-lots'))$('#generate-lots').onclick=()=>showLotGenerator(cloudContext());
+  if(page==='observaciones')bindObservationSelection();
   unifyCollectionToolbar();
   if(cloud?.spark&&['lotes','documentos'].includes(page))bindManagedRecords(cloudContext());
   if(page==='remisiones')bindRemisionManagement({...cloudContext(),render});
@@ -647,7 +677,7 @@ function generateRemisiones() {
 function form(c, id, defaults = {}) {
   if(id&&cloud?.spark&&['lotes','documentos'].includes(c)&&managedState(db,c,find(c,id))!=='Pendiente')return;
   if(c==='remisiones'&&((!id&&cloudMode()&&!canCreateRemision(cloud.profile))||(id&&remisionState(db,find(c,id))==='Conciliada')))return;
-  if(!canManage(c)||id&&recordAnnulled(c,id))return;
+  if(!(c==='observaciones'&&id?canEditObservation(find(c,id)):canManage(c))||id&&recordAnnulled(c,id))return;
   if(c==='lotes'&&!id&&cloud?.spark){showLotGenerator(cloudContext());return;}
   if(!id){
     defaults={year:+f.year,month:+f.month,half:f.half?+f.half:'',gerenciaId:f.gerencia||'',cacId:f.cac||'',...defaults};
@@ -754,13 +784,13 @@ function form(c, id, defaults = {}) {
       field("owner", "Responsable de la observación", "text", row.owner ?? (db.users?.find(u=>u.id===cloud?.auth?.currentUser?.uid)?.description?.trim() || cloud?.profile?.description?.trim() || "")) +
       pick(
         "status",
-        "Regularización",
+        "Estado",
         [{ id: "Pendiente" }, { id: "En proceso" }, { id: "Regularizada" }],
         (r) => r.id,
         row.status ?? "Pendiente",
       );
   $("#modal").innerHTML =
-    `<form id="record-form"><div class="section-line"><h2>${id ? "Editar" : "Nuevo"} registro</h2><button type="button" id="close" aria-label="Cerrar">✕</button></div>${c==="remisiones"?"":`<p>${pages.find((p) => p[0] === c)[2]} · ${cloudMode()?"Firebase institucional":mode === "demo" ? "Demostración" : "Mis registros locales"}</p>`}<div class="form-fields">${fields}${cloudMode()?(c==="remisiones"?`<p>Usuario que generó el registro: ${esc(remisionCreator(db,row,cloud.profile,!id))}</p>`:"<p>Responsable: identidad de la sesión autenticada.</p>"):field("actor", "Responsable de este registro")}</div><p id="form-error" role="alert"></p><div class="form-actions"><button type="button" id="cancel" class="secondary">Cancelar</button><button class="primary" type="submit">Guardar registro</button></div></form>`;
+    `<form id="record-form"><div class="section-line"><h2>${id ? "Editar" : "Nuevo"} registro</h2><button type="button" id="close" aria-label="Cerrar">✕</button></div>${["remisiones","observaciones"].includes(c)?"":`<p>${pages.find((p) => p[0] === c)[2]} · ${cloudMode()?"Firebase institucional":mode === "demo" ? "Demostración" : "Mis registros locales"}</p>`}<div class="form-fields">${fields}${cloudMode()?(c==="remisiones"?`<p>Usuario que generó el registro: ${esc(remisionCreator(db,row,cloud.profile,!id))}</p>`:c==="observaciones"?"":"<p>Responsable: identidad de la sesión autenticada.</p>"):field("actor", "Responsable de este registro")}</div><p id="form-error" role="alert"></p><div class="form-actions"><button type="button" id="cancel" class="secondary">Cancelar</button><button class="primary" type="submit">Guardar registro</button></div></form>`;
   if(c==='lotes'&&row.typeId){$('#record-form').elements.code.readOnly=true;$('#record-form').elements.remisionId.disabled=true;}
   if(c==='documentos'){
     const form=$('#record-form'),lotSelect=form.elements.loteId,typeSelect=form.elements.type;

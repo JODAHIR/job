@@ -16,7 +16,7 @@ export function managedCollection({db,s,page,query,esc,table,period,canManage,pr
  const typeOf=lot=>types.find(t=>t.id===lot?.typeId||t.code===lot?.typeCode)?.description||lot?.typeCode||'Sin descripción';
  const selected=rows.filter(row=>{const lot=lots?row:db.lotes.find(l=>l.id===row.loteId),rem=remOf(row),cac=db.cacs.find(c=>c.id===rem?.cacId);return [row.code,row.number,typeOf(lot),cac?.name,period(rem||{})].join(' ').toLocaleLowerCase('es').includes(query.toLocaleLowerCase('es'));});
  const groups=new Map();for(const row of selected){const rem=remOf(row);if(!groups.has(rem?.cacId))groups.set(rem?.cacId,[]);groups.get(rem?.cacId).push(row);}
- const headers=lots?['Seleccionar','Lote','Tipo de documento','Período','Declarados','Registrados / Individualizados','Estado','Acciones']:['Seleccionar','Documento','Lote','Tipo de documento','Estado','Observaciones','Fecha','Regularización','Responsable','Acciones'];
+ const headers=lots?['Seleccionar','Lote','Tipo de documento','Período','Declarados','Registrados / Individualizados','Estado','Acciones']:['Seleccionar','Documento','Lote','Tipo de documento','Estado','Observaciones','Fecha','Estado Obs.','Responsable','Acciones'];
  const markup=[...groups].sort(([a],[b])=>(db.cacs.find(c=>c.id===a)?.name||'').localeCompare(db.cacs.find(c=>c.id===b)?.name||'','es',{numeric:true})).map(([cacId,items])=>{
   items.sort((a,b)=>(a.code||db.lotes.find(l=>l.id===a.loteId)?.code||'').localeCompare(b.code||db.lotes.find(l=>l.id===b.loteId)?.code||'','es',{numeric:true})||String(a.number||'').localeCompare(String(b.number||''),'es',{numeric:true}));
   const rendered=items.map(row=>{

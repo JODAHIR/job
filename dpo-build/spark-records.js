@@ -1,3 +1,4 @@
+import {canConciliate} from './conciliation-permission.js';
 import {newLotGuard} from './spark-document-management.js';
 import {assertRemisionEditable} from './spark-remision-guard.js';
 import {lifecycleFence} from './spark-lifecycle.js';
@@ -47,6 +48,7 @@ export function sparkWriter(store, auth) {
       const profile=(await tx.get(doc(store,'users',auth.currentUser.uid))).data();
       const ref = doc(store,path), snap = await tx.get(ref), before = snap.exists() ? snap.data() : null;
       if ((before?.revision || 0) !== expectedRevision) throw Error('El registro cambió. Actualice antes de guardar.');
+      if(entity==='observaciones'&&before){const management=(await tx.get(doc(store,'gerencias',g))).data();if(!canConciliate(profile,auth.currentUser,{...management,id:g}))throw Error('Solo el responsable designado, el Director o el Administrador pueden actualizar la observación.');}
       if(entity==='cacs' && before && !explicitActive)row.active=before.active??true;
       let after = {...before,...row, revision: expectedRevision + 1, updatedAt: serverTimestamp()};
       const key = entity==='lotes' && before?.typeId ? before.uniqueKey : sparkKey(entity,after), lock = doc(store,'sparkKeys',key);
