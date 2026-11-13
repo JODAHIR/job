@@ -1,6 +1,6 @@
 import {createIndependentArchive} from './independent-archive.js';
 import {readOperationalArchive,saveArchiveLocation} from './operational-archive.js';
-import {readRemisionCustody,saveRemisionCustody} from './remision-custody.js';
+import {readRemisionClosure,readRemisionCustody,saveRemisionCustody} from './remision-custody.js';
 import {remisionComments,addRemisionComment} from './remision-comments.js';
 import {deleteManagedRecord} from './spark-document-management.js';
 import {registerDocument} from './spark-document-registration.js';
@@ -43,6 +43,7 @@ export function sparkAPI(api) {
   if(name==='createIndependentArchive')return createIndependentArchive(store,auth,input);
   if(name==='readOperationalArchive')return readOperationalArchive(store,input);
   if(name==='saveArchiveLocation')return saveArchiveLocation(store,auth,input);
+  if(name==='readRemisionClosure')return readRemisionClosure(store,auth,input);
   if(name==='readRemisionCustody')return readRemisionCustody(store,input);
   if(name==='saveRemisionCustody')return saveRemisionCustody(store,auth,input);
   if(name==='remisionComments')return remisionComments(store,input);
