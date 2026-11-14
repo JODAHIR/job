@@ -1,6 +1,6 @@
 import {jsPDF} from 'jspdf';
 
-export function closurePdf({closure,management,period,now,logo,issuer,demo=false}) {
+export function closurePdf({closure,management,period,now,logo,issuer,issuerRole,demo=false}) {
   if(!closure.eligible) throw Error('La gerencia todavía tiene remisiones pendientes de conciliación.');
   const names=[issuer?.trim()].filter(Boolean);
   if(!names.length)throw Error('Falta la descripción del usuario que emite el documento.');
@@ -22,11 +22,11 @@ export function closurePdf({closure,management,period,now,logo,issuer,demo=false
     'Se hace constar que en el control realizado no se registran documentos faltantes, y los adjuntos se encuentran dentro de lo establecido en el “Manual de Procedimientos de Rendición de Documentos que respaldan las Operaciones de Desembolsos de Préstamos”, aprobado por la Resolución del Consejo Directivo N.º 26, Acta N.º 34 de fecha 23/10/2025.',
     'Por lo expuesto se da por finalizado el proceso de verificación documental, para proseguir con los trámites.'
   ];
-  for(const p of paragraphs){const lines=pdf.splitTextToSize(p,width);for(const line of lines){if(y>265){pdf.addPage();y=30;}pdf.text(line,left,y);y+=5.82;}y+=7;}
+  for(const p of paragraphs){const lines=pdf.splitTextToSize(p,width);for(const [index,line] of lines.entries()){if(y>265){pdf.addPage();y=30;}const words=line.trim().split(/\s+/);if(index<lines.length-1&&words.length>1){const gap=(width-words.reduce((sum,word)=>sum+pdf.getTextWidth(word),0))/(words.length-1);let x=left;for(const word of words){pdf.text(word,x,y);x+=pdf.getTextWidth(word)+gap;}}else{pdf.text(line,left,y);}y+=5.82;}y+=7;}
   const signature=pdf.splitTextToSize(names.join(' / '),width);
   if(y+signature.length*5+27>270) pdf.addPage(),y=35;
   y+=14;pdf.setFont('helvetica','bold');pdf.text(signature,105,y,{align:'center'});y+=signature.length*5+2;
-  pdf.setFont('helvetica','normal');pdf.text('Responsable de la emisión',105,y,{align:'center'});pdf.text('Unidad de Operaciones',105,y+6,{align:'center'});
+  pdf.setFont('helvetica','normal');pdf.text(issuerRole==='technical'?'Dirección de Operaciones':'Unidad de Operaciones',105,y,{align:'center'});
   for(let p=1;p<=pdf.getNumberOfPages();p++){pdf.setPage(p);pdf.setDrawColor(150);pdf.line(30,282,180,282);if(demo){pdf.setFontSize(8);pdf.setTextColor(120);pdf.text('DEMOSTRACIÓN · DATOS FICTICIOS · SIN VALIDEZ INSTITUCIONAL',105,288,{align:'center'});}}
   return pdf;
 }

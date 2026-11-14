@@ -47,5 +47,5 @@ export async function readRemisionClosure(store,auth,input){
  if(auth.currentUser?.uid!==uid)throw Error('La sesión cambió.');
  const db={...Object.fromEntries(entities.map((e,i)=>[e,values[i]])),remisionControls:after,completeInventory:true};
  const closure=evaluateClosure(db,input.gerenciaId,period);
- return {closure,period,issuer:profile.data().description||'',management:{...management.data(),id:input.gerenciaId}};
+ return {closure,period,issuer:profile.data().description||'',issuerRole:profile.data().role,management:{...management.data(),id:input.gerenciaId}};
 }
