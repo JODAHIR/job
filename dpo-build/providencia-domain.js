@@ -18,7 +18,7 @@ export function evaluateClosure(db, managementId, period) {
       for (const l of lots) {
         const control=db.remisionControls.find(c=>c.id===r.id);
         const v=control&&Number.isSafeInteger(control.version)?currentVerification(db.lotVerifications,l,control,false,db):null;
-        if (!v || !Number.isSafeInteger(l.declared) || l.declared<=0 || !Number.isSafeInteger(v.registered) || v.registered!==l.declared || Number(v.missing||0)>0 || Number(v.excess||0)>0) {
+        if (!v || !Number.isSafeInteger(l.declared) || l.declared<0 || !Number.isSafeInteger(v.registered) || v.registered!==l.declared || Number(v.missing||0)>0 || Number(v.excess||0)>0) {
           pending.push(`${cac.name}: ${l.label||l.id} sin conciliación completa.`);
         } else reviews.push(v);
       }

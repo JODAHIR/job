@@ -9,3 +9,6 @@ for(const [name,change] of Object.entries({incompleto:d=>d.completeInventory=fal
 test('PDF bloqueado si no se cumple conciliación',()=>assert.throws(()=>closurePdf({closure:{eligible:false}})));
 test('control ausente impide certificar',()=>{const d=fixture();d.remisionControls=[];assert.equal(evaluateClosure(d,'g',period).eligible,false);});
 test('PDF usa período, gerencia y expediente reales',async()=>{const {readFileSync}=await import('node:fs');const source=readFileSync(new URL('../dpo-build/providencia.js',import.meta.url),'utf8');const logo=source.match(/const logo = '([^']+)'/)[1];const pdf=closurePdf({closure:evaluateClosure(fixture(),'g',period),management:{name:'Gerencia Centro'},period,now:new Date('2026-11-13T12:00:00Z'),issuer:'Usuario de prueba',logo});assert.equal(pdf.getNumberOfPages(),1);const text=pdf.output();assert.ok(text.includes('2026-001'));assert.ok(text.includes('octubre/2026'));assert.ok(!text.includes('DATOS FICTICIOS'));});
+
+test('lote cero conciliado no bloquea PDF',()=>{const d=fixture();d.lotes[0].declared=0;d.lotVerifications[0].registered=0;assert.equal(evaluateClosure(d,'g',period).eligible,true);});
+test('lote cero sin conciliación sigue pendiente',()=>{const d=fixture();d.lotes[0].declared=0;d.lotVerifications=[];assert.equal(evaluateClosure(d,'g',period).eligible,false);});
