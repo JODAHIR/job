@@ -1,3 +1,4 @@
+import {reportButton} from './remision-report-ui.js';
 import {canConciliate as observationPermission} from './conciliation-permission.js';
 import {operationalArchivePanel,bindOperationalArchive} from './operational-archive-ui.js?v=independent-20261110';
 import {managedState,managedCollection,bindManagedRecords} from './managed-records-ui.js?ajustes-20261105';
@@ -370,7 +371,7 @@ function collectionView() {
   }
   if (page === "remisiones") {
     headers = ["", "CAC", "Período", "Expediente", "Fecha de remisión", "Recepción", "Vencimiento", "Lotes", "Estado", "Acciones"];
-    rows = s.rem.map((r) => [
+    rows = s.rem.map((r) => Object.assign([
       managementSelection(db,r,cloud?.profile||{active:true,role:"technical"},esc),
       esc(name("cacs", r.cacId)),
       esc(period(r)),
@@ -378,7 +379,7 @@ function collectionView() {
       db.lotes.filter((l) => l.remisionId === r.id).length,
       remisionBadge(remisionState(db,r),esc),
       managementActions(db,r,cloud?.profile||{active:true,role:"technical"},esc),
-    ]);
+    ], {remision:r,gerenciaId:db.cacs.find(c=>c.id===r.cacId)?.gerenciaId}));
 
   }
   if (page === "lotes") {
@@ -441,14 +442,14 @@ function collectionView() {
   if(page==='remisiones'&&filtered.length){
     const groups=new Map();
     for(const row of filtered){
-      const key=JSON.stringify([row[2],row[3]]);
+      const key=JSON.stringify([row.gerenciaId,row[2],row[3]]);
       if(!groups.has(key))groups.set(key,[]);
       groups.get(key).push(row);
     }
     const groupHeaders=headers.filter((_,i)=>i!==2&&i!==3);
     tableMarkup=[...groups.values()].map(group=>{
       const groupRows=[...group].sort((a,b)=>a[1].localeCompare(b[1],'es',{numeric:true}));
-      return `<div class="remision-period-group"><div class="remision-period-heading"><span><strong>Período:</strong> ${group[0][2]}</span><span><strong>Expediente:</strong> ${group[0][3]}</span></div>${table(groupHeaders,groupRows.map(row=>row.filter((_,i)=>i!==2&&i!==3)))}</div>`;
+      return `<div class="remision-period-group"><div class="remision-period-heading"><span><strong>Período:</strong> ${group[0][2]}</span><span><strong>Expediente:</strong> ${group[0][3]}</span><span><strong>Gerencia:</strong> ${esc(name("gerencias",group[0].gerenciaId))}</span>${reportButton(db,cloud,group.map(row=>row.remision),esc)}</div><p class="remision-report-status" data-report-status role="status" hidden></p>${table(groupHeaders,groupRows.map(row=>row.filter((_,i)=>i!==2&&i!==3)))}</div>`;
     }).join('');
   }else if(page==='remisiones'){
     tableMarkup=table(headers.filter((_,i)=>i!==2&&i!==3),[]);

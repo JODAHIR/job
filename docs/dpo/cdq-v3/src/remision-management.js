@@ -1,3 +1,4 @@
+import {bindRemisionReports} from './remision-report-ui.js';
 import {bindRemisionCustody} from './remision-custody-ui.js';
 import {bindRemisionComments} from './remision-comments-ui.js?comentarios-20261029';
 import {bindRestoration} from './remision-restoration-ui.js?restaurar-20261029';
@@ -20,7 +21,7 @@ export function remisionCreator(db,row,profile,isNew){if(isNew)return profile?.d
 export function bindRemisionManagement(ctx){const {db,cloud,esc,load}=ctx;
  bindBulkRemisiones(ctx);
  bindRestoration(ctx);
- bindRemisionComments(ctx);bindRemisionCustody(ctx);
+ bindRemisionComments(ctx);bindRemisionCustody(ctx);bindRemisionReports(ctx);
  document.querySelectorAll('[data-remision-detail]').forEach(b=>b.onclick=()=>{
  const r=db.remisiones.find(r=>r.id===b.dataset.remisionDetail),control=db.remisionControls?.find(c=>c.id===r.id);
  const types=Array.isArray(db.catalog?.types)?db.catalog.types:Object.values(db.catalog?.types||{});
