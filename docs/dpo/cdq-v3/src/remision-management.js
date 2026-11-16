@@ -4,12 +4,11 @@ import {bindRemisionComments} from './remision-comments-ui.js?comentarios-202610
 import {bindRestoration} from './remision-restoration-ui.js?restaurar-20261029';
 import {previewSelection,confirmSelection} from './annul-selection.js';
 import {openRemisionDetailWindow} from './remision-detail-window.js';
-import {currentVerification} from './lot-verification.js';
+import {currentVerification,isLotReconciled} from './lot-verification.js';
 export function remisionState(db,r){
  if(r?.annulment)return 'Anulada';
- const lots=(db.lotes||[]).filter(l=>l.remisionId===r.id);
- const control=(db.remisionControls||[]).find(c=>c.id===r.id);
- const complete=lots.length>0&&lots.every(l=>{const v=currentVerification(db.lotVerifications||[],l,control,false,db);return v&&Number.isInteger(v.registered)&&v.registered===l.declared;});
+ const lots=(db.lotes||[]).filter(l=>l.remisionId===r.id&&!l.deletion);
+ const complete=lots.length>0&&lots.every(l=>isLotReconciled(db,l));
  return complete?'Conciliada':r.receivedOn?'Registrada':'Pendiente';
 }
 export const canCreateRemision=p=>p?.active&&['technical','director','gerente'].includes(p.role);
@@ -56,4 +55,5 @@ function bindBulkRemisiones({db,cloud,esc,load}){
  };
  };
 }
+
 

@@ -1,9 +1,8 @@
-import {currentVerification} from './lot-verification.js';
+import {currentVerification,isLotReconciled} from './lot-verification.js';
 export function remisionState(db,r){
  if(r?.annulment)return 'Anulada';
- const lots=(db.lotes||[]).filter(l=>l.remisionId===r.id);
- const control=(db.remisionControls||[]).find(c=>c.id===r.id);
- const complete=lots.length>0&&lots.every(l=>{const v=currentVerification(db.lotVerifications||[],l,control,false,db);return v&&Number.isInteger(v.registered)&&v.registered===l.declared;});
+ const lots=(db.lotes||[]).filter(l=>l.remisionId===r.id&&!l.deletion);
+ const complete=lots.length>0&&lots.every(l=>isLotReconciled(db,l));
  return complete?'Conciliada':r.receivedOn?'Registrada':'Pendiente';
 }
 export const canCreateRemision=p=>p?.active&&['technical','director','gerente'].includes(p.role);
@@ -24,3 +23,4 @@ export function bindRemisionManagement(ctx){const {db,cloud,esc,load}=ctx;
  });
 }
 export function unifyCollectionToolbar(){document.querySelectorAll('section.panel').forEach(panel=>{const search=panel.querySelector(':scope > input.search');const heading=panel.querySelector(':scope > .section-line');if(!search||!heading)return;const bar=document.createElement('div');bar.className='collection-toolbar';bar.append(search);for(const child of [...heading.children].slice(1))bar.append(child);heading.after(bar);});}
+

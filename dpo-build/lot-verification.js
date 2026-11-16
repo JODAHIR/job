@@ -30,3 +30,17 @@ export function reconcilePresented(summary, registered) {
  if(!Number.isSafeInteger(registered)||registered<0||registered>1000000)throw Error('Ingrese una cantidad entera entre 0 y 1000000.');
  return {...summary,individualized:summary.registered,countSource:'manual',registered,missing:Math.max(0,summary.declared-registered),excess:Math.max(0,registered-summary.declared),complete:summary.declared>0&&registered===summary.declared&&summary.openObservations===0};
 }
+
+
+// Reconciliation is persisted separately from verification freshness.
+// An observation update can invalidate a review without reopening the lot.
+export function isLotReconciled(db, lot) {
+ if (!lot || lot.deletion) return false;
+ const remision = (db.remisiones || []).find(r => r.id === lot.remisionId);
+ if (remision?.annulment) return false;
+ const guard = (db.lotManagement || []).find(g => g.id === lot.id);
+ if (guard?.pending === false) return true;
+ const control = (db.remisionControls || []).find(c => c.id === lot.remisionId);
+ const review = currentVerification(db.lotVerifications || [], lot, control, false, db);
+ return !!review && Number.isInteger(review.registered) && review.registered === lot.declared;
+}

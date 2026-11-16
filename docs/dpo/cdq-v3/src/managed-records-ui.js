@@ -1,12 +1,10 @@
+import {isLotReconciled} from './lot-verification.js';
 import {lotReconciliation} from './lot-verification-ui.js?historial-20261030';
 import {sortedTypes} from './lot-catalog.js?abm-documental-20261028';
 export function managedState(db,c,row){
  if(!row||row.deletion)return 'Eliminado';
  const lot=c==='lotes'?row:db.lotes.find(l=>l.id===row.loteId);
- const guard=db.lotManagement?.find(g=>g.id===lot?.id);
- if(guard?.pending===false)return 'Conciliado';
- const {review}=lot?lotReconciliation(db,lot):{};
- if(review&&review.registered===lot.declared)return 'Conciliado';
+ if(isLotReconciled(db,lot))return 'Conciliado';
  return c==='lotes'?'Pendiente':row.state==='Pendiente'?'Pendiente':row.state;
 }
 export function managedCollection({db,s,page,query,esc,table,period,canManage,profile,linked,selectedCac}){
@@ -57,4 +55,5 @@ export function bindManagedRecords({db,cloud,esc,load}){
   };
  };
 }
+
 
