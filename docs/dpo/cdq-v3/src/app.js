@@ -463,8 +463,15 @@ function collectionView() {
       groups.get(key).push(row);
     }
     const cacTitle=id=>db.cacs.find(c=>c.id===id)?.name||'Sin CAC asociado';
+    const typeGroups=group=>{
+      const types=new Map();
+      for(const row of group){const type=row[2]||'Sin tipo de documento';if(!types.has(type))types.set(type,[]);types.get(type).push(row);}
+      return [...types].sort(([a],[b])=>a.localeCompare(b,'es',{numeric:true})).map(([type,items])=>
+        `<details class="document-group observation-type-group"><summary><strong>${type}</strong> · ${items.length} ${items.length===1?'observación':'observaciones'}</summary>${table(headers,items)}</details>`
+      ).join('');
+    };
     tableMarkup=[...groups].sort(([a],[b])=>cacTitle(a).localeCompare(cacTitle(b),'es',{numeric:true})).map(([id,group])=>
-      `<details class="document-group" open><summary><strong>${esc(cacTitle(id))}</strong> · ${group.length} ${group.length===1?'observación':'observaciones'}</summary>${table(headers,group)}</details>`
+      f.cac?typeGroups(group):`<details class="document-group observation-cac-group" open><summary><strong>${esc(cacTitle(id))}</strong> · ${group.length} ${group.length===1?'observación':'observaciones'}</summary>${typeGroups(group)}</details>`
     ).join('')||'<p>Sin observaciones para esta selección.</p>';
   }
 
