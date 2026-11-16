@@ -1,8 +1,8 @@
-import {reportButton} from './remision-report-ui.js';
+import {reportButton} from './remision-report-ui.js?mensaje-20261116';
 import {canConciliate as observationPermission} from './conciliation-permission.js';
 import {operationalArchivePanel,bindOperationalArchive} from './operational-archive-ui.js?v=independent-20261110';
 import {managedState,managedCollection,bindManagedRecords} from './managed-records-ui.js?conciliacion-20261116';
-import {remisionState,canCreateRemision,remisionBadge,managementActions,managementSelection,remisionCreator,bindRemisionManagement,unifyCollectionToolbar} from './remision-management.js?conciliacion-20261116';
+import {remisionState,canCreateRemision,remisionBadge,managementActions,managementSelection,remisionCreator,bindRemisionManagement,unifyCollectionToolbar} from './remision-management.js?mensaje-20261116';
 import {documentLots,selectedDocumentLot} from './document-lot-selection.js';
 import {observationCatalog,observationKey} from './observation-catalog.js';
 import {observationCatalogPanel,bindObservationCatalog} from './observation-catalog-ui.js';

@@ -19,12 +19,12 @@ export function bindRemisionReports({db,cloud}){
   const row=db.remisiones.find(r=>r.id===button.dataset.remisionReport);
   const target=row&&reportContext(db,cloud,[row]);
   const status=button.closest('.remision-period-group').querySelector('[data-report-status]');
-  status.hidden=false;
+  status.hidden=false;status.style.color="";
   if(!target||target.gerenciaId!==button.dataset.reportGerencia){status.textContent='No tiene permiso para generar el informe de esta gerencia.';return;}
   button.disabled=true;status.textContent='Comprobando la conciliación de todos los CAC de la gerencia…';
   try{
    const data=await cloud.call('readRemisionClosure',target);
-   if(!data.closure.eligible){status.textContent='Informe pendiente: '+data.closure.pending.join(' ');return;}
+   if(!data.closure.eligible){status.style.color='#b91c1c';status.textContent='documentaciones con observaciones';return;}
    const {downloadClosure}=await import('./providencia.bundle.js');
    downloadClosure(data);status.textContent='Informe PDF generado.';
   }catch(error){status.textContent='No se pudo generar el informe: '+error.message;}

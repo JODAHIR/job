@@ -1,4 +1,4 @@
-import {bindRemisionReports} from './remision-report-ui.js';
+import {bindRemisionReports} from './remision-report-ui.js?mensaje-20261116';
 import {bindRemisionCustody} from './remision-custody-ui.js';
 import {bindRemisionComments} from './remision-comments-ui.js?comentarios-20261029';
 import {bindRestoration} from './remision-restoration-ui.js?restaurar-20261029';
