@@ -424,7 +424,7 @@ function collectionView() {
     rows = db.observaciones
       .filter((o) => ids.has(o.documentId) && (!f.observation || o.status===f.observation))
       .sort((a,b)=>observationType(a).localeCompare(observationType(b),"es",{numeric:true}) || a.description.localeCompare(b.description,"es"))
-      .map((o) => [
+      .map((o) => Object.assign([
         cloud?.spark&&canEditObservation(o)?`<input type="checkbox" data-observation-select="${esc(o.id)}" aria-label="Seleccionar observación del documento ${esc(find('documentos',o.documentId).number)}">`:'',
         esc(find("documentos", o.documentId).number),
         esc(observationType(o)),
@@ -433,10 +433,10 @@ function collectionView() {
         esc(find("lotes", find("documentos", o.documentId)?.loteId)?.code || "Sin lote asociado"),
         badge(o.status, o.status === "Regularizada" ? "ok" : "warn"),
         edit(page, o.id),
-      ]);
+      ], {cacId:find("remisiones",find("lotes",find("documentos",o.documentId)?.loteId)?.remisionId)?.cacId}));
   }
   const filtered = rows.filter((r) =>
-    r.join(" ").toLowerCase().includes(esc(query.toLowerCase())),
+    (r.join(" ")+(page==="observaciones"?" "+esc(name("cacs",r.cacId)):"")).toLowerCase().includes(esc(query.toLowerCase())),
   );
   let tableMarkup=table(headers,filtered);
   if(page==='remisiones'&&filtered.length){
@@ -453,6 +453,19 @@ function collectionView() {
     }).join('');
   }else if(page==='remisiones'){
     tableMarkup=table(headers.filter((_,i)=>i!==2&&i!==3),[]);
+  }
+
+  if(page==='observaciones'){
+    const groups=new Map();
+    for(const row of filtered){
+      const key=row.cacId||'';
+      if(!groups.has(key))groups.set(key,[]);
+      groups.get(key).push(row);
+    }
+    const cacTitle=id=>db.cacs.find(c=>c.id===id)?.name||'Sin CAC asociado';
+    tableMarkup=[...groups].sort(([a],[b])=>cacTitle(a).localeCompare(cacTitle(b),'es',{numeric:true})).map(([id,group])=>
+      `<details class="document-group" open><summary><strong>${esc(cacTitle(id))}</strong> · ${group.length} ${group.length===1?'observación':'observaciones'}</summary>${table(headers,group)}</details>`
+    ).join('')||'<p>Sin observaciones para esta selección.</p>';
   }
 
   if(page==='documentos'){
