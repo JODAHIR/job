@@ -4,7 +4,7 @@ import {bindRemisionComments} from './remision-comments-ui.js?comentarios-202610
 import {bindRestoration} from './remision-restoration-ui.js?restaurar-20261029';
 import {previewSelection,confirmSelection} from './annul-selection.js';
 import {openRemisionDetailWindow} from './remision-detail-window.js';
-import {currentVerification,isLotReconciled} from './lot-verification.js';
+import {currentVerification,isLotReconciled} from './lot-verification.js?conciliacion-20261116';
 export function remisionState(db,r){
  if(r?.annulment)return 'Anulada';
  const lots=(db.lotes||[]).filter(l=>l.remisionId===r.id&&!l.deletion);

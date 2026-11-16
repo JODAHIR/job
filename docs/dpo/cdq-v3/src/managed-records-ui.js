@@ -1,4 +1,4 @@
-import {isLotReconciled} from './lot-verification.js';
+import {isLotReconciled} from './lot-verification.js?conciliacion-20261116';
 import {lotReconciliation} from './lot-verification-ui.js?historial-20261030';
 import {sortedTypes} from './lot-catalog.js?abm-documental-20261028';
 export function managedState(db,c,row){
