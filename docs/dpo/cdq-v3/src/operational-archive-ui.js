@@ -21,15 +21,38 @@ export async function bindOperationalArchive({db,cloud,esc}){
   results.innerHTML=rows.map(a=>{const loc=a.locations[0],scans=a.remisiones.filter(r=>r.scanned).length;return `<article class="archive-card"><h3>${esc(a.name)}</h3><p>${esc(db.gerencias.find(g=>g.id===a.gerenciaId)?.name)} · ${a.month}/${a.year}</p><p><strong>Ubicación:</strong> ${loc?`${esc(loc.shelf)} · ${esc(loc.row)} · ${esc(loc.section)}`:'Sin asignar'}</p><p>${a.independent?'Carga independiente · '+esc(a.description||'Sin descripción'):'Remisiones vinculadas'}</p><p><strong>Escaneo:</strong> ${a.independent?(a.scanned?'Completo':'Pendiente'):`${scans} de ${a.remisiones.length} remisiones confirmado${scans===a.remisiones.length?' · Completo':' · Pendiente'}`}</p><div class="form-actions">${!a.independent?`<button class="secondary" data-detail="${esc(a.gerenciaId+'|'+a.id)}">Ver remisiones</button>`:''}${canManageCustody(cloud?.profile,cloud?.auth?.currentUser,db.gerencias.find(g=>g.id===a.gerenciaId),a.remisiones[0])?`<button class="secondary" data-place="${esc(a.gerenciaId+'|'+a.id)}">${loc?'Cambiar':'Asignar'} ubicación</button>`:''}</div></article>`;}).join('')||'<p>No hay archivos para esta selección.</p>';
   root.querySelectorAll('[data-detail],[data-place]').forEach(b=>b.onclick=()=>open(archives.find(a=>a.gerenciaId+'|'+a.id===(b.dataset.detail||b.dataset.place)),!!b.dataset.place));
  }
- async function reload(){const run=++generation;loaded=false;updateActions();refresh.disabled=true;status.textContent='Consultando archivos registrados…';try{
-  if(!cloud?.spark)throw Error('Archivo está disponible en Firebase institucional.');
-  const all=[];for(const g of db.gerencias){all.push(...await cloud.call('readOperationalArchive',{gerenciaId:g.id}));}
-  if(!root.isConnected||run!==generation)return;archives=all.sort((a,b)=>a.name.localeCompare(b.name,'es',{numeric:true}));loaded=true;status.textContent=`${archives.length} archivos`;draw();
- }catch(e){if(root.isConnected){archives=[];results.replaceChildren();status.textContent='No se pudieron cargar los archivos: '+e.message;}}finally{refresh.disabled=false;}}
+ async function reload(){
+  const run=++generation;loaded=false;archives=[];results.replaceChildren();updateActions();refresh.disabled=true;
+  status.textContent='Consultando archivos registrados…';
+  const current=()=>root.isConnected&&run===generation;
+  try{
+   if(!cloud?.spark)throw Error('Archivo está disponible en Firebase institucional.');
+   const selected=root.querySelector('[data-management]').value;
+   const gerencias=db.gerencias.filter(g=>!selected||g.id===selected);
+   let cursor=0,completed=0;const errors=[];
+   await Promise.all(Array.from({length:Math.min(3,gerencias.length)},async()=>{
+    while(current()&&cursor<gerencias.length){
+     const g=gerencias[cursor++];
+     try{
+      const rows=await cloud.call('readOperationalArchive',{gerenciaId:g.id});
+      if(!current())return;
+      archives.push(...rows);archives.sort((a,b)=>a.name.localeCompare(b.name,'es',{numeric:true}));
+     }catch(e){if(!current())return;errors.push(g.name+': '+e.message);}
+     completed++;if(!current())return;draw();
+     status.textContent=`Carga parcial: ${archives.length} archivos · ${completed} de ${gerencias.length} gerencias consultadas…`;
+    }
+   }));
+   if(!current())return;
+   loaded=!errors.length;draw();
+   status.textContent=errors.length?`Carga incompleta: ${archives.length} archivos. No se pudieron consultar: ${errors.join('; ')}`:`${archives.length} ${archives.length===1?'archivo':'archivos'}`;
+  }catch(e){if(current())status.textContent='No se pudieron cargar los archivos: '+e.message;}
+  finally{if(current())refresh.disabled=false;}
+ }
+
  function open(a,edit){
   const modal=document.querySelector('#modal'),loc=a.locations[0]||{},options=(items,selected)=>items.map(x=>`<option ${x===selected?'selected':''}>${x}</option>`).join('');let busy=false;const operationId=crypto.randomUUID();
   modal.innerHTML=`<form class="archive-location-form"><h2>${edit?'Ubicación física':'Remisiones del archivo'}</h2><p>${esc(a.name)}</p>${edit?`<div class="archive-filters"><label>Estante<select name="shelf" required><option value="">Seleccione</option>${options(Array.from({length:10},(_,i)=>'E'+String(i+1).padStart(2,'0')),loc.shelf)}</select></label><label>Fila<select name="row" required><option value="">Seleccione</option>${options(['F1','F2','F3','F4','F5'],loc.row)}</select></label><label>Sección<select name="section" required><option value="">Seleccione</option>${options(['D','A'],loc.section)}</select></label></div>`:`${a.remisiones.sort((x,y)=>String(x.cacId).localeCompare(String(y.cacId),undefined,{numeric:true})||x.half-y.half).map(r=>`<article class="archive-card"><strong>${esc(db.cacs.find(c=>c.id===r.cacId)?.name||r.cacId)}</strong><p>${esc(r.expediente||'Sin expediente')} · ${r.half===1?'Primera':'Segunda'} quincena</p><p>Escaneo: ${r.scanned?'Completo':'Pendiente'}</p></article>`).join('')}<p>Para confirmar el escaneo: Remisiones → Archivo → Escanear.</p>`}<p role="alert" hidden></p><div class="form-actions">${edit?'<button class="primary" type="submit">Guardar ubicación</button>':''}<button class="secondary" type="button" data-close>Cerrar</button></div><details><summary>Historial de ubicación</summary>${a.locations.map(h=>`<p>${esc(h.shelf)} · ${esc(h.row)} · ${esc(h.section)}<br>Responsable: ${esc(h.owner)} · ${esc(date(h.at))}</p>`).join('')||'<p>Sin cambios registrados.</p>'}</details></form>`;
   const form=modal.querySelector('form');form.querySelector('[data-close]').onclick=()=>modal.close();modal.oncancel=e=>{if(busy)e.preventDefault();};form.onsubmit=async e=>{e.preventDefault();if(!edit||busy||!form.reportValidity())return;busy=true;form.querySelectorAll('button').forEach(b=>b.disabled=true);const error=form.querySelector('[role=alert]');try{await cloud.call('saveArchiveLocation',{gerenciaId:a.gerenciaId,archiveId:a.id,...a.anchor,operationId,...Object.fromEntries(new FormData(form))});modal.close();await reload();}catch(err){error.hidden=false;error.textContent=err.message;}finally{busy=false;form.querySelectorAll('button').forEach(b=>b.disabled=false);}};modal.showModal();
  }
- root.querySelectorAll('input,select').forEach(el=>el.oninput=draw);refresh.onclick=reload;await reload();
+ root.querySelectorAll('[data-search],[data-location]').forEach(el=>el.oninput=draw);root.querySelector('[data-management]').onchange=reload;refresh.onclick=reload;await reload();
 }

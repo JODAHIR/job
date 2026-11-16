@@ -10,7 +10,7 @@ import {saveCatalog,initializeCatalog,catalogHistory} from './spark-catalog.js';
 import {generateLots} from './spark-lots.js';
 import {initializeControl,previewAnnulments,annulRemisiones,restoreRemision} from './spark-lifecycle.js';
 import {generateRemisiones} from './spark-remisiones.js';
-import {doc,collection,getDocFromServer,getDocsFromServer,runTransaction,serverTimestamp,query,orderBy,startAfter,limit} from 'firebase/firestore';
+import {doc,collection,getDocFromServer,getDocsFromServer,runTransaction,serverTimestamp,query,orderBy,startAfter,limit,where} from 'firebase/firestore';
 import {sparkWriter} from './spark-records.js';
 import {publishSparkCalendar} from './spark-calendar.js';
 import {makeReport} from './reports.js';
@@ -87,7 +87,10 @@ export function sparkAPI(api) {
    const scope=input.gerenciaId ? 'g:'+input.gerenciaId : 'a:'+input.kind;
    if(typeof scope!=='string'||!scope.match(/^[ga]:[A-Za-z0-9_-]{1,128}$/)) throw Error('Ámbito inválido.');
    const path=scope.startsWith('g:')?`gerencias/${scope.slice(2)}/audit`:`administration/${scope.slice(2)}/audit`;
-   const constraints=[orderBy('at'),orderBy('__name__')];
+   const validDate=v=>typeof v==='string'&&/^\d{4}-\d{2}-\d{2}$/.test(v)&&Number.isFinite(Date.parse(v+'T00:00:00Z'))&&new Date(v+'T00:00:00Z').toISOString().slice(0,10)===v;
+   if(!validDate(input.from)||!validDate(input.to)||input.from>input.to)throw Error('Rango de fechas inválido.');
+   const from=new Date(input.from+'T00:00:00Z'),until=new Date(input.to+'T00:00:00Z');until.setUTCDate(until.getUTCDate()+1);
+   const constraints=[where('at','>=',from),where('at','<',until),orderBy('at'),orderBy('__name__')];
    if(input.cursor){const s=await getDocFromServer(doc(store,path,input.cursor));if(!s.exists())throw Error('Cursor inválido.');constraints.push(startAfter(s));}
    constraints.push(limit(50));
    const s=await getDocsFromServer(query(collection(store,path),...constraints));

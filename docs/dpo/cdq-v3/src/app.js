@@ -1,6 +1,6 @@
 import {reportButton} from './remision-report-ui.js?mensaje-20261116';
 import {canConciliate as observationPermission} from './conciliation-permission.js';
-import {operationalArchivePanel,bindOperationalArchive} from './operational-archive-ui.js?v=independent-20261110';
+import {operationalArchivePanel,bindOperationalArchive} from './operational-archive-ui.js?v=consulta-20261116';
 import {managedState,managedCollection,bindManagedRecords} from './managed-records-ui.js?conciliacion-20261116';
 import {remisionState,canCreateRemision,remisionBadge,managementActions,managementSelection,remisionCreator,bindRemisionManagement,unifyCollectionToolbar} from './remision-management.js?mensaje-20261116';
 import {documentLots,selectedDocumentLot} from './document-lot-selection.js';
@@ -167,7 +167,7 @@ async function load() {
     else {$('#app').setAttribute('aria-busy','true');$('#refresh-cloud').disabled=true;showSyncStatus();}
 
     try{
-      if(!cloud){const module=await import('./firebase-client.bundle.js?archivo-independiente-20261110');cloud=await module.connectFirebase();let initial=true;stopAuth=cloud.watchAuth(()=>{if(initial){initial=false;return}if(cloudMode()||!cloud.auth.currentUser){mode='cloud';epoch++;db=null;page=cloud?.profile?.role==='gerente'?'remisiones':'dashboard';functionId="list";window.history.replaceState(null,"",routeFor(page));$('#modal').close();load()}});}
+      if(!cloud){const module=await import('./firebase-client.bundle.js?consulta-20261116');cloud=await module.connectFirebase();let initial=true;stopAuth=cloud.watchAuth(()=>{if(initial){initial=false;return}if(cloudMode()||!cloud.auth.currentUser){mode='cloud';epoch++;db=null;page=cloud?.profile?.role==='gerente'?'remisiones':'dashboard';functionId="list";window.history.replaceState(null,"",routeFor(page));$('#modal').close();load()}});}
       if(cloud.authOnly){authenticationView();return}
       if(!cloud.auth.currentUser){loginView();return}
       const result=await cloud.load({includeAdministration:false,onCached:cached=>{
