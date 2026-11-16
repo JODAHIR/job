@@ -15,7 +15,7 @@ import {catalogPanel,bindCatalog,showLotGenerator,lotDashboard} from './lot-ui.j
 import {sortedTypes} from './lot-catalog.js?v=cah-lotes-20261019';
 import {annulPanel,bindAnnulPanel} from './remision-annul-ui.js?v=cah-filtros-20261020';
 import {pages,resolveRoute,routeFor} from './navigation.js?archivo-independiente-20261110';
-import {navigationMarkup,bindNavigation,breadcrumb} from './navigation-ui.js?caratula-20261116';
+import {navigationMarkup,bindNavigation,breadcrumb} from './navigation-ui.js?caratula-mayuscula-20261116';
 import {installTables} from './tables.js?v=visual-20261104';
 import {validateResponsables,validateContact,assignedUsers,userDescription} from './gerencia-contacts.js?v=cah-lotes-20261019';
 import { visibleModule, manageRecord, manageCacStatus } from './permissions.js?archivo-independiente-20261110';
