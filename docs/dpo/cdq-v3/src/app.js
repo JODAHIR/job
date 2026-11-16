@@ -415,7 +415,7 @@ function collectionView() {
       "Tipo de documento",
       "Descripción",
       "Fecha",
-      "Responsable",
+      "Lote",
       "Estado",
       "",
     ];
@@ -430,7 +430,7 @@ function collectionView() {
         esc(observationType(o)),
         esc(o.description),
         esc(o.date),
-        esc(o.owner),
+        esc(find("lotes", find("documentos", o.documentId)?.loteId)?.code || "Sin lote asociado"),
         badge(o.status, o.status === "Regularizada" ? "ok" : "warn"),
         edit(page, o.id),
       ]);
