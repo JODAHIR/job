@@ -126,7 +126,7 @@ export function bindPhase3(page, c) {
               );
             else
               module.download(
-                module.pdfBytes(report,{filters:report.filters || f,user:db.users?.find(u=>u.id===cloud?.auth?.currentUser?.uid)?.description?.trim() || cloud?.profile?.description?.trim() || (mode==='demo'?'Usuario de demostración':'Descripción de usuario no registrada')}),
+                module.pdfBytes(settings.type==='comentarios'?{...report,headers:report.headers.slice(0,5),rows:report.rows.map(row=>row.slice(0,5)),note:report.note.replace(' Fecha y hora de Paraguay.','')}:report,{filters:report.filters || f,user:db.users?.find(u=>u.id===cloud?.auth?.currentUser?.uid)?.description?.trim() || cloud?.profile?.description?.trim() || (mode==='demo'?'Usuario de demostración':'Descripción de usuario no registrada')}),
                 "control-documental.pdf",
                 "application/pdf",
               );

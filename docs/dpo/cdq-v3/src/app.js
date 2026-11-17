@@ -19,7 +19,7 @@ import {navigationMarkup,bindNavigation,breadcrumb} from './navigation-ui.js?car
 import {installTables} from './tables.js?v=visual-20261104';
 import {validateResponsables,validateContact,assignedUsers,userDescription} from './gerencia-contacts.js?v=cah-lotes-20261019';
 import { visibleModule, manageRecord, manageCacStatus } from './permissions.js?archivo-independiente-20261110';
-import {phase3Panel,bindPhase3} from './phase3-ui.js?comentarios-remisiones-20261117';
+import {phase3Panel,bindPhase3} from './phase3-ui.js?comentarios-pdf-20261117';
 import { metrics, scope, deadlineStatus, mutate, states, integer } from "./domain.js?filtros-vacios-20261023";
 import { LocalRepository } from "./repository.js?v=cah-lotes-20261019";
 import { demo } from "./seed.js?v=cah-lotes-20261019";
