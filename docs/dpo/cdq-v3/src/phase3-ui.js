@@ -1,6 +1,8 @@
+import {commentsReport,loadCommentsReport} from './remision-comments-report.js';
+const reportTypes={...baseReportTypes,comentarios:'Comentarios generales de remisiones'};
 import {managementFilters} from './management-summary.js?faltantes-20261105';
 import { template, prepareBulk, applyBulkLocal } from "./bulk.js?v=cah-lotes-20261019";
-import { makeReport, reportTypes } from "./reports.js?reportes-20261106";
+import { makeReport, reportTypes as baseReportTypes } from "./reports.js?reportes-20261106";
 import { states } from "./domain.js?v=cah-lotes-20261019";
 const settings = {
   type: "documentos",
@@ -19,7 +21,7 @@ const opts = (items, value, esc) =>
 export function phase3Panel(page, c) {
   const { db, esc, table, f, cloud, mode } = c;
   if (page === "reports") {
-    const r = makeReport(db, settings.type==='gerencias'?managementFilters(f,cloud?.profile,db.gerencias):f, {
+    const r = settings.type==='comentarios'?commentsReport(db,f):makeReport(db, settings.type==='gerencias'?managementFilters(f,cloud?.profile,db.gerencias):f, {
       ...settings,
       source:
         mode === "demo"
@@ -32,10 +34,10 @@ export function phase3Panel(page, c) {
       ["quincena", "mes", "año"].map((s) => [s, s]),
       settings.comparison,
       esc,
-    )}</select></label><label>Próximos días calendario<input id="report-horizon" type="number" min="0" max="30" value="${settings.horizon}" ${settings.type !== "plazos" ? "disabled" : ""}></label></div><p>${esc(r.note)}</p><div class="form-actions"><button data-export="xlsx" class="primary">Exportar Excel</button><button data-export="pdf" class="secondary">Exportar PDF</button></div><p id="phase3-error" role="alert"></p><p>${r.rows.length} filas · Se exporta el informe completo con estos filtros.</p>${table(
+    )}</select></label><label>Próximos días calendario<input id="report-horizon" type="number" min="0" max="30" value="${settings.horizon}" ${settings.type !== "plazos" ? "disabled" : ""}></label></div><p>${esc(r.note)}</p><div class="form-actions"><button data-export="xlsx" class="primary">Exportar Excel</button><button data-export="pdf" class="secondary">Exportar PDF</button></div><p id="phase3-error" role="alert"></p><div id="report-preview"><p>${r.rows.length} filas · Se exporta el informe completo con estos filtros.</p>${table(
       r.headers,
       r.rows.slice(0, 100).map((row) => row.map(esc)),
-    )}${r.rows.length > 100 ? "<p>Vista previa limitada a 100 filas.</p>" : ""}</section>`;
+    )}${r.rows.length > 100 ? "<p>Vista previa limitada a 100 filas.</p>" : ""}</div></section>`;
   }
   if (page === "bulk" && cloud?.spark) return `<section class="panel"><h2>Importación masiva</h2><p>La importación masiva aún no está habilitada en el espacio Firebase Spark. Puede registrar documentos individualmente. No se realizará una importación parcial.</p></section>`;
   if (page === "bulk") {
@@ -82,13 +84,28 @@ export function bindPhase3(page, c) {
           settings.state = "";
         render();
       };
+    let loadedComments=null;
+    if(settings.type==='comentarios'){
+      const preview=$('#report-preview'),buttons=[...document.querySelectorAll('[data-export]')];
+      buttons.forEach(b=>b.disabled=true);preview.textContent='Consultando comentarios generales…';
+      const current=()=>preview.isConnected&&$('#report-preview')===preview&&settings.type==='comentarios';
+      (async()=>{
+        try{
+          if(mode!=='cloud')throw Error('Este informe consulta los comentarios registrados en Firebase institucional.');
+          const report=await loadCommentsReport(db,{...f},cloud,current);if(!current()||!report)return;
+          loadedComments=report;
+          preview.innerHTML=`<p>${report.rows.length} comentarios · Se exporta el informe completo con estos filtros.</p>${report.rows.length?table(report.headers,report.rows.slice(0,100).map(row=>row.map(esc))):'<p>No hay comentarios generales para esta selección.</p>'}${report.rows.length>100?'<p>Vista previa limitada a 100 filas.</p>':''}`;
+          buttons.forEach(b=>b.disabled=false);
+        }catch(e){if(current()){preview.textContent='No se completó la consulta. Cambie el informe o actualice para reintentar.';fail(e);}}
+      })();
+    }
     document.querySelectorAll("[data-export]").forEach(
       (b) =>
         (b.onclick = async () => {
           b.disabled = true;
           try {
             const module = await import("./exporters.bundle.js?reportes-20261106");
-            const report =
+            const report = settings.type==='comentarios'?loadedComments:
               mode === "cloud"
                 ? await cloud.call("report", {
                     filters: settings.type==='gerencias'?managementFilters(f,cloud?.profile,db.gerencias):{ ...f },
@@ -100,6 +117,7 @@ export function bindPhase3(page, c) {
                       mode === "demo" ? "Datos ficticios" : "Registros locales",
                   });
             if (!b.isConnected) return;
+            if(!report)throw Error('Espere a que se complete la consulta de comentarios.');
             if (b.dataset.export === "xlsx")
               module.download(
                 await module.excelBytes(report),
