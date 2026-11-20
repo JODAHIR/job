@@ -1,4 +1,4 @@
-import {progressPlaceholder,bindResponsibleProgress} from './responsible-progress.js?v=20261120';
+import {progressPlaceholder,bindResponsibleProgress} from './responsible-progress.js?v=todos-responsables-20261120';
 import {enhanceDashboard} from './dashboard-motion.js?dashboard-color-20261025';
 import {verificationRankings} from './verification-rankings.js?dashboard-20261025';
 import {dailyVerificationPanel} from './verification-progress.js?dashboard-color-20261025';

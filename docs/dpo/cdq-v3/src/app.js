@@ -10,7 +10,7 @@ import {initialFilters,createFilterSession} from './filter-session.js?v=filtros-
 import {connectionState,orderLots} from './presentation-status.js?v=cah-filtros-20261020';
 import {showLotVerification,lotVerificationLabel,lotReconciliation} from './lot-verification-ui.js?conciliadores-20261104';
 import {creationActions} from './record-actions.js?gdzs-20261027';
-import {dashboardFilters,intelligencePanel,bindIntelligence,groupModuleFilters} from './intelligence-ui.js?responsables-20261120';
+import {dashboardFilters,intelligencePanel,bindIntelligence,groupModuleFilters} from './intelligence-ui.js?todos-responsables-20261120';
 import {catalogPanel,bindCatalog,showLotGenerator,lotDashboard} from './lot-ui.js?lotes-cantidades-20261029';
 import {sortedTypes} from './lot-catalog.js?v=cah-lotes-20261019';
 import {annulPanel,bindAnnulPanel} from './remision-annul-ui.js?v=cah-filtros-20261020';
