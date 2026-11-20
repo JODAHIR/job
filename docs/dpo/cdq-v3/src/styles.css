@@ -809,3 +809,13 @@ dialog:has(#lot-generate-form){width:960px}.lot-type-row>label:first-child{flex-
 .document-group{padding:18px;margin:14px 0;border:1px solid #dbe5e8;border-radius:12px}.document-group summary{cursor:pointer;font-weight:700}.document-group table{margin-top:14px}
 
 .document-group summary{font-weight:400}.document-group summary strong{font-weight:700}.document-group-states{margin-left:.5em}
+
+/* Pantalla de acceso institucional */
+.login-page .login-card{text-align:center;padding:32px clamp(20px,5vw,44px);border-radius:20px;box-shadow:0 16px 48px #12314b0d}
+.login-illustration{display:block;width:min(320px,100%);height:auto;margin:0 auto 24px}
+.login-card h1{font-size:clamp(23px,4vw,30px);line-height:1.2;margin:0 0 14px}
+.login-card>p{line-height:1.6}
+.login-card .form-actions{justify-content:center;flex-wrap:wrap;gap:12px;margin-top:24px}
+.login-card .form-actions button{min-height:44px;white-space:normal}
+.login-card #login-error:empty{display:none}
+@media(max-width:480px){.login-card .form-actions{flex-direction:column;align-items:stretch}.login-page .login-card{padding:24px 20px}}

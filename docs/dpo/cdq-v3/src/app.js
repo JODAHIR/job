@@ -110,8 +110,7 @@ function bindObservationSelection(){
 }
 function loginView(error=''){  hidePrivateShell();
   if(cloud?.authOnly){authenticationView(error);return;}
-  $('#app').innerHTML=`<main class="content login-page"><section class="panel"><h1>CONTROL DOCUMENTO</h1><p>Para acceder al sistema debes ser funcionario de la Dirección de Operaciones</p><form id="login-form" class="form-fields"><label>Correo<input name="email" type="email" autocomplete="username" required></label><label>Contraseña<input name="password" type="password" autocomplete="current-password" required></label>
-<button class="primary">Ingresar</button></form>
+  $('#app').innerHTML=`<main class="content login-page"><section class="panel login-card"><img class="login-illustration" src="cdq-v3/assets/login-documentos.svg" alt="" width="320" height="180"><h1>CONTROL DOCUMENTO</h1><p>Para acceder al sistema debes ser funcionario de la Dirección de Operaciones</p>
 <p id="login-error" role="alert">${esc(error)}</p>
 <div class="form-actions">
   <button id="google-login" class="primary" type="button">Ingresar con Google</button>
@@ -119,7 +118,6 @@ function loginView(error=''){  hidePrivateShell();
   ${cloud?.auth.currentUser ? '<button id="logout">Cerrar sesión</button>' : ''}
 </div>
 <p></p></section></main>`;
-  $('#login-form').onsubmit=async e=>{e.preventDefault();const b=e.submitter;b.disabled=true;const values=new FormData(e.target);try{await cloud.login(values.get('email'),values.get('password'))}catch(error){$('#login-error').textContent=error.message;b.disabled=false}};
   const googleAccess=async()=>{
     const buttons=[$('#google-login'),$('#google-signup')].filter(Boolean);
     buttons.forEach(button=>button.disabled=true);
@@ -132,7 +130,7 @@ function loginView(error=''){  hidePrivateShell();
   if($('#google-signup'))$('#google-signup').onclick=googleAccess;
   if($('#logout'))$('#logout').onclick=()=>cloud.logout();
   if(cloud?.spark && cloud.auth.currentUser){const button=document.createElement('button');button.textContent='Solicitar acceso';button.className='primary';button.onclick=async()=>{button.disabled=true;try{await cloud.requestAccess();$('#login-error').textContent='Solicitud registrada. El administrador debe asignar su perfil.';}catch(e){$('#login-error').textContent=e.message;button.disabled=false}};$('.login-page .panel').append(button);}
-  if(!cloud){$('#google-login').disabled=true;if($('#google-signup'))$('#google-signup').disabled=true;$('#login-form button').disabled=true;}
+  if(!cloud){$('#google-login').disabled=true;if($('#google-signup'))$('#google-signup').disabled=true;}
 }
 function authenticationView(error=''){
   hidePrivateShell();
