@@ -116,18 +116,19 @@ export async function connectFirebase() {
     async call(name, data) {
       return (await httpsCallable(functions, name)(data)).data;
     },
-    async loadAdministration(state){
+    async loadAdministration(state,{peopleOnly=false}={}){
       const uid=auth.currentUser?.uid;if(!uid)throw Error('Inicie sesión.');
       const profile=(await getDocFromServer(doc(store,'users',uid))).data();
       if(!profile?.active||!auth.currentUser?.emailVerified||JSON.stringify(profile)!==JSON.stringify(api.profile))throw Error('Los permisos cambiaron. Actualice la sesión.');
-      const result={users:[],accessRequests:[],catalogAudit:[]};
+      if(peopleOnly&&!['technical','director'].includes(profile.role))throw Error('Sin permiso para consultar avances por responsable.');
+      const result=peopleOnly?{users:[]}:{users:[],accessRequests:[],catalogAudit:[]};
       const tasks=[];
       if(['technical','director'].includes(profile.role))tasks.push(async()=>{result.users=(await getDocsFromServer(collection(store,'users'))).docs.map(d=>({...d.data(),id:d.id}));});
-      if(spark&&profile.role==='technical')tasks.push(async()=>{result.accessRequests=(await getDocsFromServer(collection(store,'accessRequests'))).docs.map(d=>({...d.data(),id:d.id}));});
-      if(spark&&['technical','director'].includes(profile.role))tasks.push(async()=>{result.catalogAudit=(await getDocsFromServer(query(collection(store,'catalogAudit'),orderBy('revision','desc'),limit(50)))).docs.map(d=>d.data());});
+      if(!peopleOnly&&spark&&profile.role==='technical')tasks.push(async()=>{result.accessRequests=(await getDocsFromServer(collection(store,'accessRequests'))).docs.map(d=>({...d.data(),id:d.id}));});
+      if(!peopleOnly&&spark&&['technical','director'].includes(profile.role))tasks.push(async()=>{result.catalogAudit=(await getDocsFromServer(query(collection(store,'catalogAudit'),orderBy('revision','desc'),limit(50)))).docs.map(d=>d.data());});
       await readPool(tasks,t=>t());
       if(auth.currentUser?.uid!==uid)throw Error('La sesión cambió.');
-      Object.assign(state,result,{administrationLoaded:true});
+      Object.assign(state,result,peopleOnly?{progressPeopleLoaded:true}:{administrationLoaded:true});
       return state;
     },
     async load({onCached,onProgress=()=>{},includeAdministration=true}={}) {
