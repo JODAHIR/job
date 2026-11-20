@@ -130,7 +130,7 @@ export async function connectFirebase() {
       Object.assign(state,result,{administrationLoaded:true});
       return state;
     },
-    async load({onCached,includeAdministration=true}={}) {
+    async load({onCached,onProgress=()=>{},includeAdministration=true}={}) {
       const user = auth.currentUser;
       if (!user) {previewCache.clear();throw Error("Inicie sesión.");}
       const profile = (
@@ -143,6 +143,7 @@ export async function connectFirebase() {
       }
       if(auth.currentUser?.uid!==user.uid)throw Error("La sesión cambió.");
       api.profile = profile;
+      onProgress({phase:'Acceso validado · Cargando datos'});
       if(onCached){const cached=previewCache.read(user.uid,profile);if(cached){try{validate(cached);onCached(cached);}catch{previewCache.clear();}}}
       const state = empty();
       const globalScope = profile.role === "director" || (spark && profile.role === "technical");
@@ -189,8 +190,12 @@ export async function connectFirebase() {
         await readScope();
       const collections = spark ? [...entities, 'remisionControls', 'lotRequirements', 'lotVerifications', 'lotManagement'] : entities;
       const reads = state.gerencias.flatMap(g => collections.map(entity => ({gerenciaId:g.id, entity})));
-      const snapshots = await readPool(reads, ({gerenciaId, entity}) =>
-        getDocsFromServer(query(collection(store, 'gerencias', gerenciaId, entity), limit(3001))));
+      let completed=0;
+      const snapshots = await readPool(reads, async ({gerenciaId, entity}) => {
+        const snapshot=await getDocsFromServer(query(collection(store, 'gerencias', gerenciaId, entity), limit(3001)));
+        onProgress({phase:'Cargando datos documentales',done:++completed,total:reads.length});
+        return snapshot;
+      });
       snapshots.forEach((snapshot, index) => {
         if (snapshot.size > 3000) throw Error('El ámbito supera 3000 registros por entidad; consulta incompleta bloqueada.');
         const {entity, gerenciaId} = reads[index];
@@ -201,19 +206,19 @@ export async function connectFirebase() {
       // Read each immutable calendar actually referenced by authorized remissions.
       // Never substitute the current version for a missing historical version.
       const historicalVersions = [...new Set(state.remisiones.map(r => r.calendarVersion).filter(v => v && v !== state.calendarVersion))];
-      const historicalCalendars = await readPool(historicalVersions, version =>
-        getDocFromServer(doc(store, 'calendars', version)));
+      onProgress({phase:'Comprobando calendarios y conciliaciones'});
+      const catalogVersionsTask=spark?readPool([...new Set(state.lotRequirements.map(r=>r.catalogVersion))],v=>getDocFromServer(doc(store,'documentCatalogVersions',String(v)))):Promise.resolve([]);
+      const [historicalCalendars,catalogSnapshots] = await Promise.all([readPool(historicalVersions, version =>
+        getDocFromServer(doc(store, 'calendars', version))),catalogVersionsTask]);
       state.calendars = [
         ...(state.calendar ? [state.calendar] : []),
         ...historicalCalendars.filter(s => s.exists()).map(s => s.data()),
       ];
       if (spark) {
-        const versions = [...new Set(state.lotRequirements.map(r => r.catalogVersion))];
-        const snapshots = await readPool(versions, v => getDocFromServer(doc(store, 'documentCatalogVersions', String(v))));
-        state.catalogVersions = snapshots.filter(s => s.exists()).map(s => s.data());
+        state.catalogVersions = catalogSnapshots.filter(s => s.exists()).map(s => s.data());
       }
       if(spark){
-        await initializeManagement(store,auth,{...state,profile});
+        await initializeManagement(store,auth,{...state,profile},onProgress);
         state.deletedRecords=[...state.lotes.filter(r=>r.deletion).map(r=>({...r,collection:'lotes'})),...state.documentos.filter(r=>r.deletion).map(r=>({...r,collection:'documentos'}))];
         state.lotes=state.lotes.filter(r=>!r.deletion);
         const activeLots=new Set(state.lotes.map(r=>r.id));

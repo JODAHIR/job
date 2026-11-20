@@ -157,6 +157,14 @@ function updateConnectionChip(){const chip=document.querySelector('.local-chip')
 window.addEventListener('offline',updateConnectionChip);
 window.addEventListener('online',updateConnectionChip);
 function showSyncStatus(){if($('#sync-status'))return;const status=document.createElement('div');status.id='sync-status';status.setAttribute('role','status');status.textContent='Sincronizando…';document.body.append(status);}
+function loadingProgress(progress){
+ const label=progress.phase+(progress.total?` · ${progress.done} de ${progress.total}`:'');
+ if(!db&&!document.querySelector('#loading-progress')){
+  $('#app').innerHTML=`${navigationMarkup(page,functionId,navigationContext())}<main><header><button id="nav-mobile" aria-label="Abrir menú">☰</button><strong>CONTROL DOCUMENTO — CAH</strong></header><div class="content"><section class="panel"><h1>Preparando información</h1><p id="loading-progress" role="status"></p><p>Los valores se mostrarán cuando termine la consulta.</p></section></div></main>`;
+  bindNavigation(route=>{window.history.replaceState(null,'',route);routeReady=false;});
+ }
+ const status=$('#loading-progress')||$('#sync-status');if(status)status.textContent=label;
+}
 async function load() {
   const token=++epoch;
   if(cloudMode()){
@@ -165,10 +173,10 @@ async function load() {
     else {$('#app').setAttribute('aria-busy','true');$('#refresh-cloud').disabled=true;showSyncStatus();}
 
     try{
-      if(!cloud){const module=await import('./firebase-client.bundle.js?consulta-20261116');cloud=await module.connectFirebase();let initial=true;stopAuth=cloud.watchAuth(()=>{if(initial){initial=false;return}if(cloudMode()||!cloud.auth.currentUser){mode='cloud';epoch++;db=null;page=cloud?.profile?.role==='gerente'?'remisiones':'dashboard';functionId="list";window.history.replaceState(null,"",routeFor(page));$('#modal').close();load()}});}
+      if(!cloud){const module=await import('./firebase-client.bundle.js?carga-progresiva-20261120');cloud=await module.connectFirebase();let initial=true;stopAuth=cloud.watchAuth(()=>{if(initial){initial=false;return}if(cloudMode()||!cloud.auth.currentUser){mode='cloud';epoch++;db=null;page=cloud?.profile?.role==='gerente'?'remisiones':'dashboard';functionId="list";window.history.replaceState(null,"",routeFor(page));$('#modal').close();load()}});}
       if(cloud.authOnly){authenticationView();return}
       if(!cloud.auth.currentUser){loginView();return}
-      const result=await cloud.load({includeAdministration:false,onCached:cached=>{
+      const result=await cloud.load({includeAdministration:false,onProgress:progress=>{if(token===epoch&&cloudMode()&&cloud.auth.currentUser)loadingProgress(progress);},onCached:cached=>{
         if(refreshing||token!==epoch||!cloudMode()||!cloud.auth.currentUser)return;
         db=cached;render();$('#app').inert=true;showSyncStatus();const status=$('#sync-status');if(status)status.textContent='Mostrando datos recientes · Sincronizando…';
       }});if(token!==epoch||!cloudMode())return;db=result;connectionFailed=false;

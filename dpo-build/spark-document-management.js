@@ -1,23 +1,29 @@
+import {readPool} from './read-pool.js';
 import {doc,runTransaction,serverTimestamp} from 'firebase/firestore';
 import {currentVerification} from './lot-verification.js';
 import {lifecycleFence} from './spark-lifecycle.js';
 export const newLotGuard=id=>({id,pending:true,documents:0,version:1,event:'create',recordId:id,updatedAt:serverTimestamp()});
-export async function initializeManagement(store,auth,state){
+export async function initializeManagement(store,auth,state,onProgress=()=>{}){
  if(state.profile?.role!=='technical')return;
- for(const lot of state.lotes){
-  const rem=state.remisiones.find(r=>r.id===lot.remisionId),g=state.cacs.find(c=>c.id===rem?.cacId)?.gerenciaId;
-  if(!g||lot.deletion||rem?.annulment||state.lotManagement?.some(m=>m.id===lot.id))continue;
-  const control=state.remisionControls.find(c=>c.id===rem.id),review=currentVerification(state.lotVerifications,lot,control,false,state);
+ const remissions=new Map(state.remisiones.map(r=>[r.id,r])), cacs=new Map(state.cacs.map(c=>[c.id,c])), guards=new Set((state.lotManagement||[]).map(m=>m.id));
+ const controls=new Map(state.remisionControls.map(c=>[c.id,c]));
+ const counts=new Map();for(const d of state.documentos)if(!d.deletion)counts.set(d.loteId,(counts.get(d.loteId)||0)+1);
+ const pending=state.lotes.filter(l=>!guards.has(l.id)&&!l.deletion);let done=0;
+ await readPool(pending,async lot=>{
+  const rem=remissions.get(lot.remisionId),g=cacs.get(rem?.cacId)?.gerenciaId;
+  if(!g||lot.deletion||rem?.annulment||guards.has(lot.id))return;
+  const control=controls.get(rem.id),review=currentVerification(state.lotVerifications,lot,control,false,state);
   const initialized=await runTransaction(store,async tx=>{
    const ref=doc(store,`gerencias/${g}/lotManagement/${lot.id}`);
    const [old,ls,cs]=await Promise.all([tx.get(ref),tx.get(doc(store,`gerencias/${g}/lotes/${lot.id}`)),tx.get(doc(store,`gerencias/${g}/remisionControls/${rem.id}`))]);
    if(old.exists())return old.data();
    if(ls.data()?.revision!==lot.revision||cs.data()?.version!==control?.version)return null;
-   const guard={id:lot.id,pending:!review||review.registered!==lot.declared,documents:state.documentos.filter(d=>d.loteId===lot.id&&!d.deletion).length,version:1,event:'initialize',recordId:lot.id,updatedAt:serverTimestamp()};
+   const guard={id:lot.id,pending:!review||review.registered!==lot.declared,documents:counts.get(lot.id)||0,version:1,event:'initialize',recordId:lot.id,updatedAt:serverTimestamp()};
    tx.set(ref,guard);return guard;
   });
   if(initialized)state.lotManagement.push(initialized);
- }
+  onProgress({phase:"Preparando controles de lotes",done:++done,total:pending.length});
+ },3);
 }
 export async function deleteManagedRecord(store,auth,{gerenciaId:g,collection:c,id,expectedRevision,reason}){
  if(!['lotes','documentos'].includes(c)||![g,id].every(v=>typeof v==='string'&&/^[A-Za-z0-9_-]{1,128}$/.test(v)))throw Error('Registro inválido.');
